@@ -9,7 +9,7 @@ title() -> "Welcome to Nitrogen".
 
 body() ->
     #container_12 { body=[
-        #grid_8 { alpha=true, prefix=2, suffix=2, omega=true, body=inner_body() }
+        #grid_12{ alpha=true,  omega=true, body=inner_body() }
     ]}.
 
 inner_body() -> 
