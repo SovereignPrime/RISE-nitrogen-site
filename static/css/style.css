@@ -14,7 +14,13 @@ body {
     border: 0px #fff solid;
     width: 40px;
 }
-a.btn-link, a.btn-link:hover, a.btn-link:visited {
+a.btn-link, a.btn-link:hover, a.btn-link:visited, a.btn-link:active {
     color: #000;
     text-decoration: none;
+}
+.table th, .table td {
+    border-top: #fff 0px solid;
+}
+.cell-right {
+    text-align: right !important;
 }

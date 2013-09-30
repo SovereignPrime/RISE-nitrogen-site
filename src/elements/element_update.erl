@@ -27,5 +27,14 @@ render_element(#update_element{from=From, text=Text, age=Age, collapse=false}) -
         #panel{class="row-fluid", body=[
                 #panel{class="span12", body=Text}
                 ]}
+        ];
+render_element(#update_element{from=From, text=Text, age=Age, collapse=paragraph}) ->
+    [
+        #panel{class="row", body=[
+                #panel{class="span9", body="<b>Subject: </b>" ++ From},
+                #panel{class="span2 cell-right", body=Age}
+                ]},
+        #panel{class="row", body=[
+                #panel{class="span12", body=Text}
+                ]}
         ].
-

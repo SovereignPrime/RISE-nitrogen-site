@@ -21,3 +21,17 @@
                      size,
                      time
     }).
+
+-record(vcard, {?ELEMENT_BASE(element_vcard),
+                photo="undefined.png",
+                name,
+                email,
+                phone,
+                address
+    }).
+
+-record(taskrow, {?ELEMENT_BASE(element_taskrow),
+                  type,
+                  name,
+                  due
+    }).
