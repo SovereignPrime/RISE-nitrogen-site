@@ -5,7 +5,7 @@
 -include_lib("nitrogen_core/include/wf.hrl").
 -include("records.hrl").
 
-main() -> #template { file="./site/templates/bare.html" }.
+main() -> common:main().
 
 title() -> "Hello from relationships.erl!".
 

@@ -5,14 +5,14 @@
 -include_lib("nitrogen_core/include/wf.hrl").
 -include("records.hrl").
 
-main() -> #template { file="./site/templates/bare.html" }.
+main() -> common:main().
 
 title() -> "Hello from relationships.erl!".
 
 icon() -> "<i class='icon-user icon-large'></i>".
 
 buttons() ->
-    #panel{class='row-fluid', body=[
+    #panel{id=buttons, class='row-fluid', body=[
 
     #panel{class='span9 offset3', body=[
             #panel{class="row-fluid", body=[
