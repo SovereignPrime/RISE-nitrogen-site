@@ -8,7 +8,7 @@ main() -> #template { file="./site/templates/bare.html" }.
 
 title() -> "Welcome to Nitrogen".
 
-icon() -> "globe".
+icon() -> "<i class='icon-globe icon-2x'></i>".
 
 buttons() ->
     #panel{class='row-fluid', body=[

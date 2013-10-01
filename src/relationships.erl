@@ -9,7 +9,7 @@ main() -> #template { file="./site/templates/bare.html" }.
 
 title() -> "Hello from relationships.erl!".
 
-icon() -> "user".
+icon() -> "<i class='icon-user icon-large'></i>".
 
 buttons() ->
     #panel{class='row-fluid', body=[
