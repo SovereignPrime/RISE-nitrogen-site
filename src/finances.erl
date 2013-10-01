@@ -1,6 +1,6 @@
 %% -*- mode: nitrogen -*-
 %% vim: ts=4 sw=4 et
--module (files).
+-module (finances).
 -compile(export_all).
 -include_lib("nitrogen_core/include/wf.hrl").
 -include("records.hrl").
@@ -34,15 +34,14 @@ body() ->
                         #tablecell{body=[
                                 #checkbox{id=check_all,  postback=check_all, checked=false}
                                 ], class=""},
-                        #tableheader{text="File name", class=""},
-                        #tableheader{text="Type", class=""},
-                        #tableheader{text="Size", class=""},
-                        #tableheader{text="From/To", class=""},
-                        #tableheader{text="Linked message", class=""},
-                        #tableheader{text="Date", class=""},
-                        #tableheader{text="Seed", class=""},
-                        #tableheader{text="Peer", class=""},
-                        #tableheader{text="Status", class=""}
+                        #tableheader{text="Payable", class=""},
+                        #tableheader{text="Chargable", class=""},
+                        #tableheader{text="Tasks", class=""},
+                        #tableheader{text="Due", class=""},
+                        #tableheader{text="Status", class=""},
+                        #tableheader{text="Amount", class=""},
+                        #tableheader{text="Curr.", class=""},
+                        #tableheader{text="Type", class=""}
                         ]},
                 #tablerow{ cells=[
                         #tablecell{body=[
