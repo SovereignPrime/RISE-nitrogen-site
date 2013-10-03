@@ -13,15 +13,15 @@ reflect() -> record_info(fields, update_preview).
 
 -spec render_element(#update_preview{}) -> body().
 render_element(#update_preview{icon=Icon, from=From, age=Age, subject=Subject, text=Text}) ->
-                io_lib:format("<div class='row-fluid'>
-                    <div class='span1'><i class='icon-~s'></i></div>
-                    <div class='span8'><b>From: </b>~s</div>
-                    <div class='span3'>~s</div>
-                </div>
-                <div class='row-fluid'>
-                    <div class='span11 offset1'><b>Subject: </b>~s</div>
-                </div>
-                <div class='row-fluid'>
-                    <div class='span1'><input type='checkbox'></div>
-                    <div class='span11'>~200s...</div>
-                              </div>", [Icon, From, Age, Subject, Text]).
+    #panel{class='row-fluid', body=[
+            #panel{class='span1', body=["<i class='icon-" ++ Icon ++ "'></i>"]}
+            #panel{class='span8', body=["<b>From: </b>", From]}
+            #panel{class='span3', body=[Age]}
+            ]},
+    #panel{class='row-fluid', body=[
+            #panel{class='span11 offset1', body=["<b>Subject: </b>", Subject]}
+            ]},
+    #panel{class='row-fluid', body=[
+            #panel{class='span1', body=["<input type='checkbox'>"]}
+            #panel{class='span11', body=[io_lib:format("~200s...", [Text])]}
+            ]}.
