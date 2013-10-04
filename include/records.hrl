@@ -7,6 +7,7 @@
                          from,
                          age,
                          subject,
+                         flag=true,
                          text
     }).
 -record(update_element, {?ELEMENT_BASE(element_update),
