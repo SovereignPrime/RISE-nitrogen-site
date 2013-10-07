@@ -15,7 +15,7 @@ reflect() -> record_info(fields, involved).
 render_element(_Record = #involved{id=Id, num=N}) ->
             #panel{ class="row-fluid", body=[
                     #panel{ class="span9", body=[
-                            #span{ class="add-on span1", body=[
+                            #span{ class="add-on", body=[
                                     #span{html_encode=false, text="<i class='icon-user'></i>"}
                                     ]},
                     #textbox{id=wf:f("~s_person~p", [Id, N]), text="People", next=wf:f("i~s_responsible~p", [Id, N]), class="span11"}

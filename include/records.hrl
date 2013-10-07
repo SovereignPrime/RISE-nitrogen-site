@@ -42,5 +42,5 @@
 -record(addable_row, {?ELEMENT_BASE(element_addable_row),
                       num=0,
                       body,
-                      last=false
+                      options
     }).

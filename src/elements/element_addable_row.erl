@@ -23,11 +23,34 @@ render_element(Record = #addable_row{id=Id, num=N, body=Body}) ->
 
             ]}.
 
-event({add, #addable_row{id=Id, num=N, body=Body}=Record}) ->
+event({add, #addable_row{id=Id, num=N, body=Body, options=undefined}=Record}) ->
     io:format("Event ~s in module ~p~n", [Id, ?MODULE]),
     wf:replace(wf:f("~s_addable_plus~p",[Id, N]), 
                     #button{id=wf:to_atom(wf:f("~s_addable_plus~p", [Id, N])), 
                             body=["<i class='icon-minus'></i>"], html_encode=false, postback={del,  Record}, delegate=?MODULE}
+             ),
+    wf:insert_after(wf:f("~s_addable~p", [Id, N]), 
+                    #addable_row{
+            id=Id,
+            num=N+1,
+            body=Body
+            });
+event({add, #addable_row{id=Id, num=N, body=Body, options=Opt}=Record}) ->
+    io:format("Event ~p in module ~p~n", [Record, ?MODULE]),
+    wf:replace(wf:f("~s_addable_plus~p",[Id, N]), 
+               #panel{class="dropdown span12", body=[
+                "<a href='#', class='btn dropdown-toggle' data-toggle='dropdown'>",
+                "<i class='icon-reorder'></i>",
+                "</a>",
+                #list{numbered=false, class="dropdown-menu",
+                      body=[
+                        #listitem{body=[
+                                #link{id=wf:to_atom(wf:f("~s_addable_plus~p", [Id, N])), 
+                                        body=["<i class='icon-minus'></i> Delete"], html_encode=false, postback={del,  Record}, delegate=?MODULE}
+                                ]},
+                        Opt(Id, N)
+                        ]}
+                ]}
              ),
     wf:insert_after(wf:f("~s_addable~p", [Id, N]), 
                     #addable_row{
