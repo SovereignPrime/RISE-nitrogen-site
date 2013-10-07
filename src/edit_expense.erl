@@ -95,29 +95,7 @@ body() ->
                                     ]}
                             ]}
                     ]},
-            #panel{ class="row-fluid", body=[
-                    #panel{ class="input-prepend span9", body=[
-                            #span{ class="add-on", body=[
-                                    #span{html_encode=false, text="<i class='icon-user'></i>"}
-                                    ]},
-                            #textbox{id=name, text="People", next=responsible, class="span11"}
-                            ]},
-                    #panel{class="dropdown span2", body=[
-                            "<a href='#', class='btn dropdown-toggle' data-toggle='dropdown'>",
-                            #span{ class="", text="Is:Responsible"},
-                            #span{ class="caret",html_encode=false, text=""},
-                            "</a>",
-                            #list{numbered=false, class="dropdown-menu",
-                                  body=[
-                                    #listitem{text="Responsible"},
-                                    #listitem{text="Accountable"}
-                                    ]}
-                            ]},
-                    #panel{class="span1", body=[
-                            #button{body="<i class='icon-plus'></i>", html_encode=false, postback=add_role}
-                            ]}
-
-                    ]},
+            #addable_row{id=roles, body= #involved{}},
             #panel{ class="row-fluid", body=[
                     #panel{class="span12", body=[
                             #textarea{class="input-block-level",rows=15, text="Some text here", id=text}
@@ -139,22 +117,4 @@ event(click) ->
         body="You clicked the button!", 
         actions=#effect { effect=highlight }
     }).
-
-dropdown(Id, true=Icon) ->
-    #dropdown{id=Id, html_encode=false, options=[
-            #option{ text="<img src='img/globe.png'> Updates", value=updates},
-            #option{ text="<img src='img/globe.png'> Tasks", value=tasks},
-            #option{ text="<img src='img/globe.png'> Relationships", value=relations},
-            #option{ text="<img src='img/globe.png'> Files", value=files},
-            #option{ text="<img src='img/globe.png'> Finances", value=finance}
-            ]};
-
-dropdown(Id, false=Icon) ->
-    #dropdown{id=Id, html_encode=false, options=[
-            #option{ text="Updates", value=updates},
-            #option{ text="Tasks", value=tasks},
-            #option{ text="Relationships", value=relations},
-            #option{ text="Files", value=files},
-            #option{ text="Finances", value=finance}
-            ]}.
 

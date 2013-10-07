@@ -25,6 +25,7 @@ buttons() ->
             ]}]}.
 
 left() ->
+    {ok, {Tasks, _Cont}} = db:get_tasks(10),
     [
         #panel{class="span4", body=[
                 #panel{ class="row-fluid", body=[
@@ -40,57 +41,12 @@ left() ->
                         #panel{ class="row-fluid", body=[
                                 #panel{ class="span6", body=[
                                         #list{numbered=false,
-                                              body=[
+                                              body=lists:map(fun() ->
                                                 #listitem{class="clearfix", body=[
                                                         #checkbox{id=john, class="pull-left", style="margin: 10px 15px 0;", postback=test, checked=false},
-                                                        "<b>Task 1</b>", #br{},
-                                                        "Due: 25 Oct 2013"
-                                                        ]},
-                                                #listitem{class="clearfix", body=[
-                                                        #checkbox{id=john, class="pull-left", style="margin: 10px 15px 0;", postback=test, checked=false},
-                                                        "<b>Task 1</b>", #br{},
-                                                        "Due: 25 Oct 2013"
-                                                        ]},
-                                                #listitem{class="clearfix", body=[
-                                                        #checkbox{id=john, class="pull-left", style="margin: 10px 15px 0;", postback=test, checked=false},
-                                                        "<b>Task 1</b>", #br{},
-                                                        "Due: 25 Oct 2013"
-                                                        ]},
-                                                #listitem{class="clearfix", body=[
-                                                        #checkbox{id=john, class="pull-left", style="margin: 10px 15px 0;", postback=test, checked=false},
-                                                        "<b>Task 1</b>", #br{},
-                                                        "Due: 25 Oct 2013"
-                                                        ]},
-                                                #listitem{class="clearfix", body=[
-                                                        #checkbox{id=john, class="pull-left", style="margin: 10px 15px 0;", postback=test, checked=false},
-                                                        "<b>Task 1</b>", #br{},
-                                                        "Due: 25 Oct 2013"
-                                                        ]},
-                                                #listitem{class="clearfix", body=[
-                                                        #checkbox{id=john, class="pull-left", style="margin: 10px 15px 0;", postback=test, checked=false},
-                                                        "<b>Task 1</b>", #br{},
-                                                        "Due: 25 Oct 2013"
-                                                        ]},
-                                                #listitem{class="clearfix", body=[
-                                                        #checkbox{id=john, class="pull-left", style="margin: 10px 15px 0;", postback=test, checked=false},
-                                                        "<b>Task 1</b>", #br{},
-                                                        "Due: 25 Oct 2013"
-                                                        ]},
-                                                #listitem{class="clearfix", body=[
-                                                        #checkbox{id=john, class="pull-left", style="margin: 10px 15px 0;", postback=test, checked=false},
-                                                        "<b>Task 1</b>", #br{},
-                                                        "Due: 25 Oct 2013"
-                                                        ]},
-                                                #listitem{class="clearfix", body=[
-                                                        #checkbox{id=john, class="pull-left", style="margin: 10px 15px 0;", postback=test, checked=false},
-                                                        "<b>Task 1</b>", #br{},
-                                                        "Due: 25 Oct 2013"
-                                                        ]},
-                                                #listitem{class="clearfix", body=[
-                                                        #checkbox{id=john, class="pull-left", style="margin: 10px 15px 0;", postback=test, checked=false},
-                                                        "<b>Task 1</b>", #br{},
-                                                        "Due: 25 Oct 2013"
-                                                        ]}
+                                                        "<b>" ++ Task ++ "</b>", #br{},
+                                                        "Due: " ++ Due
+                                                        ]}, Tasks)
                                                 ]}
                                 ]},
                                 #panel{ class="span6", body=[

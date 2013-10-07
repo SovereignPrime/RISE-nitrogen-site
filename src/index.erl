@@ -61,21 +61,3 @@ event(click) ->
         actions=#effect { effect=highlight }
     }).
 
-dropdown(Id, true=Icon) ->
-    #dropdown{id=Id, html_encode=false, options=[
-            #option{ text="<img src='img/globe.png'> Updates", value=updates},
-            #option{ text="<img src='img/globe.png'> Tasks", value=tasks},
-            #option{ text="<img src='img/globe.png'> Relationships", value=relations},
-            #option{ text="<img src='img/globe.png'> Files", value=files},
-            #option{ text="<img src='img/globe.png'> Finances", value=finance}
-            ]};
-
-dropdown(Id, false=Icon) ->
-    #dropdown{id=Id, html_encode=false, options=[
-            #option{ text="Updates", value=updates},
-            #option{ text="Tasks", value=tasks},
-            #option{ text="Relationships", value=relations},
-            #option{ text="Files", value=files},
-            #option{ text="Finances", value=finance}
-            ]}.
-

@@ -16,7 +16,7 @@ buttons() ->
                     #panel{class="row-fluid", body=[
                             #panel{ class='span2', body="<i class='icon-arrow-left'></i> Back"},
                             #panel{ class='span2', body="<i class='icon-remove'></i> Discard"},
-                            #panel{ class='span2', body="<i class='icon-ok'></i> Save"}
+                            #button{ class='btn btn-link span2', body="<i class='icon-ok'></i> Save", postback=save, delegate=?MODULE}
                             ]}
                     ]}
             ]}.
@@ -24,30 +24,18 @@ buttons() ->
 left() ->
     #panel{ class="span3", body=[
             #h1{html_encode=false, text="<i class='icon-usd'></i> Payment"},
-            #panel{ class="row-fluid", body=[
-                    #panel{ class="span8", body=[
-                            #textbox{id="person", text="John", next=amount, class="input-block-level"}
-                            ]},
-                    #panel{ class="span3", body=[
-                            #textbox{id="amount", text="300$", next=order, class="input-block-level"}
-                            ]},
-                    #panel{ class="span1", body=[
-                            #button{id=reorder, class="btn btn-block",  body="<i class='icon-reorder'></i>", postback=reorder}
-                            ]}
-
-                    ]},
-            #panel{ class="row-fluid", body=[
-                    #panel{ class="span8", body=[
-                            #textbox{id="person", text="Person", next=amount, class="input-block-level"}
-                            ]},
-                    #panel{ class="span3", body=[
-                            #textbox{id="amount", text="Amount", next=order, class="input-block-level"}
-                            ]},
-                    #panel{ class="span1", body=[
-                            #button{id=reorder, class="btn btn-block",  body="<i class='icon-plus'></i>", postback=reorder}
-                            ]}
-
-                    ]},
+            #addable_row{id=payment, body=
+                        #panel{class="row-fluid", body=[
+                                #panel{ class="span8", body=[
+                                        #textbox{id=payable, placeholder="John", next=amount, class="input-block-level"}
+                                        ]},
+                                #panel{ class="span3", body=[
+                                        #textbox{id=amount, placeholder="300$", next=order, class="input-block-level"}
+                                        ]}
+                                ]},
+                         options=fun(Id, N) ->
+                        []
+                end},
             #panel{ class="row-fluid", style="margin: 10% 0;", body=[
                     #panel{ class="span12", body=[
                             "<i class='icon-tasks'></i> Linked tasks", #br{},
@@ -73,83 +61,44 @@ body() ->
     #panel{ class="span9", body=[
             #panel{ class="row-fluid", body=[
                     #panel{ class="input-prepend span12", body=[
-                            #span{ class="add-on span1", body=[
+                            #span{ class="add-on", body=[
                                     #span{ class="icon-stack",html_encode=false, text="<i class='icon-calendar-empty icon-stack-base'></i><i class='icon-small icon-ok'></i>"}
                                     ]},
-                            #textbox{id=name, text="Task name", next=due, class="span11"}
+                            #textbox{id=name, placeholder="Task name", next=due, class="span11"}
                             ]}
                     ]},
             #panel{ class="row-fluid", body=[
                     #panel{ class="input-prepend input-append span12", body=[
-                            #span{ class="add-on span1", body=[
+                            #span{ class="add-on", body=[
                                     #span{html_encode=false, text="<i class='icon-calendar'></i>"}
                                     ]},
-                            #textbox{id=name, text="Due", next=due, class="span9"},
+                            #textbox{id=due, placeholder="Due", next=due, class="span9"},
                             #span{ class="add-on", body=[
                                     #span{ text="Calendar | Make recurring"}
                                     ]}
                             ]}
                     ]},
+            #addable_row{id=roles, body= #involved{}},
             #panel{ class="row-fluid", body=[
-                    #panel{ class="input-prepend span9", body=[
-                            #span{ class="add-on span1", body=[
-                                    #span{html_encode=false, text="<i class='icon-user'></i>"}
-                                    ]},
-                            #textbox{id=name, text="People", next=responsible, class="span11"}
-                            ]},
-                    #panel{class="dropdown span2", body=[
-                            "<a href='#', class='btn dropdown-toggle' data-toggle='dropdown'>",
-                            #span{ class="", text="Is:Responsible"},
-                            #span{ class="caret",html_encode=false, text=""},
-                            "</a>",
-                            #list{numbered=false, class="dropdown-menu",
-                                  body=[
-                                    #listitem{text="Responsible"},
-                                    #listitem{text="Accountable"}
-                                    ]}
-                            ]},
-                    #panel{class="span1", body=[
-                            #button{body="<i class='icon-plus'></i>", html_encode=false, postback=add_role}
+                    #panel{class="span12", body=[
+                            #textarea{class="input-block-level",rows=15, placeholder="Some text here", id=text}
                             ]}
-
                     ]},
             #panel{ class="row-fluid", body=[
                     #panel{class="span12", body=[
-                            #textarea{class="input-block-level",rows=15, text="Some text here", id=text}
+                            #checkbox{id=notice,class="pull-left", text=" Send notice about this update to everyone involved",  checked=true}
                             ]}
-
-                    ]},
-            #panel{ class="row-fluid", body=[
-                    #panel{class="span12", body=[
-                            #checkbox{id=notice,class="pull-left", text=" Send notice about this update to everyone involved",  checked=false}
-
-                            ]}
-
                     ]}
             ]}.
             
     
-event(click) ->
-    wf:replace(button, #panel { 
-        body="You clicked the button!", 
-        actions=#effect { effect=highlight }
-    }).
+event(save) ->
+    TaskName = wf:q(name),
+    Due = wf:q(due),
+    Involved = wf:qs(person),
+    Role = wf:qs(responsible),
+    Text = wf:q(text),
+    db:new_task(TaskName, Due, Text, []);
 
-dropdown(Id, true=Icon) ->
-    #dropdown{id=Id, html_encode=false, options=[
-            #option{ text="<img src='img/globe.png'> Updates", value=updates},
-            #option{ text="<img src='img/globe.png'> Tasks", value=tasks},
-            #option{ text="<img src='img/globe.png'> Relationships", value=relations},
-            #option{ text="<img src='img/globe.png'> Files", value=files},
-            #option{ text="<img src='img/globe.png'> Finances", value=finance}
-            ]};
-
-dropdown(Id, false=Icon) ->
-    #dropdown{id=Id, html_encode=false, options=[
-            #option{ text="Updates", value=updates},
-            #option{ text="Tasks", value=tasks},
-            #option{ text="Relationships", value=relations},
-            #option{ text="Files", value=files},
-            #option{ text="Finances", value=finance}
-            ]}.
-
+event(Ev) ->
+    io:format("Event ~p in module ~p~n", [Ev, ?MODULE]).
