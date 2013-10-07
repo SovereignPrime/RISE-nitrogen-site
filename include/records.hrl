@@ -36,3 +36,11 @@
                   name,
                   due
     }).
+-record(involved, {?ELEMENT_BASE(element_involved),
+                   num
+                  }).
+-record(addable_row, {?ELEMENT_BASE(element_addable_row),
+                      num=0,
+                      body,
+                      last=false
+    }).
