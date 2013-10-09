@@ -16,7 +16,7 @@ buttons() ->
                     #panel{class="row-fluid", body=[
                             #panel{ class='span2', body="<i class='icon-arrow-left'></i> Back"},
                             #panel{ class='span2', body="<i class='icon-remove'></i> Discard"},
-                            #panel{ class='span2', body="<i class='icon-ok'></i> Save"}
+                            #button{ class='btn btn-link span2', body="<i class='icon-ok'></i> Save", postback=save, delegate=?MODULE}
                             ]}
                     ]}
             ]}.
@@ -52,18 +52,7 @@ body() ->
                             #textbox{id=name, text="Re:something", next=due, class="span12"}
                             ]}
                     ]},
-            #panel{ class="row-fluid", body=[
-                    #panel{ class="input-prepend span11", body=[
-                            #span{ class="add-on", body=[
-                                    #span{html_encode=false, text="<i class='icon-user'></i>"}
-                                    ]},
-                            #textbox{id=name, text="People", next=responsible, class="span11"}
-                            ]},
-                    #panel{class="span1", body=[
-                            #button{body="<i class='icon-plus'></i>", html_encode=false, postback=add_role}
-                            ]}
-
-                    ]},
+            #addable_row{id=roles, body= #involved{}},
             #panel{ class="row-fluid", body=[
                     #panel{class="span12", body=[
                             #textarea{class="input-block-level",rows=15, text="Some text here", id=text}
@@ -80,8 +69,11 @@ body() ->
             ]}.
             
     
-event(click) ->
-    wf:replace(button, #panel { 
-        body="You clicked the button!", 
-        actions=#effect { effect=highlight }
-    }).
+event(save) ->
+    Name = wf:q(name),
+    Involved = wf:qs(person),
+    Text = wf:q(text),
+    db:new_update(Name, Text);
+
+event(Ev) ->
+    io:format("Event ~p in module ~p~n", [Ev, ?MODULE]).

@@ -33,7 +33,6 @@ buttons() ->
 
 left() ->
     {ok, {Tasks, Cont}} = db:get_tasks(10),
-    %{ok, {Tasks1, _Cont}} = db:get_tasks(Cont,10),
     [
         #panel{id=tasks, class="span4", body=[
                 #panel{ class="row-fluid", body=[
@@ -76,41 +75,50 @@ left() ->
         
 
 body() -> 
-    {ok, [ #db_task{id=Id, name=Name, due=Due, text=Text, parent=Parent, status=Status} ]} = case wf:session(tid) of
-        undefined  ->
-            db:get_task();
-        TId ->
-            db:get_task(TId)
-    end,
+    case 
+        case wf:session(tid) of
+            undefined  ->
+                db:get_task();
+            TId ->
+                db:get_task(TId)
+        end 
+    of
+        {ok, [ #db_task{id=Id, name=Name, due=Due, text=Text, parent=Parent, status=Status} ]} ->
+            {ok, Involved} = db:get_involved(Id),
+            %{ok, MyRole} = db:get_my_role(Id),
+            #panel{id=body, class="span8", body=
+                   [
+                    #panel{ class="row-fluid", body=[
+                            #panel{ class="span11", body=[
+                                    #h1{text=Name},
+                                    "Status: ", Status, #br{},
+                                    "Due: ", Due , #br{},
+                                    #br{},
+                                    "My role - ", "Accountable", #br{},
+                                    lists:map(fun({Name, Role}) ->
+                                                [ Name, " - ", Role]
+                                        end, Involved)
+                                    ]},
+                            #panel{ class="span1", body=[
+                                    #panel{class="span1", body="<i class='icon-edit icon-large'></i><br><i class='icon-reorder icon-large'></i>"}
+                                    ]}
 
-    #panel{id=body, class="span8", body=
-    [
-            #panel{ class="row-fluid", body=[
-                    #panel{ class="span11", body=[
-                            #h1{text=Name},
-                            "Status: ", Status, #br{},
-                            "Due: ", Due , #br{},
-                            #br{},
-                            "My role - ", "Accountable", #br{},
-                            "John Doe", " - Responsible"
+
                             ]},
-                    #panel{ class="span1", body=[
-                            #panel{class="span1", body="<i class='icon-edit icon-large'></i><br><i class='icon-reorder icon-large'></i>"}
-                            ]}
-                    
-                    
-                    ]},
-            #panel{ class="row-fluid", body=[
-                    #panel{ class="span12", body=Text}
-                    ]},
-            #panel{class="row-fluid", body=[
-                    #panel{class="span6", body="<i class='icon-file-alt'></i> Attachment"},
-                    #panel{class="span2 offset4", body="<i class='icon-download-alt'></i> Download all"}
-                    ]},
-            #attachment{filename="File1.xlsx", size="10mb", time="10/10/2013 10:59"},
-            #attachment{filename="File1.xlsx", size="10mb", time="10/10/2013 10:59"},
-            #attachment{filename="File1.xlsx", size="10mb", time="10/10/2013 10:59"}
-            ]}.    
+                    #panel{ class="row-fluid", body=[
+                            #panel{ class="span12", body=Text}
+                            ]},
+                    #panel{class="row-fluid", body=[
+                            #panel{class="span6", body="<i class='icon-file-alt'></i> Attachment"},
+                            #panel{class="span2 offset4", body="<i class='icon-download-alt'></i> Download all"}
+                            ]},
+                    #attachment{filename="File1.xlsx", size="10mb", time="10/10/2013 10:59"},
+                    #attachment{filename="File1.xlsx", size="10mb", time="10/10/2013 10:59"},
+                    #attachment{filename="File1.xlsx", size="10mb", time="10/10/2013 10:59"}
+                    ]};
+        {ok, []} ->
+            []
+    end.
 
 %event(hide_tasks) ->
 %    wf:

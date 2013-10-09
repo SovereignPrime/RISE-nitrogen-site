@@ -16,7 +16,7 @@ buttons() ->
                     #panel{class="row-fluid", body=[
                             #panel{ class='span2', body="<i class='icon-arrow-left'></i> Back"},
                             #panel{ class='span2', body="<i class='icon-remove'></i> Discard"},
-                            #panel{ class='span2', body="<i class='icon-ok'></i> Save"}
+                            #button{ class='btn btn-link span2', body="<i class='icon-ok'></i> Save", postback=save, delegate=?MODULE}
                             ]}
                     ]}
             ]}.
@@ -81,7 +81,7 @@ body() ->
                             #span{ class="add-on", body=[
                                     "<i class='icon-usd'></i>"
                                     ]},
-                            #textbox{id=name, text="Task name", next=due, class="span11"}
+                            #textbox{id=name, text="Name", next=due, class="span11"}
                             ]}
                     ]},
             #panel{ class="row-fluid", body=[
@@ -89,7 +89,7 @@ body() ->
                             #span{ class="add-on", body=[
                                     #span{html_encode=false, text="<i class='icon-calendar'></i>"}
                                     ]},
-                            #textbox{id=name, text="Due", next=due, class="span10"},
+                            #textbox{id=due, text="Due", class="span10"},
                             #span{ class="add-on", body=[
                                     #span{ text="Calendar | Make recurring"}
                                     ]}
@@ -110,11 +110,16 @@ body() ->
 
                     ]}
             ]}.
-            
-    
-event(click) ->
-    wf:replace(button, #panel { 
-        body="You clicked the button!", 
-        actions=#effect { effect=highlight }
-    }).
 
+event(save) ->
+    Name = wf:q(name),
+    Due = wf:q(due),
+    Involved = wf:qs(person),
+    Role = wf:qs(responsible),
+    Payable = wf:qs(payable),
+    Amount = wf:q(amount),
+    Text = wf:q(text),
+    db:new_expense(Name, Due, Text, Amount);
+
+event(Ev) ->
+    io:format("Event ~p in module ~p~n", [Ev, ?MODULE]).

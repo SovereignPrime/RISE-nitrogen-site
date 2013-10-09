@@ -13,7 +13,7 @@ reflect() -> record_info(fields, involved).
 
 -spec render_element(#involved{}) -> body().
 render_element(_Record = #involved{}) ->
-    Users = db:get_users(10),
+    {ok, Users, _} = db:get_users(10), % Move from here
     #panel{ class="row-fluid", body=[
             #panel{ class="span9", body=[
                     #span{ class="add-on", body=[
