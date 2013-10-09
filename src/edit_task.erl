@@ -64,7 +64,7 @@ body() ->
                             #span{ class="add-on", body=[
                                     #span{ class="icon-stack",html_encode=false, text="<i class='icon-calendar-empty icon-stack-base'></i><i class='icon-small icon-ok'></i>"}
                                     ]},
-                            #textbox{id=name, placeholder="Task name", next=due, class="span11"}
+                            #textbox{id=name, placeholder="Task name", text=wf:session_default(current_task, ""),  next=due, class="span11"}
                             ]}
                     ]},
             #panel{ class="row-fluid", body=[
@@ -97,6 +97,8 @@ event(save) ->
     Due = wf:q(due),
     Involved = wf:qs(person),
     Role = wf:qs(responsible),
+    Payable = wf:qs(payable),
+    Amounts = wf:qs(amount),
     Text = wf:q(text),
     db:new_task(TaskName, Due, Text, []);
 

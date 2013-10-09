@@ -1,8 +1,8 @@
--record(group,{name, subgroups=[]}).
--record(contact,{name, email, phone, photo, address, groups=[]}).
--record(task,{id, due, name, text, linked=[]}).
--record(file,{id, path, type, user, date, status}).
--record(expense,{id, name, date, type, amount, status}).
--record(upd,{id, subject, from, text, date}).
--record(contact_roles,{id, type, tid, role, contct}).
--record(attachment,{id, file, type, tid}).
+-record(db_group,{name, subgroups=[]}).
+-record(db_contact,{name, email, phone, photo, address, groups=[]}).
+-record(db_task,{id, due, name, text, parent, status=new}).
+-record(db_file,{id, path, type, user, date, status}).
+-record(db_expense,{id, name, date, type, amount, status}).
+-record(db_update,{id, subject, from, text, date}).
+-record(db_contact_roles,{id, type, tid, role, contct}).
+-record(db_attachment,{id, file, type, tid}).
