@@ -41,42 +41,43 @@ save_task(Id, Name, Due, Text, Parent, Status) ->
     {atomic, ok} = mnesia:transaction(fun() ->
                 ok = mnesia:write(Task)
         end).
+
 get_task() ->
-    {atomic, [ Task ]} = mnesia:transaction(fun() ->
-                    mnesia:read(db_task, mnesia:last(db_task))
-            end),
-    {ok, Task}.
+    transaction(fun() ->
+                mnesia:read(db_task, mnesia:last(db_task))
+            end).
 
 get_task(Id) -> 
-    {atomic, [ Task ]} = mnesia:transaction(fun() ->
-                    mnesia:read(db_task, Id)
-            end),
-    {ok, Task}.
+    transaction(fun() ->
+                mnesia:read(db_task, Id)
+            end).
     
 all_tasks() ->
-    {atomic, Tasks} = mnesia:transaction(fun() ->
-                    mnesia:match_object(#db_task{_='_'})
-            end),
-    io:format("~p~n", [Tasks]).
+    transaction(fun() ->
+                mnesia:match_object(#db_task{_='_'})
+            end).
 
 get_users(N) ->
-    {atomic, R} = mnesia:transaction(fun() ->
+    transaction(fun() ->
                 mnesia:select(db_contact, [{#db_contact{name='$1'}, [], ['$1']}], N, read)
-        end),
-    R.
+        end).
 
 get_tasks(N) ->
-   case mnesia:transaction(fun() ->
+    transaction(fun() ->
                         mnesia:select(db_task, [{#db_task{_='_'}, [], ['$_']}], N, read)
-            end) of
+            end).
+
+get_tasks(C, _N) ->
+    transaction(fun() ->
+                mnesia:select(C)
+        end).
+
+transaction(Fun) ->
+   case mnesia:transaction(Fun) of
+        {error, R} ->
+            {error, R};
         {atomic, '$end_of_table'} ->
             {ok, [], undefined};
         {atomic, R} ->
             {ok, R}
     end.
-
-get_tasks(C, _N) ->
-    {atomic, R} = mnesia:transaction(fun() ->
-                    mnesia:select(C)
-        end),
-    {ok, R}.

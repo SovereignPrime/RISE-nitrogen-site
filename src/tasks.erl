@@ -76,7 +76,7 @@ left() ->
         
 
 body() -> 
-    {ok, #db_task{id=Id, name=Name, due=Due, text=Text, parent=Parent, status=Status}} = case wf:session(tid) of
+    {ok, [ #db_task{id=Id, name=Name, due=Due, text=Text, parent=Parent, status=Status} ]} = case wf:session(tid) of
         undefined  ->
             db:get_task();
         TId ->
