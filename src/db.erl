@@ -46,6 +46,12 @@ save_task(Id, Name, Due, Text, Parent, Status) ->
                 ok = mnesia:write(Task)
         end).
 
+save_subtask(Id, PId) ->
+    transaction(fun() ->
+                [ C ] = mnesia:wread({ db_task, Id }),
+                mnesia:write(C#db_task{parent=PId})
+        end).
+
 new_expense(Name, Due, Text, Amount) ->
     {atomic, ok} = mnesia:transaction(fun() ->
                     N = case mnesia:table_info(db_expense, size) of
@@ -151,9 +157,9 @@ get_users(N) ->
                 mnesia:select(db_contact, [{#db_contact{name='$1'}, [], ['$1']}], N, read)
         end).
 
-get_tasks(N) ->
+get_tasks(Parent) ->
     transaction(fun() ->
-                        mnesia:select(db_task, [{#db_task{_='_'}, [], ['$_']}], N, read)
+                        mnesia:select(db_task, [{#db_task{parent=Parent, _='_'}, [], ['$_']}])
             end).
 
 get_tasks(C, _N) ->

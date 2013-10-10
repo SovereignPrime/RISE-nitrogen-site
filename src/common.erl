@@ -9,7 +9,9 @@ main() ->
             wf:redirect_to_login("/login");
         R ->
             io:format("~p~n", [R]),
-            #template { file="./site/templates/bare.html" }
+            T = #template { file="./site/templates/bare.html" },
+            wf:wire(new_task, #event{type=click, postback=new_task, delegate=?MODULE}),
+            T
     end.
 
 event(E) ->

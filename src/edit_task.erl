@@ -3,6 +3,7 @@
 -compile(export_all).
 -include_lib("nitrogen_core/include/wf.hrl").
 -include("records.hrl").
+-include("db.hrl").
 
 main() -> common:main().
 
@@ -22,6 +23,13 @@ buttons() ->
             ]}.
 
 left() ->
+    #db_task{parent=PId} = wf:session_default(current_task, #db_task{}),
+    PName = case db:get_task(PId) of
+        {ok, #db_task{name=P}} ->
+            P;
+        _ ->
+            undefined
+    end,
     #panel{ class="span3", body=[
             #h1{html_encode=false, text="<i class='icon-usd'></i> Payment"},
             #addable_row{id=payment, body=
@@ -39,7 +47,12 @@ left() ->
             #panel{ class="row-fluid", style="margin: 10% 0;", body=[
                     #panel{ class="span12", body=[
                             "<i class='icon-tasks'></i> Linked tasks", #br{},
-                            "Subtask of: Example task 1", #br{},
+                            case PName of
+                               undefined ->
+                                   "";
+                               N -> 
+                                    "Subtask of: ",N, #br{}
+                            end,
                             "<i class='icon-th-large'></i> Edit/View task tree", #br{}
                             ]}
                     ]},
@@ -58,13 +71,21 @@ left() ->
             ]}.
 
 body() ->
+    case wf:q(type) of 
+        "new" ->
+            wf:session(tid, undefined),
+            wf:session(current_task, undefined);
+        _ ->
+            ok
+    end,
+    #db_task{id=Id, name=Name, due=Due, text=Text} = wf:session_default(current_task, #db_task{}),
     #panel{ class="span9", body=[
             #panel{ class="row-fluid", body=[
                     #panel{ class="input-prepend span12", body=[
                             #span{ class="add-on", body=[
                                     #span{ class="icon-stack",html_encode=false, text="<i class='icon-calendar-empty icon-stack-base'></i><i class='icon-small icon-ok'></i>"}
                                     ]},
-                            #textbox{id=name, placeholder="Task name", text=wf:session_default(current_task, ""),  next=due, class="span11"}
+                            #textbox{id=name, placeholder="Task name", text=Name,  next=due, class="span11"}
                             ]}
                     ]},
             #panel{ class="row-fluid", body=[
@@ -72,7 +93,7 @@ body() ->
                             #span{ class="add-on", body=[
                                     #span{html_encode=false, text="<i class='icon-calendar'></i>"}
                                     ]},
-                            #textbox{id=due, placeholder="Due", next=due, class="span9"},
+                            #textbox{id=due, placeholder="Due", next=due, text=Due, class="span9"},
                             #span{ class="add-on", body=[
                                     #span{ text="Calendar | Make recurring"}
                                     ]}
@@ -81,7 +102,7 @@ body() ->
             #addable_row{id=roles, body= #involved{}},
             #panel{ class="row-fluid", body=[
                     #panel{class="span12", body=[
-                            #textarea{class="input-block-level",rows=15, placeholder="Some text here", id=text}
+                            #textarea{class="input-block-level",rows=15, placeholder="Some text here", id=text, text=Text}
                             ]}
                     ]},
             #panel{ class="row-fluid", body=[
@@ -100,7 +121,13 @@ event(save) ->
     Payable = wf:qs(payable),
     Amounts = wf:qs(amount),
     Text = wf:q(text),
-    db:new_task(TaskName, Due, Text, []);
+    case wf:session(tid) of
+        'undefined' ->
+            db:new_task(TaskName, Due, Text, undefined);
+        Id ->
+            #db_task{parent=Parent} = wf:session(current_task),
+            db:save_task(Id, TaskName, Due, Text, Parent, "Changed")
+        end;
 
 event(Ev) ->
     io:format("Event ~p in module ~p~n", [Ev, ?MODULE]).

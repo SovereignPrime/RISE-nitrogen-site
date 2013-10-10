@@ -42,3 +42,9 @@
                       body,
                       options
     }).
+-record(task_leaf, {?ELEMENT_BASE(element_task_leaf),
+                    tid,
+                    name,
+                    delegate,
+                    due
+    }).

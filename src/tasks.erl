@@ -20,8 +20,6 @@ buttons() ->
                             #button{id=hide_show, class="btn btn-link span2", body="<i class='icon-angle-left'></i> Hide tasks", 
                                     actions=#event{type=click, actions=[
                                         #hide{trigger=hide_show,target=tasks}, 
-                                        #remove_class{target=body, class=span8},
-                                        #add_class{target=body, class=span12},
                                         #event{postback=hide}
                                         ]}},
                             #panel{ class='span2', body="<i class='icon-user'></i> All accounts"},
@@ -32,49 +30,6 @@ buttons() ->
                     ]}]}.
 
 left() ->
-    {ok, {Tasks, Cont}} = db:get_tasks(10),
-    [
-        #panel{id=tasks, class="span4", body=[
-                #panel{ class="row-fluid", body=[
-                        #list{numbered=false,class="pager",
-                              body=[
-                                #listitem{class="previous", body=[
-                                        #link{html_encode=false, text="<i class='icon-arrow-left'></i>", postback={task_list, prrev}}
-                                        ]},
-                                #listitem{class="next",body=[
-                                        #link{html_encode=false, text="<i class='icon-arrow-right'></i>", postback={task_list, prrev}}
-                                        ]}
-                                ]},
-                        #panel{ class="row-fluid", body=[
-                                #panel{ class="span6", body=[
-                                        #list{numbered=false,
-                                              body=lists:map(fun(#db_task{name=Task, due=Due, id=Id}) ->
-                                                        #listitem{class="clearfix", body=[
-                                                                #checkbox{id=john, class="pull-left", style="margin: 10px 15px 0;", postback={check, Id}, checked=false},
-                                                                "<b>" ++ Task ++ "</b>", #br{},
-                                                                "Due: " ++ Due
-                                                                ]}
-                                                end, Tasks)
-                                                }
-                                ]}%,
-%                                #panel{ class="span6", body=[
-%                                        #list{numbered=false,
-%                                              body=lists:map(fun(#db_task{name=Task, due=Due}) ->
-%                                                        #listitem{class="clearfix", body=[
-%                                                                #checkbox{id=john, class="pull-left", style="margin: 10px 15px 0;", postback=test, checked=false},
-%                                                                "<b>" ++ Task ++ "</b>", #br{},
-%                                                                "Due: " ++ Due
-%                                                                ]}
-%                                                end, Tasks1)
-                                             %}
-                                        %]}
-                                ]}
-                        
-                        ]}]}
-                ].
-        
-
-body() -> 
     case 
         case wf:session(tid) of
             undefined  ->
@@ -83,44 +38,120 @@ body() ->
                 db:get_task(TId)
         end 
     of
-        {ok, [ #db_task{id=Id, name=Name, due=Due, text=Text, parent=Parent, status=Status} ]} ->
-            {ok, Involved} = db:get_involved(Id),
-            %{ok, MyRole} = db:get_my_role(Id),
-            #panel{id=body, class="span8", body=
-                   [
-                    #panel{ class="row-fluid", body=[
-                            #panel{ class="span11", body=[
-                                    #h1{text=Name},
-                                    "Status: ", Status, #br{},
-                                    "Due: ", Due , #br{},
-                                    #br{},
-                                    "My role - ", "Accountable", #br{},
-                                    lists:map(fun({Name, Role}) ->
-                                                [ Name, " - ", Role]
-                                        end, Involved)
-                                    ]},
-                            #panel{ class="span1", body=[
-                                    #panel{class="span1", body="<i class='icon-edit icon-large'></i><br><i class='icon-reorder icon-large'></i>"}
-                                    ]}
+        {ok, [ #db_task{id=CId}=Task ]} ->
+            wf:session(tid, CId),
+            wf:session(current_task, Task),
+            [
+                #panel{id=tasks, class="span4", body=[
+                        #panel{ class="row-fluid", body=[
+                                #list{numbered=false,class="pager",
+                                      body=[
+                                        #listitem{class="previous", body=[
+                                                #link{html_encode=false, text="<i class='icon-arrow-left'></i>", postback={task_list, prrev}}
+                                                ]},
+                                        #listitem{class="next",body=[
+                                                #link{html_encode=false, text="<i class='icon-arrow-right'></i>", postback={task_list, prrev}}
+                                                ]}
+                                        ]},
+                                #panel{ class="row-fluid", body=[
+                                        #panel{ class="span6", body=[
+                                                #droppable{tag=task, accept_groups=tasks, body=[
+                                                        case db:get_tasks(Parent) of
+                                                            {ok, Tasks} ->
+                                                                #list{numbered=false,
+                                                                      body=lists:map(fun(#db_task{name=Task, due=Due, id=Id}) ->
+                                                                                #task_leaf{tid=Id, name=Task, due=Due, delegate=?MODULE}
+                                                                        end, Tasks)
+                                                                     };
+                                                            {ok, [], undefined} ->
+                                                                []
+                                                        end
+                                                        ]}
+                                                ]},
+                                        #panel{ class="span6", body=[
+                                                #droppable{tag=subtask, accept_groups=tasks, body=[
+                                                        case db:get_tasks(wf:session(tid)) of
+                                                            {ok, []} ->
+                                                                #list{numbered=false,
+                                                                      body=
+                                                                      ["&nbsp;",#br{},"&nbsp;",#br{},"&nbsp;",#br{},"&nbsp;",#br{},"&nbsp;",#br{}]};
+                                                            {ok, Tasks} ->
+                                                                #list{numbered=false,
+                                                                      body=lists:map(fun(#db_task{name=Task, due=Due, id=Id}) ->
+                                                                                #task_leaf{tid=Id, name=Task, due=Due, delegate=?MODULE}
+                                                                        end, Tasks)
+                                                                     };
+                                                            {ok, [], undefined} ->
+                                                                [#br{},#br{},#br{},#br{},#br{}]
+                                                        end
+                                                        ]}
+                                                ]}
+                                        ]}
 
-
-                            ]},
-                    #panel{ class="row-fluid", body=[
-                            #panel{ class="span12", body=Text}
-                            ]},
-                    #panel{class="row-fluid", body=[
-                            #panel{class="span6", body="<i class='icon-file-alt'></i> Attachment"},
-                            #panel{class="span2 offset4", body="<i class='icon-download-alt'></i> Download all"}
-                            ]},
-                    #attachment{filename="File1.xlsx", size="10mb", time="10/10/2013 10:59"},
-                    #attachment{filename="File1.xlsx", size="10mb", time="10/10/2013 10:59"},
-                    #attachment{filename="File1.xlsx", size="10mb", time="10/10/2013 10:59"}
-                    ]};
+                                ]}]}
+                ];
+        {ok, [], undefined} ->
+            [];
         {ok, []} ->
             []
     end.
 
-%event(hide_tasks) ->
-%    wf:
+body() ->
+    #db_task{id=Id, name=Name, due=Due, text=Text, parent=Parent, status=Status}=Task = wf:session_default(current_task, #db_task{}),
+    {ok, Involved} = db:get_involved(Id),
+    %{ok, MyRole} = db:get_my_role(Id),
+    #panel{id=body, class="span8", body=
+           [
+            #panel{ class="row-fluid", body=[
+                    #panel{ class="span11", body=[
+                            #h1{text=Name},
+                            "Status: ", Status, #br{},
+                            "Due: ", Due , #br{},
+                            #br{},
+                            "My role - ", "Accountable", #br{},
+                            lists:map(fun({Name, Role}) ->
+                                        [ Name, " - ", Role]
+                                end, Involved)
+                            ]},
+                    #panel{ class="span1", body=[
+                            #panel{class="", body = #link{body=[
+                                        "<i class='icon-edit icon-large'></i><br>"      
+                                        ], url="/edit_task", new=false}
+                                  },
+                            #panel{class="", body="<i class='icon-reorder icon-large'></i>"}
+                            ]}
+
+
+                    ]},
+            #panel{ class="row-fluid", body=[
+                    #panel{ class="span12", body=Text}
+                    ]},
+            case db:get_attachments(Task) of
+                {ok, []} ->
+                    [];
+                {ok, [], undefined} ->
+                    [];
+                {ok, Attachments} ->
+                    #panel{class="row-fluid", body=[
+                            #panel{class="span6", body="<i class='icon-file-alt'></i> Attachment"},
+                            #panel{class="span2 offset4", body="<i class='icon-download-alt'></i> Download all"}
+                            ]},
+                    lists:map(fun(#db_file{path=Path, size=Size, date=Date, id=Id}) ->
+                                #attachment{filename=Path, size=Size, time=Date, id=Id}
+                        end, Attachments)
+            end
+
+            ]}.
+
+event({task_chosen, Id}) ->
+    wf:session(tid, Id),
+    wf:wire(#event{actions=#script{script="window.location.reload(true);"}});
 event(Click) ->
     io:format("~p~n",[Click]).
+
+drop_event({task, Id}, subtask) ->
+    PId = wf:session(tid),
+    db:save_subtask(Id, PId);
+drop_event({task, Id}, task) ->
+    #db_task{parent=PId} = wf:session(current_task),
+    db:save_subtask(Id, PId).
