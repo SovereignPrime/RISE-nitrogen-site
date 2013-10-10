@@ -14,8 +14,8 @@ buttons() ->
     #panel{class='row-fluid', body=[
             #panel{class='span9 offset3', body=[
                     #panel{class="row-fluid", body=[
-                            #panel{ class='span2', body="<i class='icon-arrow-left'></i> Back"},
-                            #panel{ class='span2', body="<i class='icon-remove'></i> Discard"},
+                            #button{ class='btn btn-link span2', body="<i class='icon-remove'></i> Discard", 
+   					click=#script{script="window.history.back();"}},
                             #button{ class='btn btn-link span2', body="<i class='icon-ok'></i> Save", postback=save, delegate=?MODULE}
                             ]}
                     ]}
@@ -49,19 +49,19 @@ body() ->
                             #span{ class="add-on", body=[
                                     #span{html_encode=false, text="<i class='icon-globe'></i>"}
                                     ]},
-                            #textbox{id=name, text="Re:something", next=due, class="span12"}
+                            #textbox{id=name, placeholder="Re:something", next=due, class="span12"}
                             ]}
                     ]},
             #addable_row{id=roles, body= #involved{}},
             #panel{ class="row-fluid", body=[
                     #panel{class="span12", body=[
-                            #textarea{class="input-block-level",rows=15, text="Some text here", id=text}
+                            #textarea{class="input-block-level",rows=15, placeholder="Some text here", id=text}
                             ]}
 
                     ]},
             #panel{ class="row-fluid", body=[
                     #panel{class="span12", body=[
-                            #checkbox{id=notice,class="pull-left", text=" Send notice about this update to everyone involved",  checked=false}
+                            #checkbox{id=notice,class="pull-left", text=" Send notice about this update to everyone involved",  checked=true}
 
                             ]}
 

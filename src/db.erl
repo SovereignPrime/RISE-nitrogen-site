@@ -89,6 +89,33 @@ get_task(Id) ->
     transaction(fun() ->
                 mnesia:read(db_task, Id)
             end).
+%%%
+%% Attachment routines
+%%%
+
+get_attachments(Record) ->
+    Type = element(1, Record),
+    Id = element(2, Record),
+     transaction(fun() ->
+                mnesia:select(db_attachment, [{#db_attachment{ type=Type, tid=Id, _='_'}, [], ['$_']}])
+            end).
+
+save_attachments(Record, Filename) ->
+    Type = element(1, Record),
+    Id = element(2, Record),
+     transaction(fun() ->
+                N = case mnesia:table_info(db_attachment, size) of
+                        '$end_of_table' ->
+                            0;
+                        A -> 
+                            A
+                    end,
+                mnesia:write(#db_attachment{id=N+1, file=Filename, type=Type, tid=Id})
+            end).
+
+%%%
+%%  Admin functions
+%%%
     
 all_tasks() ->
     transaction(fun() ->
@@ -104,6 +131,11 @@ all_updates() ->
                 mnesia:match_object(#db_update{_='_'})
             end).
 
+all_attachments() ->
+    transaction(fun() ->
+                mnesia:match_object(#db_attachment{_='_'})
+            end).
+
 get_involved(Id) ->
     transaction(fun() ->
                 R = mnesia:match_object(#db_contact_roles{type=task, tid=Id, _='_'}),
@@ -112,6 +144,8 @@ get_involved(Id) ->
                             {Name, Role}
                     end, R)
         end).
+
+
 get_users(N) ->
     transaction(fun() ->
                 mnesia:select(db_contact, [{#db_contact{name='$1'}, [], ['$1']}], N, read)
@@ -126,9 +160,7 @@ get_tasks(C, _N) ->
     transaction(fun() ->
                 mnesia:select(C)
         end).
-
-%%%
-%% 
+ 
 %%%
 %% Account routines
 %%%

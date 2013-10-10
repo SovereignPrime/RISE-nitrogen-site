@@ -14,8 +14,8 @@ buttons() ->
     #panel{class='row-fluid', body=[
             #panel{class='span9 offset3', body=[
                     #panel{class="row-fluid", body=[
-                            #panel{ class='span2', body="<i class='icon-arrow-left'></i> Back"},
-                            #panel{ class='span2', body="<i class='icon-remove'></i> Discard"},
+                            #button{ class='btn btn-link span2', body="<i class='icon-remove'></i> Discard", 
+   					click=#script{script="window.history.back();"}},
                             #button{ class='btn btn-link span2', body="<i class='icon-ok'></i> Save", postback=save, delegate=?MODULE}
                             ]}
                     ]}

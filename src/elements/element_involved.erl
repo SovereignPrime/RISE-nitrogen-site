@@ -15,7 +15,7 @@ reflect() -> record_info(fields, involved).
 render_element(_Record = #involved{}) ->
     {ok, Users, _} = db:get_users(10), % Move from here
     #panel{ class="row-fluid", body=[
-            #panel{ class="span9", body=[
+            #panel{ class="input-prepend span9", body=[
                     #span{ class="add-on", body=[
                             #span{html_encode=false, text="<i class='icon-user'></i>"}
                             ]},
