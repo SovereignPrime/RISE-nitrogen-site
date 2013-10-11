@@ -149,6 +149,10 @@ body() ->
 event({task_chosen, Id}) ->
     wf:session(tid, Id),
     wf:wire(#event{actions=#script{script="window.location.reload(true);"}});
+event({task_list, prrev}) ->
+    #db_task{parent=Parent} = wf:session(current_task),
+    wf:session(tid,Parent),
+    wf:wire(#event{actions=#script{script="window.location.reload(true);"}});
 event(Click) ->
     io:format("~p~n",[Click]).
 

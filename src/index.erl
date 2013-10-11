@@ -47,9 +47,9 @@ body() ->
                 #panel{class="span6", body="<i class='icon-file-alt'></i> Attachment"},
                 #panel{class="span2 offset4", body="<i class='icon-download-alt'></i> Download all"}
                 ]},
-        #attachment{filename="File1.xlsx", size="10mb", time="10/10/2013 10:59"},
-        #attachment{filename="File1.xlsx", size="10mb", time="10/10/2013 10:59"},
-        #attachment{filename="File1.xlsx", size="10mb", time="10/10/2013 10:59"}
+            #attachment{filename="File1.xlsx", size="10mb", time=date()},
+            #attachment{filename="File1.xlsx", size="10mb", time=date()},
+            #attachment{filename="File1.xlsx", size="10mb", time=date()}
 
 
             ]}.
