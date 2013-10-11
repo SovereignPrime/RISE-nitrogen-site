@@ -16,23 +16,22 @@ install()->
     {atomic, ok} = mnesia:create_table(db_attachment, [{disc_copies, [node()]}, {attributes, record_info(fields, db_attachment)}, {type, ordered_set}]).
 
 
-new_task(Name, Due, Text, Parent) ->
-    {atomic, ok} = mnesia:transaction(fun() ->
-                    N = case mnesia:table_info(db_task, size) of
-                        '$end_of_table' ->
-                            0;
-                        A -> 
-                            A
-                    end,
-                    Task = #db_task{id=N+1,
-                                    name=Name,
-                                    due=Due,
-                                    text=Text,
-                                    parent=Parent,
-                                    status=new
-                                   },
-                    ok = mnesia:write(Task)
-        end).
+%%%
+%% Get new id fot Type
+%%%
+
+next_id(Type) ->
+    case mnesia:table_info(Type, size) of
+        '$end_of_table' ->
+            1;
+        A -> 
+            A+1
+    end.
+
+%%%
+%% Task routines
+%%%
+
 save_task(Id, Name, Due, Text, Parent, Status) ->
     Task = #db_task{id=Id,
                     name=Name,
@@ -52,6 +51,29 @@ save_subtask(Id, PId) ->
                 mnesia:write(C#db_task{parent=PId})
         end).
 
+get_task() ->
+    transaction(fun() ->
+                mnesia:read(db_task, mnesia:last(db_task))
+            end).
+
+get_task(Id) -> 
+    transaction(fun() ->
+                mnesia:read(db_task, Id)
+            end).
+
+get_tasks(Parent) ->
+    transaction(fun() ->
+                        mnesia:select(db_task, [{#db_task{parent=Parent, _='_'}, [], ['$_']}])
+            end).
+
+get_tasks(C, _N) ->
+    transaction(fun() ->
+                mnesia:select(C)
+        end).
+%%%
+%% Expense routines
+%%%
+
 new_expense(Name, Due, Text, Amount) ->
     {atomic, ok} = mnesia:transaction(fun() ->
                     N = case mnesia:table_info(db_expense, size) of
@@ -69,6 +91,7 @@ new_expense(Name, Due, Text, Amount) ->
                                       },
                     ok = mnesia:write(Task)
             end).
+
 new_update(Subject, Text) ->
     {atomic, ok} = mnesia:transaction(fun() ->
                     N = case mnesia:table_info(db_update, size) of
@@ -86,15 +109,49 @@ new_update(Subject, Text) ->
                                      },
                     ok = mnesia:write(Task)
             end).
-get_task() ->
-    transaction(fun() ->
-                mnesia:read(db_task, mnesia:last(db_task))
-            end).
 
-get_task(Id) -> 
+%%%
+%% Contact routines
+%%%
+
+get_contact(Id) ->
     transaction(fun() ->
-                mnesia:read(db_task, Id)
-            end).
+                mnesia:read(db_contact, Id)
+        end).
+
+get_involved(Id) ->
+    transaction(fun() ->
+                R = mnesia:match_object(#db_contact_roles{type=task, tid=Id, _='_'}),
+                lists:map(fun(#db_contact_roles{role=Role, contact=Contact}) ->
+                            #db_contact{name=Name, email=Email} = mnesia:read(Contact),
+                            {Name, Role}
+                    end, R)
+        end).
+
+
+get_users(N) ->
+    transaction(fun() ->
+                mnesia:select(db_contact, [{#db_contact{name='$1'}, [], ['$1']}], N, read)
+        end).
+
+%%%
+%% File routines
+%%%
+
+save_file(Name, Path, #db_contact{id=UID}) ->
+    Size = filelib:file_size(Path),
+    Type = filename:extension(Name),
+    transaction(fun() ->
+                mnesia:write(#db_file{id=filename:basename(Path), 
+                                      path=Name, 
+                                      size=Size,
+                                      date=now(),
+                                      status=uploaded,
+                                      user=UID,
+                                      type=Type
+                                     })
+        end).
+
 %%%
 %% Attachment routines
 %%%
@@ -106,17 +163,11 @@ get_attachments(Record) ->
                 mnesia:select(db_attachment, [{#db_attachment{ type=Type, tid=Id, _='_'}, [], ['$_']}])
             end).
 
-save_attachments(Record, Filename) ->
+save_attachments(Record, Files) ->
     Type = element(1, Record),
     Id = element(2, Record),
      transaction(fun() ->
-                N = case mnesia:table_info(db_attachment, size) of
-                        '$end_of_table' ->
-                            0;
-                        A -> 
-                            A
-                    end,
-                mnesia:write(#db_attachment{id=N+1, file=Filename, type=Type, tid=Id})
+                save_attachment(Type, Id, Files, db:next_id(db_attachment))
             end).
 
 %%%
@@ -142,30 +193,12 @@ all_attachments() ->
                 mnesia:match_object(#db_attachment{_='_'})
             end).
 
-get_involved(Id) ->
+all_files() ->
     transaction(fun() ->
-                R = mnesia:match_object(#db_contact_roles{type=task, tid=Id, _='_'}),
-                lists:map(fun(#db_contact_roles{role=Role, contact=Contact}) ->
-                            #db_contact{name=Name, email=Email} = mnesia:read(Contact),
-                            {Name, Role}
-                    end, R)
-        end).
-
-
-get_users(N) ->
-    transaction(fun() ->
-                mnesia:select(db_contact, [{#db_contact{name='$1'}, [], ['$1']}], N, read)
-        end).
-
-get_tasks(Parent) ->
-    transaction(fun() ->
-                        mnesia:select(db_task, [{#db_task{parent=Parent, _='_'}, [], ['$_']}])
+                mnesia:match_object(#db_file{_='_'})
             end).
 
-get_tasks(C, _N) ->
-    transaction(fun() ->
-                mnesia:select(C)
-        end).
+
  
 %%%
 %% Account routines
@@ -210,3 +243,12 @@ transaction(Fun) ->
         {atomic, R} ->
             {ok, R}
     end.
+%%%
+%% Helpers
+%%%
+
+save_attachment(_Type, _Id, [], _N) ->
+    ok;
+save_attachment(Type, Id, [File|Rest], N) ->
+    mnesia:write(#db_attachment{id=N, file=File, type=Type, tid=Id}),
+    save_attachment(Type, Id, Rest, N+1).

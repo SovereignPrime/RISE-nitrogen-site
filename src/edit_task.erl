@@ -25,12 +25,13 @@ buttons() ->
 left() ->
     case wf:q(type) of 
         "new" ->
-            wf:session(tid, undefined),
-            wf:session(current_task, undefined);
+            Ti = db:next_id(db_task),
+            wf:session(tid, Ti),
+            wf:session(current_task, #db_task{id=Ti});
         _ ->
             ok
     end,
-    #db_task{id=CId, parent=PId} = wf:session_default(current_task, #db_task{}),
+    #db_task{id=CId, parent=PId} = wf:session(current_task),
     PName = case db:get_task(PId) of
         {ok, [ #db_task{name=P} ]} ->
             P;
@@ -85,7 +86,7 @@ left() ->
             ]}.
 
 body() ->
-    #db_task{id=Id, name=Name, due=Due, text=Text} = wf:session_default(current_task, #db_task{}),
+    #db_task{id=Id, name=Name, due=Due, text=Text} = wf:session(current_task),
     #panel{ class="span9", body=[
             #panel{ class="row-fluid", body=[
                     #panel{ class="input-prepend span12", body=[
@@ -128,13 +129,10 @@ event(save) ->
     Payable = wf:qs(payable),
     Amounts = wf:qs(amount),
     Text = wf:q(text),
-    case wf:session(tid) of
-        'undefined' ->
-            db:new_task(TaskName, Due, Text, undefined);
-        Id ->
-            #db_task{parent=Parent} = wf:session(current_task),
-            db:save_task(Id, TaskName, Due, Text, Parent, "Changed")
-        end;
+    Id = wf:session(tid),
+    #db_task{parent=Parent} = wf:session(current_task),
+    db:save_task(Id, TaskName, Due, Text, Parent, "Changed"),
+    db:save_attachments(wf:session(current_task), wf:session_default(attached_files, []));
 
 event(Ev) ->
     io:format("Event ~p in module ~p~n", [Ev, ?MODULE]).
@@ -142,4 +140,7 @@ event(Ev) ->
 start_upload_event(_) ->
     ok.
 finish_upload_event(filename, FName, FPath, _Node) ->
-    io:format("File uploaded: ~p to ~p~n", [FName, FPath]).
+    FID = filename:basename(FPath),
+    io:format("File uploaded: ~p to ~p for ~p~n", [FName, FPath, new]),
+    db:save_file(FName, FPath, wf:user()),
+    wf:session(task_attached_files, wf:session_default(task_attached_files, []) ++ [FID]).

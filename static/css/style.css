@@ -36,4 +36,5 @@ a.btn-link, a.btn-link:hover, a.btn-link:visited, a.btn-link:active {
     border-radius: 0;
     border: 1px #000 dotted;
     font-size: 100%;
+    width: auto;
 }

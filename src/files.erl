@@ -4,6 +4,7 @@
 -compile(export_all).
 -include_lib("nitrogen_core/include/wf.hrl").
 -include("records.hrl").
+-include("db.hrl").
 
 main() -> common:main().
 
@@ -28,6 +29,7 @@ left() ->
     [].
 
 body() -> 
+    {ok, Files} = db:all_files(),
     [
         #table{ rows=[
                 #tablerow{ cells=[
@@ -44,22 +46,13 @@ body() ->
                         #tableheader{text="Peer", class=""},
                         #tableheader{text="Status", class=""}
                         ]},
-                #tablerow{ cells=[
-                        #tablecell{body=[
-                                #checkbox{id=check_all,  postback=check_all, checked=false}
-                                ], class=""},
-                        #tablecell{text="", class=""},
-                        #tablecell{text="", class=""},
-                        #tablecell{text="", class=""},
-                        #tablecell{text="", class=""},
-                        #tablecell{text="", class=""},
-                        #tablecell{text="", class=""},
-                        #tablecell{text="", class=""},
-                        #tablecell{text="", class=""},
-                        #tablecell{text="", class=""}
-                        ]}
+                lists:map(fun(#db_file{id=Id, path=Name, size=Size, type=Type,user=For, date=Date, status=Status} ) ->
+                            {ok, [#db_contact{name=U}]} = db:get_contact(For),
+                            #file_row{name=Name, size=Size, type=Type, for=U, date=Date, status=Status}
+                    end, Files)
                 ]}
 
         ].    
+
 event(Click) ->
     io:format("~p~n",[Click]).

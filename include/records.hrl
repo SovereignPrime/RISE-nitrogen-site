@@ -50,3 +50,14 @@
                     current=false,
                     due
     }).
+-record(file_row, {?ELEMENT_BASE(element_file_row),
+                   name,
+                   type,
+                   size,
+                   for,
+                   date,
+                   linked,
+                   seed,
+                   peer,
+                   status
+    }).
