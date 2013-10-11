@@ -157,7 +157,8 @@ get_attachments(Record) ->
     Type = element(1, Record),
     Id = element(2, Record),
      transaction(fun() ->
-                mnesia:select(db_attachment, [{#db_attachment{ type=Type, tid=Id, _='_'}, [], ['$_']}])
+                A = mnesia:select(db_attachment, [{#db_attachment{ file='$1', type=Type, tid=Id, _='_'}, [], ['$1']}]),
+                attached_files(A)
             end).
 
 save_attachments(Record, Files) ->
@@ -249,3 +250,7 @@ save_attachment(_Type, _Id, [], _N) ->
 save_attachment(Type, Id, [File|Rest], N) ->
     mnesia:write(#db_attachment{id=N, file=File, type=Type, tid=Id}),
     save_attachment(Type, Id, Rest, N+1).
+attached_files([]) ->
+    [];
+attached_files([Id|R]) ->
+    mnesia:read(db_file, Id) ++ attached_files(R).

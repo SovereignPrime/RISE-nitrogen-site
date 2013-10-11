@@ -132,7 +132,7 @@ event(save) ->
     Id = wf:session(tid),
     #db_task{parent=Parent} = wf:session(current_task),
     db:save_task(Id, TaskName, Due, Text, Parent, "Changed"),
-    db:save_attachments(wf:session(current_task), wf:session_default(attached_files, []));
+    db:save_attachments(wf:session(current_task), wf:session_default(task_attached_files, []));
 
 event(Ev) ->
     io:format("Event ~p in module ~p~n", [Ev, ?MODULE]).
