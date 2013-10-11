@@ -61,3 +61,13 @@
                    peer,
                    status
     }).
+-record(payment_row, {?ELEMENT_BASE(element_payment_row),
+                      from,
+                      to,
+                      tasks,
+                      due,
+                      status,
+                      amount,
+                      currency,
+                      type
+                     }).

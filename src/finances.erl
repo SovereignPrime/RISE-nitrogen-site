@@ -4,6 +4,7 @@
 -compile(export_all).
 -include_lib("nitrogen_core/include/wf.hrl").
 -include("records.hrl").
+-include("db.hrl").
 
 main() -> common:main().
 
@@ -28,6 +29,7 @@ left() ->
     [].
 
 body() -> 
+    {ok, Payments} = db:all_expenses(),
     [
         #table{ rows=[
                 #tablerow{ cells=[
@@ -43,20 +45,20 @@ body() ->
                         #tableheader{text="Curr.", class=""},
                         #tableheader{text="Type", class=""}
                         ]},
-                #tablerow{ cells=[
-                        #tablecell{body=[
-                                #checkbox{id=check_all,  postback=check_all, checked=false}
-                                ], class=""},
-                        #tablecell{text="", class=""},
-                        #tablecell{text="", class=""},
-                        #tablecell{text="", class=""},
-                        #tablecell{text="", class=""},
-                        #tablecell{text="", class=""},
-                        #tablecell{text="", class=""},
-                        #tablecell{text="", class=""},
-                        #tablecell{text="", class=""},
-                        #tablecell{text="", class=""}
-                        ]}
+                lists:map(fun(#db_expense{id=Id, name=Name, date=Date, type=Type, text=Text, amount=Amount, status=Status, to=To, from=From}) ->
+                            {ok, #db_contact{name=FromS}} = db:get_contact(From),
+                            %{ok, #db_contact{name=ToS}} = db:get_contact(To),
+                            #payment_row{
+                                %id=Id,
+                                from=FromS,
+                                to=To,
+                                %tasks=Tasks,
+                                due=Date,
+                                status=Status,
+                                amount=Amount,
+                                %currency=Currency,
+                                type=Type}
+                    end, Payments)
                 ]}
 
         ].    

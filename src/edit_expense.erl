@@ -3,6 +3,7 @@
 -compile(export_all).
 -include_lib("nitrogen_core/include/wf.hrl").
 -include("records.hrl").
+-include("db.hrl").
 
 main() -> common:main().
 
@@ -22,6 +23,7 @@ buttons() ->
             ]}.
 
 left() ->
+    wf:session(current_expense, #db_expense{id=db:next_id(db_expense)}),
     #panel{ class="span3", body=[
             #panel{ class="row-fluid", body=[
                     #panel{ class="span6", body=[
@@ -35,7 +37,7 @@ left() ->
                     ]},
             #panel{ class="row-fluid", body=[
                     #panel{ class="span12", body=[
-                            #textbox{id="amount", text="Amount", next=order, class="input-block-level"}
+                            #textbox{id="amount", placeholder="Amount", next=order, class="input-block-level"}
                             ]}
                     ]},
             #panel{ class="row-fluid", body=[
@@ -81,7 +83,7 @@ body() ->
                             #span{ class="add-on", body=[
                                     "<i class='icon-usd'></i>"
                                     ]},
-                            #textbox{id=name, text="Name", next=due, class="span11"}
+                            #textbox{id=name, placeholder="Name", next=due, class="span11"}
                             ]}
                     ]},
             #panel{ class="row-fluid", body=[
@@ -89,7 +91,7 @@ body() ->
                             #span{ class="add-on", body=[
                                     #span{html_encode=false, text="<i class='icon-calendar'></i>"}
                                     ]},
-                            #textbox{id=due, text="Due", class="span10"},
+                            #datepicker_textbox{id=due, text="Due", class="span10"},
                             #span{ class="add-on", body=[
                                     #span{ text="Calendar | Make recurring"}
                                     ]}
@@ -98,7 +100,7 @@ body() ->
             #addable_row{id=roles, body= #involved{}},
             #panel{ class="row-fluid", body=[
                     #panel{class="span12", body=[
-                            #textarea{class="input-block-level",rows=15, text="Some text here", id=text}
+                            #textarea{class="input-block-level",rows=15, placeholder="Some text here", id=text}
                             ]}
 
                     ]},
@@ -119,7 +121,8 @@ event(save) ->
     Payable = wf:qs(payable),
     Amount = wf:q(amount),
     Text = wf:q(text),
-    db:new_expense(Name, Due, Text, Amount);
+    #db_expense{id=Id} = wf:session(current_expense),
+    db:save_expense(Id, Name, Due, Text, Amount, wf:user(), #db_contact{} );
 
 event(Ev) ->
     io:format("Event ~p in module ~p~n", [Ev, ?MODULE]).

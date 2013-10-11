@@ -74,22 +74,18 @@ get_tasks(C, _N) ->
 %% Expense routines
 %%%
 
-new_expense(Name, Due, Text, Amount) ->
+save_expense(Id, Name, Due, Text, Amount, #db_contact{id=From}, #db_contact{id=To}) ->
     {atomic, ok} = mnesia:transaction(fun() ->
-                    N = case mnesia:table_info(db_expense, size) of
-                        '$end_of_table' ->
-                            0;
-                        A -> 
-                            A
-                    end,
-                    Task = #db_expense{id=N+1,
+                    Task = #db_expense{id=Id,
                                        name=Name,
                                        date=Due,
                                        text=Text,
                                        amount=Amount,
+                                       from=From,
+                                       to=To,
                                        status=new
                                       },
-                    ok = mnesia:write(Task)
+                    ok = mnesia:write(db_expense, Task, write)
             end).
 
 new_update(Subject, Text) ->
@@ -116,7 +112,8 @@ new_update(Subject, Text) ->
 
 get_contact(Id) ->
     transaction(fun() ->
-                mnesia:read(db_contact, Id)
+                [U] = mnesia:read(db_contact, Id),
+                U
         end).
 
 get_involved(Id) ->
