@@ -134,15 +134,16 @@ body() ->
                 {ok, [], undefined} ->
                     [];
                 {ok, Attachments} ->
-                    #panel{class="row-fluid", body=[
-                            #panel{class="span6", body="<i class='icon-file-alt'></i> Attachment"},
-                            #panel{class="span2 offset4", body="<i class='icon-download-alt'></i> Download all"}
-                            ]},
-                    lists:map(fun(#db_file{path=Path, size=Size, date=Date, id=Id}) ->
-                                #attachment{filename=Path, size=Size, time=Date}
-                        end, Attachments)
+                    [
+                        #panel{class="row-fluid", body=[
+                                #panel{class="span6", body="<i class='icon-file-alt'></i> Attachment"},
+                                #panel{class="span2 offset4", body="<i class='icon-download-alt'></i> Download all"}
+                                ]},
+                        lists:map(fun(#db_file{path=Path, size=Size, date=Date, id=Id}) ->
+                                    #attachment{filename=Path, size=Size, time=Date}
+                            end, Attachments)
+                        ]
             end
-
             ]}.
 
 event({task_chosen, Id}) ->
