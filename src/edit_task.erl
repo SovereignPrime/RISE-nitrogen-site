@@ -23,12 +23,25 @@ buttons() ->
             ]}.
 
 left() ->
-    #db_task{parent=PId} = wf:session_default(current_task, #db_task{}),
+    case wf:q(type) of 
+        "new" ->
+            wf:session(tid, undefined),
+            wf:session(current_task, undefined);
+        _ ->
+            ok
+    end,
+    #db_task{id=CId, parent=PId} = wf:session_default(current_task, #db_task{}),
     PName = case db:get_task(PId) of
-        {ok, #db_task{name=P}} ->
+        {ok, [ #db_task{name=P} ]} ->
             P;
         _ ->
             undefined
+    end,
+    Children = case db:get_tasks(CId) of
+        {ok, C} ->
+            C;
+        _ ->
+            []
     end,
     #panel{ class="span3", body=[
             #h1{html_encode=false, text="<i class='icon-usd'></i> Payment"},
@@ -51,33 +64,27 @@ left() ->
                                undefined ->
                                    "";
                                N -> 
-                                    "Subtask of: ",N, #br{}
+                                    [
+                                        "Subtask of: ",N, #br{}
+                                    ]
                             end,
-                            "<i class='icon-th-large'></i> Edit/View task tree", #br{}
+                            lists:map(fun(#db_task{name=N}) ->
+                                    [
+                                        "Subtask: ",N, #br{}
+                                    ]
+                            end, Children),
+                            #link{url="/tasks", body="<i class='icon-th-large'></i> Edit/View task tree"}, #br{}
                             ]}
                     ]},
             #panel{ class="row-fluid", body=[
                     #panel{ class="span12", body=[
                             "<i class='icon-file-alt'></i> Attachments", #br{},
-                            #droppable{tag=filename, body=[
-                                    #panel{ class="filedrop", body=[
-                                            #br{}, "Drag and drop files here", #br{},#br{}
-                                            ]}
-                                    ]},
-
-                            "<i class='icon-th-large'></i> Select from my files", #br{}
+                            #upload{tag=filename, delegate=?MODULE, droppable=true,show_button=false, droppable_text="Drag and drop files here",  file_text=" Select my files"}
                             ]}
                     ]}
             ]}.
 
 body() ->
-    case wf:q(type) of 
-        "new" ->
-            wf:session(tid, undefined),
-            wf:session(current_task, undefined);
-        _ ->
-            ok
-    end,
     #db_task{id=Id, name=Name, due=Due, text=Text} = wf:session_default(current_task, #db_task{}),
     #panel{ class="span9", body=[
             #panel{ class="row-fluid", body=[
@@ -93,7 +100,7 @@ body() ->
                             #span{ class="add-on", body=[
                                     #span{html_encode=false, text="<i class='icon-calendar'></i>"}
                                     ]},
-                            #textbox{id=due, placeholder="Due", next=due, text=Due, class="span9"},
+                            #datepicker_textbox{id=due,  next=due, text=Due, class="span9"},
                             #span{ class="add-on", body=[
                                     #span{ text="Calendar | Make recurring"}
                                     ]}
@@ -131,3 +138,8 @@ event(save) ->
 
 event(Ev) ->
     io:format("Event ~p in module ~p~n", [Ev, ?MODULE]).
+
+start_upload_event(_) ->
+    ok.
+finish_upload_event(filename, FName, FPath, _Node) ->
+    io:format("File uploaded: ~p to ~p~n", [FName, FPath]).

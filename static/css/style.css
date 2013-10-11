@@ -28,3 +28,12 @@ a.btn-link, a.btn-link:hover, a.btn-link:visited, a.btn-link:active {
     text-align: center;
     border: 1px #000 dotted;
 }
+.current {
+    border: #000 1px solid;
+}
+.upload_drop {
+    background-color: #fff;
+    border-radius: 0;
+    border: 1px #000 dotted;
+    font-size: 100%;
+}

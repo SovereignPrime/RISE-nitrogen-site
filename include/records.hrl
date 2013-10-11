@@ -46,5 +46,7 @@
                     tid,
                     name,
                     delegate,
+                    checked=false,
+                    current=false,
                     due
     }).

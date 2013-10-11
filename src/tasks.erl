@@ -38,7 +38,7 @@ left() ->
                 db:get_task(TId)
         end 
     of
-        {ok, [ #db_task{id=CId}=Task ]} ->
+        {ok, [ #db_task{id=CId, parent=Parent}=Task ]} ->
             wf:session(tid, CId),
             wf:session(current_task, Task),
             [
@@ -59,8 +59,10 @@ left() ->
                                                         case db:get_tasks(Parent) of
                                                             {ok, Tasks} ->
                                                                 #list{numbered=false,
-                                                                      body=lists:map(fun(#db_task{name=Task, due=Due, id=Id}) ->
-                                                                                #task_leaf{tid=Id, name=Task, due=Due, delegate=?MODULE}
+                                                                      body=lists:map(fun(#db_task{name=Task, due=Due, id=Id}) when Id /= CId ->
+                                                                                #task_leaf{tid=Id, name=Task, due=Due, delegate=?MODULE};
+                                                                            (#db_task{name=Task, due=Due, id=Id}) when Id == CId ->
+                                                                                #task_leaf{tid=Id, name=Task, due=Due, delegate=?MODULE, current=true}
                                                                         end, Tasks)
                                                                      };
                                                             {ok, [], undefined} ->
