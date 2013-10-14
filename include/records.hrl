@@ -71,3 +71,12 @@
                       currency,
                       type
                      }).
+-record(contact_li, {?ELEMENT_BASE(element_contact_li),
+                     name,
+                     checked
+    }).
+-record(group_item, {?ELEMENT_BASE(element_group_item),
+                     gid,
+                     name,
+                     sub
+    }).

@@ -4,6 +4,7 @@
 -compile(export_all).
 -include_lib("nitrogen_core/include/wf.hrl").
 -include("records.hrl").
+-include("db.hrl").
 
 main() -> common:main().
 
@@ -30,27 +31,13 @@ left() ->
                     body=[
                         #listitem{text="All contacts"},
                         #listitem{text="Most contacted"},
-                        #listitem{html_encode=false, text="Custom group 1 <i class='icon-caret-down'></i>", body=[
-                                #list{numbered=false,
-                                    body=[
-                                        #listitem{text="Sub 1"},
-                                        #listitem{text="Sub 2"},
-                                        #listitem{text="Sub 3"}
-                                        ]}
-                                ]},
-                                
-                        #listitem{html_encode=false, text="Custom 2 <i class='icon-caret-left'></i>"},
-                        #listitem{text="Custom 3"},
-                        #listitem{text="Custom 4"}
+                        group_list()
                 ]}
                 
                 ]},
         #panel{class="span2", body=[
                 #list{numbered=false,
                     body=[
-                        #listitem{class="clearfix", body=[
-                                #checkbox{id=john, class="pull-left", style="margin-right: 15px;", text=" John Smith", postback=test, checked=false}
-                                ]},
                         #listitem{class="clearfix", body=[
                                 #checkbox{id=john, class="pull-left", style="margin-right: 15px;", text=" John Smith", postback=test, checked=false}
                                 ]},
@@ -98,5 +85,33 @@ body() ->
                             #update_element{collapse=paragraph, from="Lorem ipisium", age="3 days", text="Lorem ipsum dolor sit amet, consectetur adipiscing elit. Ut convallis egestas neque, sit amet mollis nisi tincidunt in. Proin fringilla sem vitae enim egestas, ut rutrum diam hendrerit. Nulla facilisi. Curabitur eleifend libero quam, sit amet sodales odio porttitor eget. Integer sit amet consequat magna. Ut eget tempus augue. Donec sodales suscipit ipsum, sed interdum nisl tincidunt a. In pretium mi ac viverra auctor. Nam dapibus interdum lectus et posuere."}
                             ]]}
             ]}.    
+
+%%%
+%% Event handlers
+%%%
+
 event(Click) ->
     io:format("~p~n",[Click]).
+
+inplace_textbox_event({group, Id}, Name) ->
+    db:update_group_name(Id, Name),
+    Name.
+
+drop_event({group, CId}, {subgroup, SId}) ->
+    db:save_subgroup(CId, SId).
+%%%
+%% Helpers
+%%%
+
+group_list() ->
+    {ok, Groups} = db:get_groups(),
+    io:format("~p~n", [Groups]),
+    #list{numbered=false,
+          body=lists:map(fun(#db_group{id=Id, name=Name, subgroups=Sub}) ->
+                    #group_item{gid=Id, name=Name, sub=Sub}
+            end, Groups)
+         }.
+          
+
+
+

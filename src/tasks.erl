@@ -158,7 +158,11 @@ event(Click) ->
 
 drop_event({task, Id}, subtask) ->
     PId = wf:session(tid),
-    db:save_subtask(Id, PId);
+    if PId /= Id ->
+            db:save_subtask(Id, PId);
+        true ->
+            ok
+    end;
 drop_event({task, Id}, task) ->
     #db_task{parent=PId} = wf:session(current_task),
     db:save_subtask(Id, PId).

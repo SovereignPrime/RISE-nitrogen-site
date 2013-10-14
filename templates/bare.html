@@ -42,14 +42,20 @@
                 </div>
             </form>
         </div>
-        <div class="dropdown span1">
+        <div class="dropdown span1  wfid_plus_menu">
             <a href="#" class="dropdown-toggle btn-block btn btn-link" data-toggle="dropdown">
                 <i class="icon-plus icon-large"></i>
             </a>
-            <ul class="dropdown-menu wfid_plus_menu" role="menu">
+            <ul class="dropdown-menu pull-right wfid_plus_dropdown" role="menu">
                 <li><a href="/edit_update?type=new" tabindex="-1" class="wfid_new_update">Update</a></li>
                 <li><a href="/edit_task?type=new" class="wfid_new_task">Task</a></li>
-                <li><a href="#" class="wfid_new_relationship">Relationship</a></li>
+                <li class="dropdown-submenu pull-left">
+                <a href="#" class="wfid_new_relationship">Relationship</a>
+                <ul class="dropdown-menu">
+                    <li><a href="#" class="wfid_new_contact">New contact</a></li>
+                    <li><a href="#" class="wfid_new_group">New group</a></li>
+                </ul>
+                </li>
                 <li><a href="/edit_file?type=new" class="wfid_new_file">File</a></li>
                 <li><a href="/edit_expense?type=new" class="wfid_new_expence">Expense</a></li>
             </ul>

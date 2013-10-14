@@ -13,6 +13,7 @@ install()->
     {atomic, ok} = mnesia:create_table(db_expense, [{disc_copies, [node()]}, {attributes, record_info(fields, db_expense)}, {type, ordered_set}]),
     {atomic, ok} = mnesia:create_table(db_update, [{disc_copies, [node()]}, {attributes, record_info(fields, db_update)}, {type, ordered_set}]),
     {atomic, ok} = mnesia:create_table(db_contact_roles, [{disc_copies, [node()]}, {attributes, record_info(fields, db_contact_roles)}, {type, ordered_set}]),
+    {atomic, ok} = mnesia:create_table(db_group_members, [{disc_copies, [node()]}, {attributes, record_info(fields, db_group_members)}, {type, ordered_set}]),
     {atomic, ok} = mnesia:create_table(db_attachment, [{disc_copies, [node()]}, {attributes, record_info(fields, db_attachment)}, {type, ordered_set}]).
 
 
@@ -131,6 +132,38 @@ get_users(N) ->
                 mnesia:select(db_contact, [{#db_contact{name='$1'}, [], ['$1']}], N, read)
         end).
 
+add_user_to_group(Group, User) ->
+    transaction(fun() ->
+                mnesia:write(#db_group_members{group=Group, contact=User})
+        end).
+%get_contacts_by_group(Group) ->
+%    transaction(fun() ->
+%                mnesia
+
+%%%
+%% Group routines
+%%%
+
+get_groups() ->
+    transaction(fun() ->
+                get_subgroup(undefined)
+        end).
+
+save_group(Group) ->
+    transaction(fun() ->
+                mnesia:write(Group)
+        end).
+
+update_group_name(Id, Name) ->
+    transaction(fun() ->
+                [G] = mnesia:read(db_group, Id),
+                mnesia:write(G#db_group{id=Id, name=Name})
+        end).
+save_subgroup(Id, Parent) ->
+    transaction(fun() ->
+                [G] = mnesia:wread({db_group, Id}),
+                mnesia:write(G#db_group{subgroups=Parent})
+        end).
 %%%
 %% File routines
 %%%
@@ -196,8 +229,12 @@ all_files() ->
                 mnesia:match_object(#db_file{_='_'})
             end).
 
-
+all_groups() ->
+    transaction(fun() ->
+                mnesia:match_object(#db_group{_='_'})
+            end).
  
+
 %%%
 %% Account routines
 %%%
@@ -254,3 +291,10 @@ attached_files([]) ->
     [];
 attached_files([Id|R]) ->
     mnesia:read(db_file, Id) ++ attached_files(R).
+
+get_subgroup(G) ->
+    Groups = mnesia:match_object(#db_group{subgroups=G, _='_'}),
+    Sub = lists:map(fun(#db_group{id=N}=Gr) ->
+                    Gr#db_group{subgroups=get_subgroup(N)}
+        end, Groups).
+             
