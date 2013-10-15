@@ -13,7 +13,7 @@ install()->
     {atomic, ok} = mnesia:create_table(db_expense, [{disc_copies, [node()]}, {attributes, record_info(fields, db_expense)}, {type, ordered_set}]),
     {atomic, ok} = mnesia:create_table(db_update, [{disc_copies, [node()]}, {attributes, record_info(fields, db_update)}, {type, ordered_set}]),
     {atomic, ok} = mnesia:create_table(db_contact_roles, [{disc_copies, [node()]}, {attributes, record_info(fields, db_contact_roles)}, {type, ordered_set}]),
-    {atomic, ok} = mnesia:create_table(db_group_members, [{disc_copies, [node()]}, {attributes, record_info(fields, db_group_members)}, {type, ordered_set}]),
+    {atomic, ok} = mnesia:create_table(db_group_members, [{disc_copies, [node()]}, {attributes, record_info(fields, db_group_members)}, {type, bag}]),
     {atomic, ok} = mnesia:create_table(db_attachment, [{disc_copies, [node()]}, {attributes, record_info(fields, db_attachment)}, {type, ordered_set}]).
 
 
@@ -111,6 +111,8 @@ new_update(Subject, Text) ->
 %% Contact routines
 %%%
 
+get_contact(undefined) ->
+    {ok, #db_contact{}};
 get_contact(Id) ->
     transaction(fun() ->
                 [U] = mnesia:read(db_contact, Id),
@@ -136,9 +138,14 @@ add_user_to_group(Group, User) ->
     transaction(fun() ->
                 mnesia:write(#db_group_members{group=Group, contact=User})
         end).
-%get_contacts_by_group(Group) ->
-%    transaction(fun() ->
-%                mnesia
+get_contacts_by_group(all) ->
+    all_contacts();
+get_contacts_by_group(Group) ->
+    transaction(fun() ->
+                U = mnesia:read(db_group_members, Group),
+                iterate(db_contact, U)
+        end).
+
 
 %%%
 %% Group routines
@@ -191,7 +198,7 @@ get_attachments(Record) ->
     Id = element(2, Record),
      transaction(fun() ->
                 A = mnesia:select(db_attachment, [{#db_attachment{ file='$1', type=Type, tid=Id, _='_'}, [], ['$1']}]),
-                attached_files(A)
+                iterate(db_file, A)
             end).
 
 save_attachments(Record, Files) ->
@@ -234,6 +241,10 @@ all_groups() ->
                 mnesia:match_object(#db_group{_='_'})
             end).
  
+all_contacts() ->
+    transaction(fun() ->
+                mnesia:match_object(#db_contact{_='_'})
+            end).
 
 %%%
 %% Account routines
@@ -287,10 +298,10 @@ save_attachment(_Type, _Id, [], _N) ->
 save_attachment(Type, Id, [File|Rest], N) ->
     mnesia:write(#db_attachment{id=N, file=File, type=Type, tid=Id}),
     save_attachment(Type, Id, Rest, N+1).
-attached_files([]) ->
+iterate(_, []) ->
     [];
-attached_files([Id|R]) ->
-    mnesia:read(db_file, Id) ++ attached_files(R).
+iterate(Type, [Id|R]) ->
+    mnesia:read(Type, Id) ++ iterate(Type, R).
 
 get_subgroup(G) ->
     Groups = mnesia:match_object(#db_group{subgroups=G, _='_'}),

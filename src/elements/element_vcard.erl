@@ -20,9 +20,14 @@ render_element(#vcard{photo=Photo, name=Name, email=Email, phone=Phone, address=
             #panel{class="span9", body=[
                     #panel{class="row-fluid", body=[
                             #h1{class="pull-left", text=Name}, " <i class='clearfix icon-edit icon-large'></i>",
-                            #panel{body= "e-mail: " ++ Email},
-                            #panel{body= "tel.: " ++ Phone},
-                            #panel{body=  Address}
+                            #panel{body= [ "e-mail: ",
+                                        #inplace_textbox{class="inline", text=  Email }
+                                         ]},
+                            #panel{body= [
+                                    "tel.: ",
+                                 #inplace_textbox{class="inline", text=Phone}
+                                    ]},
+                            #inplace_textbox{text=  Address}
                             ]}
 
                     ]},

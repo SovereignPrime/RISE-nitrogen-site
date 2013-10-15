@@ -72,6 +72,7 @@
                       type
                      }).
 -record(contact_li, {?ELEMENT_BASE(element_contact_li),
+                     uid,
                      name,
                      checked
     }).

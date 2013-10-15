@@ -25,6 +25,7 @@ buttons() ->
             ]}]}.
 
 left() ->
+    {ok, Users} = db:get_contacts_by_group(all),
     [
         #panel{class="span2", body=[
                 #list{numbered=false,
@@ -37,26 +38,22 @@ left() ->
                 ]},
         #panel{class="span2", body=[
                 #list{numbered=false,
-                    body=[
-                        #listitem{class="clearfix", body=[
-                                #checkbox{id=john, class="pull-left", style="margin-right: 15px;", text=" John Smith", postback=test, checked=false}
-                                ]},
-                        #listitem{class="clearfix", body=[
-                                #checkbox{id=john, class="pull-left", style="margin-right: 15px;", text=" John Smith", postback=test, checked=false}
-                                ]},
-                        #listitem{class="clearfix", body=[
-                                #checkbox{id=john, class="pull-left", style="margin-right: 15px;", text=" John Smith", postback=test, checked=false}
-                                ]}
-                        ]}
+                    body=
+                        lists:map(fun(#db_contact{id=Id, name=Name}) ->
+                                    #contact_li{uid=Id, name=Name, checked=false}
+                            end, Users)
+                        }
                 ]}
 
         ].
         
 
 body() -> 
+    {ok, #db_contact{id=Id, name=Name, email=Email, phone=Phone,  address=Address}} =     {ok, #db_contact{id="Id", name="Name", email="Email", phone="Phone", address="Address"} },
+    %db:get_contact(wf:session(current_contact_id)),
     #panel{class="span8", body=
     [
-            #vcard{name="John Smith", address="132 Pavlin st.", email="test@test.org", phone="+7 231 123456787"},
+            #vcard{name=Name, address=Address, email=Email, phone=Phone},
             #table{class="table table-condensed", 
                    rows=[
                     #tablerow{cells=[
