@@ -42,7 +42,9 @@ render_element(_Record = #group_item{gid=Id, name=Name, sub=Sub}) ->
 render_group(Id, Name) ->
     [
         #span{id=wf:f("group~p", [Id]), body=[
-                #span{id=wf:f("group_view~p", [Id]), class="", text=Name},
+                #span{id=wf:f("group_view~p", [Id]), class="", text=Name, actions=[
+                        #event{type=click, postback={group, Id}}
+                        ]},
                 #span{id=wf:f("group_edit~p", [Id]), body=[
                         #textbox{id=wf:f("group_name~p", [Id]), text=Name, class="pull-left"}, 
                         #link{ class="btn btn-link", text="<i class='icon-ok'></i>", html_encode=false, postback={save, Id}, delegate=?MODULE},
@@ -72,10 +74,7 @@ render_group(Id, Name) ->
                                                     ]}, new=false}
                                         ]}
                                 ]}
-                        ]}], actions=[
-                #event{type=click, postback={group, Id}},
-                #event{type=hover, actions=#show{}}
-                ]}
+                        ]}]}
         ].
 
 event({save, Id}) ->
