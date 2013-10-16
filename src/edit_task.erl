@@ -23,14 +23,6 @@ buttons() ->
             ]}.
 
 left() ->
-    case wf:q(type) of 
-        "new" ->
-            Ti = db:next_id(db_task),
-            wf:session(tid, Ti),
-            wf:session(current_task, #db_task{id=Ti});
-        _ ->
-            ok
-    end,
     #db_task{id=CId, parent=PId} = wf:session(current_task),
     PName = case db:get_task(PId) of
         {ok, [ #db_task{name=P} ]} ->
@@ -49,7 +41,7 @@ left() ->
             #addable_row{id=payment, body=
                         #panel{class="row-fluid", body=[
                                 #panel{ class="span8", body=[
-                                        #textbox{id=payable, placeholder="John", next=amount, class="input-block-level"}
+                                        #textbox_autocomplete{id=payable,tag=payable, text="Name", next=amount, class="input-block-level"}
                                         ]},
                                 #panel{ class="span3", body=[
                                         #textbox{id=amount, placeholder="300$", next=order, class="input-block-level"}
@@ -80,7 +72,7 @@ left() ->
             #panel{ class="row-fluid", body=[
                     #panel{ class="span12", body=[
                             "<i class='icon-file-alt'></i> Attachments", #br{},
-                            #upload{tag=filename, delegate=?MODULE, droppable=true,show_button=false, droppable_text="Drag and drop files here",  file_text=" Select my files"}
+                            #upload{id=attachments, tag=filename, delegate=?MODULE, droppable=true,show_button=false, droppable_text="Drag and drop files here",  file_text=" Select my files"}
                             ]}
                     ]}
             ]}.
@@ -129,10 +121,14 @@ event(save) ->
     Payable = wf:qs(payable),
     Amounts = wf:qs(amount),
     Text = wf:q(text),
-    Id = wf:session(tid),
-    #db_task{parent=Parent} = wf:session(current_task),
-    db:save_task(Id, TaskName, Due, Text, Parent, "Changed"),
-    db:save_attachments(wf:session(current_task), wf:session_default(task_attached_files, []));
+    Id = wf:session(current_task_id),
+    Task = wf:session(current_task),
+    NTask = Task#db_task{name=TaskName, due=Due, text=Text},
+    io:format("Payable ~p sum ~p~n", [Payable, Amounts]),
+    db:save(NTask),
+    wf:session(current_task, NTask),
+    db:save_attachments(wf:session(current_task), wf:session_default(task_attached_files, [])),
+    wf:redirect("/tasks");
 
 event(Ev) ->
     io:format("Event ~p in module ~p~n", [Ev, ?MODULE]).
@@ -144,3 +140,11 @@ finish_upload_event(filename, FName, FPath, _Node) ->
     io:format("File uploaded: ~p to ~p for ~p~n", [FName, FPath, new]),
     db:save_file(FName, FPath, wf:user()),
     wf:session(task_attached_files, wf:session_default(task_attached_files, []) ++ [FID]).
+
+autocomplete_enter_event(Term, _Tag) ->
+    io:format("Term ~p~n", [Term]),
+    {ok, Contacts} = db:all_contacts(),
+    List = [{struct, [{id, Id}, {label, wf:to_binary(Name)}, {valie, Id}]} || #db_contact{id=Id, name=Name} <- Contacts, string:str(string:to_lower(wf:to_list(Name)), string:to_lower(Term)) > 0],
+    mochijson2:encode(List).
+autocomplete_select_event(Selected, _Tag) ->
+    io:format("Selected ~p~n", [Selected]).

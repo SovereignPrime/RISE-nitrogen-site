@@ -45,18 +45,6 @@ delete(Type, Id) ->
 %% Task routines
 %%%
 
-save_task(Id, Name, Due, Text, Parent, Status) ->
-    Task = #db_task{id=Id,
-                    name=Name,
-                    due=Due,
-                    text=Text,
-                    parent=Parent,
-                    status=Status
-                   },
-    io:format("Task to save: ~p~n", [Task]),
-    {atomic, ok} = mnesia:transaction(fun() ->
-                ok = mnesia:write(Task)
-        end).
 
 save_subtask(Id, PId) ->
     transaction(fun() ->

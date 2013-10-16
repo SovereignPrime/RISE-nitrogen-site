@@ -13,6 +13,7 @@ main() ->
             T = #template { file="./site/templates/bare.html" },
             wf:wire('new_contact', #event{type=click, postback=add_contact, delegate=?MODULE}),
             wf:wire('new_group', #event{type=click, postback=add_group, delegate=?MODULE}),
+            wf:wire('new_task', #event{type=click, postback=add_task, delegate=?MODULE}),
             T
     end.
 
@@ -33,6 +34,11 @@ event(add_contact) ->
             name="Contact Name"
             }),
     wf:redirect("/relationships");
+event(add_task) ->
+    {ok, Id} = db:next_id(db_task),
+    wf:session(current_task_id, Id),
+    wf:session(current_task, #db_task{id=Id}),
+    wf:redirect("/edit_task");
 event(E) ->
     io:format("Event ~p occured in ~p~n", [E, ?MODULE]).
 
