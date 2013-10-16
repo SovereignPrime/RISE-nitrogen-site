@@ -34,9 +34,7 @@ left() ->
 
 render_group_list() ->
     {ok, Groups} = db:get_groups(),
-    io:format("~p~n", [Groups]),
     G = wf:session(current_group_id),
-    io:format("~p~n", [G]),
     wf:wire(wf:f("group~p", [G]), #add_class{class="active"}),
     #list{numbered=false,
           body=
@@ -148,6 +146,7 @@ drop_event({group, CId}, {subgroup, all}) ->
     db:save_subgroup(CId, undefined),
     wf:update(group_list, render_group_list());
 drop_event({group, CId}, {subgroup, SId}) when CId /= SId ->
+    io:format("Group ~p to subgroup ~p~n", [SId, CId]),
     db:save_subgroup(CId, SId),
     wf:update(group_list, render_group_list());
 drop_event(G, P) ->

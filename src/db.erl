@@ -174,7 +174,9 @@ get_contacts_by_group(Group) ->
     transaction(fun() ->
                 G = mnesia:select(db_group, [{#db_group{id='$1', subgroups=Group, _='_'}, [], ['$1']}]),
                 U = iterate(db_group_members, [Group | G]),
+                io:format("~p ~p ~n", [G, U]),
                 iterate(db_contact, U, fun(Type, #db_group_members{contact=Id}) ->
+                            io:format("~p~n",[Id]),
                             mnesia:read(Type, Id)
                     end)
         end).
@@ -354,7 +356,7 @@ iterate(Type, [Id|R]) ->
 iterate(_, [], _) ->
     [];
 iterate(Type, [Id|R], Fun) ->
-    Fun(Type, Id) ++ iterate(Type, R).
+    Fun(Type, Id) ++ iterate(Type, R, Fun).
 
 get_subgroup(G) ->
     Groups = mnesia:match_object(#db_group{subgroups=G, _='_'}),

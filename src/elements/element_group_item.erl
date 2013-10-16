@@ -19,16 +19,13 @@ reflect() -> record_info(fields, group_item).
 render_element(_Record = #group_item{gid=Id, name=Name, sub=Sub}) ->
     #listitem{class="", body=[
             #draggable{tag={group, Id}, group=groups, clone=false, body=[
-                    #droppable{tag={subgroup, Id}, accept_groups=[groups, contacts], body=[
-                            ]},
                     case Sub of
                         [] ->
-                            render_group(Id, Name);
+                            render_group(Id, Name, "");
                         _ ->
                             [
-                            render_group(Id, Name),
-                                " <i class='icon-caret-down'></i>",
-                                #list{numbered=false,style='margin-left:15px;',
+                            render_group(Id, Name," <i class='icon-caret-down'></i>"),
+                                                                #list{numbered=false,style='margin-left:15px;',
                                       body=[
 
                                         lists:map(fun(#db_group{id=I, name=N, subgroups=S}) ->
@@ -39,43 +36,43 @@ render_element(_Record = #group_item{gid=Id, name=Name, sub=Sub}) ->
                     end
                     ]}]}.
 
-render_group(Id, Name) ->
-    [
-        #span{id=wf:f("group~p", [Id]), body=[
-                #span{id=wf:f("group_view~p", [Id]), class="", text=Name, actions=[
-                        #event{type=click, postback={group, Id}}
-                        ]},
-                #span{id=wf:f("group_edit~p", [Id]), body=[
-                        #textbox{id=wf:f("group_name~p", [Id]), text=Name, class="pull-left"}, 
-                        #link{ class="btn btn-link", text="<i class='icon-ok'></i>", html_encode=false, postback={save, Id}, delegate=?MODULE},
-                        #link{ class="btn btn-link", text="<i class='icon-remove'></i>", html_encode=false, actions=#event{type=click, actions=[
-                                                #event{target=wf:f("group_view~p", [Id]),  actions=#show{}},
-                                                #event{target=wf:f("group_edit~p", [Id]),  actions=#hide{}}
-                                    ]}}
-                        ], actions=#hide{}},
-                
-                #span{class="",  body=[
-                        #link{class="btn btn-link dropdown-toggle",data_fields=[{toggle, "dropdown"}], body=[
-                                "<i class='icon-tasks'></i>"
-                                ], url="#", new=false},
-                        #list{numbered=false, class="dropdown-menu",
-                              body=[
-                                #listitem{body=[
-                                        #link{body=[
-                                                "<i class='icon-trash'></i> Delete"
-                                                ], postback={group_delete, Id}, new=false}
-                                        ]},
-                                #listitem{body=[
-                                        #link{body=[
-                                                "<i class='icon-pencil'></i> Rename"
-                                                ],  actions=#event{type=click, actions=[
-                                                #event{target=wf:f("group_view~p", [Id]),  actions=#hide{}},
-                                                #event{target=wf:f("group_edit~p", [Id]),  actions=#show{}}
-                                                    ]}, new=false}
-                                        ]}
-                                ]}
-                        ]}]}
-        ].
+render_group(Id, Name, Icon) ->
+    #span{id=wf:f("group~p", [Id]), body=[
+            #droppable{ tag={subgroup, Id}, accept_groups=[groups, contacts], body=[
+                    #span{id=wf:f("group_view~p", [Id]),  text=Name, actions=[
+                            #event{type=click, postback={group, Id}}
+                            ]},
+                    #span{id=wf:f("group_edit~p", [Id]), body=[
+                            #textbox{id=wf:f("group_name~p", [Id]), text=Name, class="pull-left"}, 
+                            #link{ class="btn btn-link", text="<i class='icon-ok'></i>", html_encode=false, postback={save, Id}, delegate=?MODULE},
+                            #link{ class="btn btn-link", text="<i class='icon-remove'></i>", html_encode=false, actions=#event{type=click, actions=[
+                                        #event{target=wf:f("group_view~p", [Id]),  actions=#show{}},
+                                        #event{target=wf:f("group_edit~p", [Id]),  actions=#hide{}}
+                                        ]}}
+                            ], actions=#hide{}},
+                    #span{class="",  body=[
+                            #link{class="btn btn-link dropdown-toggle",data_fields=[{toggle, "dropdown"}], body=[
+                                    "<i class='icon-tasks'></i>"
+                                    ], url="#", new=false},
+                            #list{numbered=false, class="dropdown-menu",
+                                  body=[
+                                    #listitem{body=[
+                                            #link{body=[
+                                                    "<i class='icon-trash'></i> Delete"
+                                                    ], postback={group_delete, Id}, new=false}
+                                            ]},
+                                    #listitem{body=[
+                                            #link{body=[
+                                                    "<i class='icon-pencil'></i> Rename"
+                                                    ],  actions=#event{type=click, actions=[
+                                                        #event{target=wf:f("group_view~p", [Id]),  actions=#hide{}},
+                                                        #event{target=wf:f("group_edit~p", [Id]),  actions=#show{}}
+                                                        ]}, new=false}
+                                            ]}
+                                    ]}
+                            ]},
+                    Icon
+                    ]}]}.
 
 event({save, Id}) ->
     Name = wf:q(wf:f("group_name~p", [Id])),
