@@ -35,14 +35,13 @@ left() ->
 render_group_list() ->
     {ok, Groups} = db:get_groups(),
     io:format("~p~n", [Groups]),
+    G = wf:session(current_group_id),
+    io:format("~p~n", [G]),
+    wf:wire(wf:f("group~p", [G]), #add_class{class="active"}),
     #list{numbered=false,
           body=
           #group_item{gid=all, name="All contacts", sub=Groups }%[
-            %#listitem{text="Most contacted"},
-%            lists:map(fun(#db_group{id=Id, name=Name, subgroups=Sub}) ->
-%                        #group_item{gid=Id, name=Name, sub=Sub}
-%                end, Groups)
-                %]}
+            %#listitem{text="Most contacted"}
          }.
 
 render_contact_list(Users) ->
@@ -106,7 +105,14 @@ event({group, Id}) ->
     {ok, Contacts} = db:get_contacts_by_group(Id),
     io:format("User ~p in ~p~n", [Contacts, Id]),
     wf:session(current_group_id, Id),
+    wf:update(group_list, render_group_list()),
+    wf:wire(wf:f("group~p", [Id]), #add_class{class="active"}),
     wf:update(user_list, render_contact_list(Contacts));
+event({group_delete, Id}) ->
+    db:delete_group(Id),
+    wf:update(group_list, render_group_list());
+event({group_rename, Id}) ->
+    wf:update(wf:f("group_~p", [Id]), render_group_list());
 event(Click) ->
     io:format("~p~n",[Click]).
 

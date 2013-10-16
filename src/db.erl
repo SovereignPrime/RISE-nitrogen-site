@@ -22,18 +22,24 @@ install()->
 %%%
 
 next_id(Type) ->
-    case mnesia:table_info(Type, size) of
-        '$end_of_table' ->
-            1;
-        A -> 
-            A+1
-    end.
+    transaction(fun() ->
+                case mnesia:last(Type) of
+                    '$end_of_table' ->
+                        1;
+                    A -> 
+                        A+1
+                end
+        end).
 %%%
 %% General routines
 %%
 save(Contact) ->
     transaction(fun() ->
                 mnesia:write(Contact)
+        end).
+delete(Type, Id) ->
+    transaction(fun() ->
+                mnesia:delete({Type, Id})
         end).
 %%%
 %% Task routines
@@ -197,6 +203,16 @@ save_subgroup(Id, Parent) ->
     transaction(fun() ->
                 [G] = mnesia:wread({db_group, Id}),
                 mnesia:write(G#db_group{subgroups=Parent})
+        end).
+delete_group(Id) ->
+    transaction(fun() ->
+                Sub = mnesia:match_object(#db_group{subgroups=Id, _='_'}),
+                iterate(db_group, Sub, fun(_Type, G) ->
+                            mnesia:write(G#db_group{subgroups=undefined}),
+                            []
+                    end),
+                mnesia:delete({db_group_members, Id}),
+                mnesia:delete({db_group, Id})
         end).
 %%%
 %% File routines
