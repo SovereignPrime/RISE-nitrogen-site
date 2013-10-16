@@ -59,12 +59,12 @@ body() ->
     wf:session(current_contact, Contact),
     #panel{id=contact_panel, class="span8", body=contact_render(Contact)}.
 
-contact_render(#db_contact{id=Id, name=Name, email=Email, phone=Phone,  address=Address}) ->
+contact_render(#db_contact{id=Id, name=Name, email=Email, phone=Phone,  address=Address, photo=Photo}) ->
     {ok, Tasks} = db:get_tasks_by_user(Id),
     {ok, Updates} = db:get_updates_by_user(Id),
     {ok, Groups} = db:get_groups_for_user(Id),
     [
-        #vcard{id=vcard,name=Name, address=Address, email=Email, phone=Phone, groups=[ N|| #db_group{name=N} <- Groups]},
+        #vcard{id=vcard,name=Name, address=Address, email=Email, phone=Phone, photo=Photo, groups=[ N|| #db_group{name=N} <- Groups]},
         #table{class="table table-condensed", 
                rows=[
                 #tablerow{cells=[

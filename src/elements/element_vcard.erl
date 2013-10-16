@@ -3,9 +3,12 @@
 -module (element_vcard).
 -include_lib("nitrogen_core/include/wf.hrl").
 -include("records.hrl").
+-include("db.hrl").
 -export([
     reflect/0,
-    render_element/1
+    render_element/1,
+    start_upload_event/1,
+    finish_upload_event/4
 ]).
 
 -spec reflect() -> [atom()].
@@ -15,8 +18,15 @@ reflect() -> record_info(fields, vcard).
 render_element(#vcard{id=Id, photo=Photo, name=Name, email=Email, phone=Phone, address=Address, groups=Groups}) ->
     #panel{id=Id, class="row-fluid", body=[
             #panel{class="span2", body=[
-                    
-                    #image{image="photo/" ++ Photo, class="image-polaroid"}
+                    #image{id=img_vcard, image="photo/" ++ Photo, class="image-polaroid", actions=[
+                            #event{type=click, actions=[
+                                    #event{target=upload_vcard,  actions=#show{}},
+                                    #event{actions=#hide{}}
+                                    ]}
+                                  ]},
+                    #span{id=upload_vcard, body=
+                          #upload{tag={photo, Id}, show_button=false, droppable=true, droppable_text="Drag and drop photo", style="width:100%;height:100%", delegate=?MODULE}, 
+                          actions=#hide{}} 
                     ]},
             #panel{class="span9", body=[
                     #panel{class="row-fluid", body=[
@@ -40,3 +50,14 @@ render_element(#vcard{id=Id, photo=Photo, name=Name, email=Email, phone=Phone, a
             #panel{class="span1", body="<i class='icon-envelope icon-large'></i><br><i class='icon-group icon-large'></i><br><i class='icon-reorder icon-large'></i>"}
                     
             ]}.
+
+start_upload_event(_) ->
+    ok.
+finish_upload_event({photo, _}, FName, FPath, _Node) ->
+    io:format("File uploaded: ~p to ~p ~n", [FName, FPath]),
+    file:copy(FPath, "./site/static/photo/" ++ FName),
+    CU = wf:session(current_contact),
+    NCU = CU#db_contact{photo=FName},
+    db:save(NCU),
+    wf:session(current_contact, NCU),
+    wf:update(contact_panel, relationships:contact_render(NCU)).
