@@ -17,10 +17,18 @@ main() ->
     end.
 
 event(add_group) ->
-    db:save_group(#db_group{
+    db:save(#db_group{
             id=db:next_id(db_group),
             name="New group",
             subgroups=undefined
+            }),
+    wf:redirect("/relationships");
+event(add_contact) ->
+    wf:session(current_contact, undefined),
+    wf:session(current_contact_id, db:next_id(db_contact)),
+    db:save(#db_contact{
+            id=db:next_id(db_contact),
+            name="Contact Name"
             }),
     wf:redirect("/relationships");
 event(E) ->

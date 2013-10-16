@@ -28,6 +28,7 @@
                 name,
                 email,
                 phone,
+                groups=[],
                 address
     }).
 

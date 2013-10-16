@@ -25,51 +25,64 @@ buttons() ->
             ]}]}.
 
 left() ->
+    wf:session(current_group_id, all),
     {ok, Users} = db:get_contacts_by_group(all),
     [
-        #panel{class="span2", body=[
-                #list{numbered=false,
-                    body=[
-                        #listitem{text="All contacts"},
-                        #listitem{text="Most contacted"},
-                        group_list()
-                ]}
-                
-                ]},
-        #panel{class="span2", body=[
+        #panel{id=group_list, class="span2", body=[render_group_list()]},
+                      #panel{id=user_list, class="span2", body=render_contact_list(Users)}
+                      ].
+
+render_group_list() ->
+    {ok, Groups} = db:get_groups(),
+    io:format("~p~n", [Groups]),
+    #list{numbered=false,
+          body=
+          #group_item{gid=all, name="All contacts", sub=Groups }%[
+            %#listitem{text="Most contacted"},
+%            lists:map(fun(#db_group{id=Id, name=Name, subgroups=Sub}) ->
+%                        #group_item{gid=Id, name=Name, sub=Sub}
+%                end, Groups)
+                %]}
+         }.
+
+render_contact_list(Users) ->
+    [
                 #list{numbered=false,
                     body=
                         lists:map(fun(#db_contact{id=Id, name=Name}) ->
                                     #contact_li{uid=Id, name=Name, checked=false}
                             end, Users)
                         }
-                ]}
 
         ].
         
 
 body() -> 
-    {ok, #db_contact{id=Id, name=Name, email=Email, phone=Phone,  address=Address}} =     {ok, #db_contact{id="Id", name="Name", email="Email", phone="Phone", address="Address"} },
-    %db:get_contact(wf:session(current_contact_id)),
-    #panel{class="span8", body=
-    [
-            #vcard{name=Name, address=Address, email=Email, phone=Phone},
-            #table{class="table table-condensed", 
-                   rows=[
-                    #tablerow{cells=[
-                            #tableheader{ body=[
-                                    #span{class=" icon-small icon-stack", html_encode=false, text="<i class='icon-calendar-empty icon-stack-base'></i><i class='icon-ok'></i>"},
-                                    "Tasks"
-                                    ]},
-                            #tableheader{},
-                            #tableheader{body="Show all", class="cell-right"}
-                            ]},
-                    #taskrow{type="Responsible", name="Example task 1", due="1 Sep 2013"},
-                    #taskrow{type="Accountable", name="Example task 2", due="17 Sep 2013"},
-                    #taskrow{type="Responsible", name="Example task 3", due="14 Sep 2013"},
-                    #taskrow{type="Responsible", name="Example task 4", due="10 Sep 2013"}
+    {ok, Contact} = db:get_contact(wf:session(current_contact_id)),
+    wf:session(current_contact, Contact),
+    #panel{id=contact_panel, class="span8", body=contact_render(Contact)}.
 
-                    ]},
+contact_render(#db_contact{id=Id, name=Name, email=Email, phone=Phone,  address=Address}) ->
+    {ok, Tasks} = db:get_tasks_by_user(Id),
+    {ok, Updates} = db:get_updates_by_user(Id),
+    {ok, Groups} = db:get_groups_for_user(Id),
+    [
+        #vcard{id=vcard,name=Name, address=Address, email=Email, phone=Phone, groups=[ N|| #db_group{name=N} <- Groups]},
+        #table{class="table table-condensed", 
+               rows=[
+                #tablerow{cells=[
+                        #tableheader{ body=[
+                                #span{class=" icon-small icon-stack", html_encode=false, text="<i class='icon-calendar-empty icon-stack-base'></i><i class='icon-ok'></i>"},
+                                "Tasks"
+                                ]},
+                        #tableheader{},
+                        #tableheader{body="Show all", class="cell-right"}
+                        ]},
+                lists:map(fun(#db_task{parent=Responsible, name=TName, due=Due}) ->
+                            #taskrow{type=Responsible, name=Name, due=Due}
+                    end, Tasks)
+
+                ]},
             #singlerow{%class="table table-condensed", 
                        cells=[ #tableheader{ body=[
                         "<i class='icon-globe'></i> Updates"
@@ -78,37 +91,58 @@ body() ->
                        #tableheader{body="Show all", class="cell-right"}
                              ]},
             #panel{class="span12", body=
-                   [ E || _ <- lists:seq(1,3), E <- [
-                            #update_element{collapse=paragraph, from="Lorem ipisium", age="3 days", text="Lorem ipsum dolor sit amet, consectetur adipiscing elit. Ut convallis egestas neque, sit amet mollis nisi tincidunt in. Proin fringilla sem vitae enim egestas, ut rutrum diam hendrerit. Nulla facilisi. Curabitur eleifend libero quam, sit amet sodales odio porttitor eget. Integer sit amet consequat magna. Ut eget tempus augue. Donec sodales suscipit ipsum, sed interdum nisl tincidunt a. In pretium mi ac viverra auctor. Nam dapibus interdum lectus et posuere."}
-                            ]]}
-            ]}.    
+                   [#update_element{collapse=paragraph, from=From, age=Age, text=Text} || #db_update{text=Text, subject=From, date=Age} <- Updates
+                        ]}].
 
 %%%
 %% Event handlers
 %%%
 
+event({contact, Id}) ->
+    {ok, Contact} = db:get_contact(Id),
+    wf:session(current_contact, Contact),
+    wf:update(contact_panel, contact_render(Contact));
+event({group, Id}) ->
+    {ok, Contacts} = db:get_contacts_by_group(Id),
+    io:format("User ~p in ~p~n", [Contacts, Id]),
+    wf:session(current_group_id, Id),
+    wf:update(user_list, render_contact_list(Contacts));
 event(Click) ->
     io:format("~p~n",[Click]).
 
-inplace_textbox_event({group, Id}, Name) ->
-    db:update_group_name(Id, Name),
+inplace_textbox_event({name, Id}, Name) ->
+    Contact = wf:session(current_contact),
+    db:save(Contact#db_contact{name=Name}),
+    {ok, Contacts} = db:get_contacts_by_group(wf:session(current_group_id)),
+    wf:update(user_list, render_contact_list(Contacts)),
+    Name;
+inplace_textbox_event({email, Id}, Name) ->
+    Contact = wf:session(current_contact),
+    db:save(Contact#db_contact{email=Name}),
+    Name;
+inplace_textbox_event({phone, Id}, Name) ->
+    Contact = wf:session(current_contact),
+    db:save(Contact#db_contact{phone=Name}),
+    Name;
+inplace_textbox_event({address, Id}, Name) ->
+    Contact = wf:session(current_contact),
+    db:save(Contact#db_contact{address=Name}),
+    Name;
+inplace_textbox_event(T, Name) ->
+    io:format("Saved ~p tag ~p", [Name, T]),
     Name.
 
-drop_event({group, CId}, {subgroup, SId}) ->
-    db:save_subgroup(CId, SId).
-%%%
-%% Helpers
-%%%
-
-group_list() ->
-    {ok, Groups} = db:get_groups(),
-    io:format("~p~n", [Groups]),
-    #list{numbered=false,
-          body=lists:map(fun(#db_group{id=Id, name=Name, subgroups=Sub}) ->
-                    #group_item{gid=Id, name=Name, sub=Sub}
-            end, Groups)
-         }.
-          
-
-
-
+drop_event({contact, CId}, {subgroup, SId}) ->
+    io:format("User: ~p Group: ~p~n", [CId, SId]),
+    {ok, Contacts} = db:get_contacts_by_group(wf:session(current_group_id)),
+    db:add_user_to_group(SId, CId),
+    wf:update(user_list, render_contact_list(Contacts)),
+    wf:update(contact_panel, contact_render(wf:session(current_contact)));
+drop_event({group, CId}, {subgroup, all}) ->
+    db:save_subgroup(CId, undefined),
+    wf:update(group_list, render_group_list());
+drop_event({group, CId}, {subgroup, SId}) when CId /= SId ->
+    db:save_subgroup(CId, SId),
+    wf:update(group_list, render_group_list());
+drop_event(G, P) ->
+    io:format("D&D ~p to ~p~n", [G, P]).

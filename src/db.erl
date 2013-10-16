@@ -28,7 +28,13 @@ next_id(Type) ->
         A -> 
             A+1
     end.
-
+%%%
+%% General routines
+%%
+save(Contact) ->
+    transaction(fun() ->
+                mnesia:write(Contact)
+        end).
 %%%
 %% Task routines
 %%%
@@ -62,6 +68,15 @@ get_task(Id) ->
                 mnesia:read(db_task, Id)
             end).
 
+get_tasks_by_user(UID) ->
+    transaction(fun() ->
+                Tasks = mnesia:match_object(#db_contact_roles{contact=UID, type=db_task, _='_'}),
+                iterate(db_task, Tasks, fun(_, #db_contact_roles{tid=I, role=Role}) ->
+                            [Task] = mnesia:read(db_task, I),
+                            Task#db_task{parent=Role}
+                    end)
+        end).
+
 get_tasks(Parent) ->
     transaction(fun() ->
                         mnesia:select(db_task, [{#db_task{parent=Parent, _='_'}, [], ['$_']}])
@@ -89,6 +104,10 @@ save_expense(Id, Name, Due, Text, Amount, #db_contact{id=From}, #db_contact{id=T
                     ok = mnesia:write(db_expense, Task, write)
             end).
 
+%%%
+%% Updates routines
+%%%
+
 new_update(Subject, Text) ->
     {atomic, ok} = mnesia:transaction(fun() ->
                     N = case mnesia:table_info(db_update, size) of
@@ -106,6 +125,11 @@ new_update(Subject, Text) ->
                                      },
                     ok = mnesia:write(Task)
             end).
+
+get_updates_by_user(UID) ->
+    transaction(fun() ->
+                mnesia:match_object(#db_update{from=UID, _='_'})
+        end).
 
 %%%
 %% Contact routines
@@ -142,10 +166,18 @@ get_contacts_by_group(all) ->
     all_contacts();
 get_contacts_by_group(Group) ->
     transaction(fun() ->
-                U = mnesia:read(db_group_members, Group),
-                iterate(db_contact, U)
+                G = mnesia:select(db_group, [{#db_group{id='$1', subgroups=Group, _='_'}, [], ['$1']}]),
+                U = iterate(db_group_members, [Group | G]),
+                iterate(db_contact, U, fun(Type, #db_group_members{contact=Id}) ->
+                            mnesia:read(Type, Id)
+                    end)
         end).
 
+get_groups_for_user(UID) ->
+    transaction(fun() ->
+                GIDS = mnesia:select(db_group_members, [{#db_group_members{group='$1', contact=UID}, [], ['$1']}]),
+                iterate(db_group, GIDS)
+        end).
 
 %%%
 %% Group routines
@@ -154,11 +186,6 @@ get_contacts_by_group(Group) ->
 get_groups() ->
     transaction(fun() ->
                 get_subgroup(undefined)
-        end).
-
-save_group(Group) ->
-    transaction(fun() ->
-                mnesia:write(Group)
         end).
 
 update_group_name(Id, Name) ->
@@ -224,6 +251,11 @@ all_expenses() ->
 all_updates() ->
     transaction(fun() ->
                 mnesia:match_object(#db_update{_='_'})
+            end).
+
+all_memberss() ->
+    transaction(fun() ->
+                mnesia:match_object(#db_group_members{_='_'})
             end).
 
 all_attachments() ->
@@ -302,6 +334,11 @@ iterate(_, []) ->
     [];
 iterate(Type, [Id|R]) ->
     mnesia:read(Type, Id) ++ iterate(Type, R).
+
+iterate(_, [], _) ->
+    [];
+iterate(Type, [Id|R], Fun) ->
+    Fun(Type, Id) ++ iterate(Type, R).
 
 get_subgroup(G) ->
     Groups = mnesia:match_object(#db_group{subgroups=G, _='_'}),
