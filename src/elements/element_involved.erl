@@ -19,7 +19,7 @@ render_element(_Record = #involved{}) ->
                     #span{ class="add-on", body=[
                             #span{html_encode=false, text="<i class='icon-user'></i>"}
                             ]},
-                    #textbox{id=person, placeholder="People", next=responsible, class="span11"}
+                    #textbox_autocomplete{id=person, tag=contact, next=responsible, class="span11", delegate=common}
                     ]},
             #panel{class="dropdown span3", body=[
                     #dropdown{id=responsible, value="", class="span12", data_fields=[

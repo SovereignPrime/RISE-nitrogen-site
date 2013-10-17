@@ -14,6 +14,7 @@ install()->
     {atomic, ok} = mnesia:create_table(db_update, [{disc_copies, [node()]}, {attributes, record_info(fields, db_update)}, {type, ordered_set}]),
     {atomic, ok} = mnesia:create_table(db_contact_roles, [{disc_copies, [node()]}, {attributes, record_info(fields, db_contact_roles)}, {type, ordered_set}]),
     {atomic, ok} = mnesia:create_table(db_group_members, [{disc_copies, [node()]}, {attributes, record_info(fields, db_group_members)}, {type, bag}]),
+    {atomic, ok} = mnesia:create_table(db_expense_tasks, [{disc_copies, [node()]}, {attributes, record_info(fields, db_expense_tasks)}, {type, bag}]),
     {atomic, ok} = mnesia:create_table(db_attachment, [{disc_copies, [node()]}, {attributes, record_info(fields, db_attachment)}, {type, ordered_set}]).
 
 
@@ -84,20 +85,13 @@ get_tasks(C, _N) ->
 %% Expense routines
 %%%
 
-save_expense(Id, Name, Due, Text, Amount, #db_contact{id=From}, #db_contact{id=To}) ->
-    {atomic, ok} = mnesia:transaction(fun() ->
-                    Task = #db_expense{id=Id,
-                                       name=Name,
-                                       date=Due,
-                                       text=Text,
-                                       amount=Amount,
-                                       from=From,
-                                       to=To,
-                                       status=new
-                                      },
-                    ok = mnesia:write(db_expense, Task, write)
-            end).
-
+get_expense_tasks(EId) ->
+    transaction(fun() ->
+                T = mnesia:read(db_expense_tasks, EId),
+                iterate(db_task, T, fun(Type, #db_expense_tasks{task=Id}) ->
+                            mnesia:read(Type, Id)
+                    end)
+        end).
 %%%
 %% Updates routines
 %%%
@@ -139,9 +133,9 @@ get_contact(Id) ->
 
 get_involved(Id) ->
     transaction(fun() ->
-                R = mnesia:match_object(#db_contact_roles{type=task, tid=Id, _='_'}),
-                lists:map(fun(#db_contact_roles{role=Role, contact=Contact}) ->
-                            #db_contact{name=Name, email=Email} = mnesia:read(Contact),
+                R = mnesia:match_object(#db_contact_roles{type=db_task, tid=Id, _='_'}),
+                L = lists:map(fun(#db_contact_roles{role=Role, contact=Contact}) ->
+                            [ #db_contact{name=Name, email=Email} ] = mnesia:read(db_contact, Contact),
                             {Name, Role}
                     end, R)
         end).
@@ -260,6 +254,10 @@ all_updates() ->
                 mnesia:match_object(#db_update{_='_'})
             end).
 
+all_expense_taskss() ->
+    transaction(fun() ->
+                mnesia:match_object(#db_expense_tasks{_='_'})
+            end).
 all_memberss() ->
     transaction(fun() ->
                 mnesia:match_object(#db_group_members{_='_'})
@@ -285,6 +283,10 @@ all_contacts() ->
                 mnesia:match_object(#db_contact{_='_'})
             end).
 
+all_involved() ->
+    transaction(fun() ->
+                mnesia:match_object(#db_contact_roles{_='_'})
+            end).
 %%%
 %% Account routines
 %%%

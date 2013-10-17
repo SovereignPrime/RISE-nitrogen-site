@@ -86,48 +86,52 @@ body() ->
             ]}.
 render_task(#db_task{id=Id, name=Name, due=Due, text=Text, parent=Parent, status=Status}=Task) ->
     {ok, Involved} = db:get_involved(Id),
-    %{ok, MyRole} = db:get_my_role(Id),
+    {My, InvolvedN} = case lists:partition(fun({"My", _}) -> true; (_) -> false end, Involved) of
+        {[{_,M}], I} ->
+            {M, I};
+        {[], I} ->
+            {no, I}
+    end,
+
     [
-            #panel{ class="row-fluid", body=[
-                    #panel{ class="span11", body=[
-                            #h1{text=Name},
-                            "Status: ", Status, #br{},
-                            "Due: ", Due , #br{},
-                            #br{},
-                            "My role - ", "Accountable", #br{},
-                            lists:map(fun({Name, Role}) ->
-                                        [ Name, " - ", Role]
-                                end, Involved)
+        #panel{ class="row-fluid", body=[
+                #panel{ class="span11", body=[
+                        #h1{text=Name},
+                        "Status: ", Status, #br{},
+                        "Due: ", Due , #br{},
+                        #br{},
+                        "My role - ", My, #br{},
+                        lists:map(fun({Name, Role}) ->
+                                    [ Name, " - ", Role, #br{}]
+                            end, InvolvedN)
+                        ]},
+                #panel{ class="span1", body=[
+                        #panel{class="", body = #link{body=[
+                                    "<i class='icon-edit icon-large'></i><br>"      
+                                    ], postback={edit, Id}, new=false}
+                              },
+                        #panel{class="", body="<i class='icon-reorder icon-large'></i>"}
+                        ]}
+                ]},
+        #panel{ class="row-fluid", body=[
+                #panel{ class="span12", body=Text}
+                ]},
+        case db:get_attachments(Task) of
+            {ok, []} ->
+                [];
+            {ok, [], undefined} ->
+                [];
+            {ok, Attachments} ->
+                [
+                    #panel{class="row-fluid", body=[
+                            #panel{class="span6", body="<i class='icon-file-alt'></i> Attachment"},
+                            #panel{class="span2 offset4", body="<i class='icon-download-alt'></i> Download all"}
                             ]},
-                    #panel{ class="span1", body=[
-                            #panel{class="", body = #link{body=[
-                                        "<i class='icon-edit icon-large'></i><br>"      
-                                        ], postback={edit, Id}, new=false}
-                                  },
-                            #panel{class="", body="<i class='icon-reorder icon-large'></i>"}
-                            ]}
-
-
-                    ]},
-            #panel{ class="row-fluid", body=[
-                    #panel{ class="span12", body=Text}
-                    ]},
-            case db:get_attachments(Task) of
-                {ok, []} ->
-                    [];
-                {ok, [], undefined} ->
-                    [];
-                {ok, Attachments} ->
-                    [
-                        #panel{class="row-fluid", body=[
-                                #panel{class="span6", body="<i class='icon-file-alt'></i> Attachment"},
-                                #panel{class="span2 offset4", body="<i class='icon-download-alt'></i> Download all"}
-                                ]},
-                        lists:map(fun(#db_file{path=Path, size=Size, date=Date, id=Id}) ->
-                                    #attachment{filename=Path, size=Size, time=Date}
-                            end, Attachments)
-                        ]
-            end
+                    lists:map(fun(#db_file{path=Path, size=Size, date=Date, id=Id}) ->
+                                #attachment{filename=Path, size=Size, time=Date}
+                        end, Attachments)
+                    ]
+        end
         ].
 
 event({task_chosen, Id}) ->
