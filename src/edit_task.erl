@@ -124,7 +124,7 @@ event(save) ->
     wf:session(current_task, NTask),
     db:save_attachments(wf:session(current_task), wf:session_default(task_attached_files, [])),
     save_payments(TaskName),
-    common:save_involved(NTask),
+    common:save_involved(db_task, Id),
     wf:session(task_attached_files, undefined),
     wf:redirect("/tasks");
 

@@ -60,11 +60,11 @@ autocomplete_select_event({struct, [{<<"id">>, K}, {<<"value">>, V}]} = Selected
     io:format("Selected ~p~n", [Selected]),
     wf:session(V, wf:to_integer(K)).
 
-save_involved(#db_task{id=TId}=Task) ->
+save_involved(Type, TId) ->
     Involved = wf:qs(person),
     Role = wf:qs(responsible),
     io:format("~p ~p~n", [Involved, Role]),
-    List = [ #db_contact_roles{type=db_task, tid=TId, role=Role, contact=wf:session(wf:to_binary(Contact))} || {Contact, Role} <- lists:zip(Involved, Role), Involved /= [[]], Contact /= ""],
+    List = [ #db_contact_roles{type=Type, tid=TId, role=Role, contact=wf:session(wf:to_binary(Contact))} || {Contact, Role} <- lists:zip(Involved, Role), Involved /= [[]], Contact /= ""],
     lists:foreach(fun(P) -> 
                 {ok, NPId} = db:next_id(db_contact_roles),
                 db:save(P#db_contact_roles{id=NPId})

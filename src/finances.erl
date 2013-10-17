@@ -10,7 +10,7 @@ main() -> common:main().
 
 title() -> "Hello from relationships.erl!".
 
-icon() -> "<i class='icon-file-text-alt icon-2x'></i>".
+icon() -> "<i class='icon-usd icon-2x'></i>".
 
 buttons() ->
     #panel{class='row-fluid', body=[
@@ -48,12 +48,20 @@ body() ->
                 lists:map(fun(#db_expense{id=Id, name=Name, date=Date, type=Type, text=Text, amount=Amount, status=Status, to=To, from=From}) ->
                             {ok, #db_contact{name=FromS}} = db:get_contact(From),
                             {ok, #db_contact{name=ToS}} = db:get_contact(To),
+                            {ok, Tasks} = db:get_expense_tasks(Id),
                             #payment_row{
                                 %id=Id,
                                 from=FromS,
                                 to=ToS,
-                                tasks=Name,
-                                due=Date,
+                                tasks=lists:map(fun(#db_task{name=TN}) ->
+                                            TN ++ ";"
+                                    end, Tasks),
+                                due=case Date of
+                                    {Statrt, Due} ->
+                                        [Statrt, " - ", Due];
+                                    D ->
+                                        D
+                                end,
                                 status=Status,
                                 amount=Amount,
                                 %currency=Currency,
