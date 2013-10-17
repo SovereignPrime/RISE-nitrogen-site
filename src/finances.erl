@@ -47,12 +47,12 @@ body() ->
                         ]},
                 lists:map(fun(#db_expense{id=Id, name=Name, date=Date, type=Type, text=Text, amount=Amount, status=Status, to=To, from=From}) ->
                             {ok, #db_contact{name=FromS}} = db:get_contact(From),
-                            %{ok, #db_contact{name=ToS}} = db:get_contact(To),
+                            {ok, #db_contact{name=ToS}} = db:get_contact(To),
                             #payment_row{
                                 %id=Id,
                                 from=FromS,
-                                to=To,
-                                %tasks=Tasks,
+                                to=ToS,
+                                tasks=Name,
                                 due=Date,
                                 status=Status,
                                 amount=Amount,

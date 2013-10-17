@@ -238,7 +238,8 @@ save_attachments(Record, Files) ->
     Type = element(1, Record),
     Id = element(2, Record),
      transaction(fun() ->
-                save_attachment(Type, Id, Files, db:next_id(db_attachment))
+                {ok, NId} = db:next_id(db_attachment),
+                save_attachment(Type, Id, Files, NId)
             end).
 
 %%%

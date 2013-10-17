@@ -118,16 +118,14 @@ event(save) ->
     Due = wf:q(due),
     Involved = wf:qs(person),
     Role = wf:qs(responsible),
-    Payable = wf:qs(payable),
-    Amounts = wf:qs(amount),
     Text = wf:q(text),
     Id = wf:session(current_task_id),
     Task = wf:session(current_task),
     NTask = Task#db_task{name=TaskName, due=Due, text=Text},
-    io:format("Payable ~p sum ~p~n", [Payable, Amounts]),
     db:save(NTask),
     wf:session(current_task, NTask),
     db:save_attachments(wf:session(current_task), wf:session_default(task_attached_files, [])),
+    save_payments(TaskName),
     wf:redirect("/tasks");
 
 event(Ev) ->
@@ -146,5 +144,20 @@ autocomplete_enter_event(Term, _Tag) ->
     {ok, Contacts} = db:all_contacts(),
     List = [{struct, [{id, Id}, {label, wf:to_binary(Name)}, {valie, Id}]} || #db_contact{id=Id, name=Name} <- Contacts, string:str(string:to_lower(wf:to_list(Name)), string:to_lower(Term)) > 0],
     mochijson2:encode(List).
-autocomplete_select_event(Selected, _Tag) ->
-    io:format("Selected ~p~n", [Selected]).
+autocomplete_select_event({struct, [{<<"id">>, K}, {<<"value">>, V}]} = Selected, _Tag) ->
+    io:format("Selected ~p~n", [Selected]),
+    wf:session(V, wf:to_integer(K)).
+
+%%%
+%% Helpers
+%%%
+save_payments(TaskName) ->
+    Payable = wf:qs(payable),
+    Amounts = wf:qs(amount),
+    io:format("~p~n", [Payable]),
+    #db_contact{id=UID} = wf:user(),
+    Payments = [ #db_expense{name=TaskName, from=wf:session(wf:to_binary(Pay)), to=UID, amount=Am, status=new} || {Pay, Am} <- lists:zip(Payable, Amounts)], 
+    lists:foreach(fun(P) -> 
+                {ok, NPId} = db:next_id(db_expense),
+                db:save(P#db_expense{id=NPId})
+        end, Payments).
