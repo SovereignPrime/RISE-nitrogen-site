@@ -176,7 +176,7 @@ event(save) ->
     Text = wf:q(text),
     Status = wf:q(status),
     #db_expense{id=Id, type=Type} = CE = wf:session(current_expense),
-    #db_contact{id=UID} = wf:user(),
+    [ #db_contact{id=UID} ] = wf:user(),
     NCE = case Type of
         expense ->
             CE#db_expense{name=Name, amount=Amount, text=Text, status=Status, date=Due, from=UID};
@@ -185,7 +185,7 @@ event(save) ->
             CE#db_expense{name=Name, amount=Amount, text=Text, status=Status, date={Purchase, Due}, from=UID}
     end,
     db:save(NCE),
-    db:save_attachments(Id, wf:session_default(attached_files, [])),
+    db:save_attachments(NCE, wf:session_default(attached_files, [])),
     common:save_involved(db_expense, Id),
     wf:redirect("/finances");
 

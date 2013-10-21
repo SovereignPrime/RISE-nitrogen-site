@@ -15,8 +15,6 @@ reflect() -> record_info(fields, file_row).
 
 -spec render_element(#file_row{}) -> body().
 render_element(_Record = #file_row{id=Id, name=Name, type=Type, size=Size, for=For, linked=Linked, date=Date, seed=Seed, peer=Peer, status=Status}) ->
-    {Y, M, D} = Date,
-    DateS = io_lib:format("~p-~p-~p", [Y, M, D]),
                 #tablerow{ cells=[
                         #tablecell{body=[
                                 #checkbox{id=check,  postback={check, id}, checked=false}
@@ -26,7 +24,7 @@ render_element(_Record = #file_row{id=Id, name=Name, type=Type, size=Size, for=F
                         #tablecell{text=Size, class=""},
                         #tablecell{text=For, class=""},
                         #tablecell{text=Linked, class=""},
-                        #tablecell{text=DateS, class=""},
+                        #tablecell{text=sugar:date_format(Date), class=""},
                         #tablecell{text=Seed, class=""},
                         #tablecell{text=Peer, class=""},
                         #tablecell{text=Status, class=""}

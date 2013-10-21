@@ -16,6 +16,7 @@
                          text,
                          age,
                          attachments,
+                         subject,
                          collapse=true
                         }).
 -record(attachment, {?ELEMENT_BASE(element_attachment),

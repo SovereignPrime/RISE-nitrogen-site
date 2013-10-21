@@ -23,7 +23,7 @@ buttons() ->
             ]}.
 
 left() ->
-    Subject = wf:session(subject),
+    Subject = wf:session(current_subject),
     {ok, Updates} = db:get_updates_by_subject(Subject),
     [
     #panel{ class="span3", body=[
@@ -44,13 +44,15 @@ left() ->
                     ]}
                 ]}].
 body() ->
+    Subject = wf:session(current_subject),
+    io:format("~p~n",[Subject]),
     #panel{ class="span9", body=[
             #panel{ class="row-fluid", body=[
                     #panel{ class="input-prepend span11", body=[
                             #span{ class="add-on", body=[
                                     #span{html_encode=false, text="<i class='icon-globe'></i>"}
                                     ]},
-                            #textbox{id=name, placeholder="Re:something", next=due, class="span12"}
+                            #textbox{id=name, placeholder="Re:something", text=Subject, next=due, class="span12"}
                             ]}
                     ]},
             #addable_row{id=roles, body= #to{}},

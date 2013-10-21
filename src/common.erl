@@ -50,17 +50,20 @@ event(add_task) ->
     {ok, Id} = db:next_id(db_task),
     wf:session(current_task_id, Id),
     wf:session(current_task, #db_task{id=Id}),
+    wf:session(attached_files, undefined),
     wf:redirect("/edit_task");
 event(add_expense) ->
     {ok, Id} = db:next_id(db_expense),
     wf:session(current_expense_id, Id),
     wf:session(current_expense, #db_expense{id=Id}),
+    wf:session(attached_files, undefined),
     wf:redirect("/edit_expense");
 event(add_update) ->
     {ok, Id} = db:next_id(db_update),
     wf:session(current_subject, undefined),
     wf:session(current_update_id, Id),
     wf:session(current_update, #db_update{id=Id}),
+    wf:session(attached_files, undefined),
     wf:redirect("/edit_update");
 event(check_all) ->
     case wf:q(check_all) of

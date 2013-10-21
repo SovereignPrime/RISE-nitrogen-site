@@ -17,7 +17,7 @@ render_element(#update_preview{icon=Icon, from=From, age=Age, subject=Subject, t
         #panel{class="row-fluid", body=[
                 #panel{class='span1', body=["<i class='icon-" ++ Icon ++ "'></i>"]},
                 #panel{class='span7 ', body=["<b>From: </b>", From]},
-                #panel{class='span4 cell-right', body=[Age]}
+                #panel{class='span4 cell-right', body=[sugar:date_format(Age)]}
                 ]},
         case Subject of 
             undefined -> "";

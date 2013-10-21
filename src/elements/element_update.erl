@@ -16,21 +16,24 @@ render_element(#update_element{id=Id, from=From, text=Text, age=Age, collapse=tr
         #panel{id=Id, class="row-fluid", body=[
                 #panel{class="span2", body="<i class='icon-chevron-down'></i> " ++ From},
             #panel{class="span8", body=io_lib:format("~100s", [Text])},
-                #panel{class="span2", body=Age}
+                #panel{class="span2", body=sugar:date_format(Age)}
             ], actions=#event{type=click, postback={unfold, Record}}};
-render_element(#update_element{id=Id, from=From, text=Text, age=Age, collapse=false, attachments=Attachments}=Record) ->
+render_element(#update_element{id=Id, from=From, text=Text, age=Age, subject=Subject, collapse=false, attachments=Attachments}=Record) ->
     #panel{id=Id, body=[
         #panel{class="row-fluid", body=[
                 #panel{class="span1", body=From},
-                #panel{class="span2 offset9", body=Age}
+                #panel{class="span2 offset9", body=sugar:date_format(Age)}
                 ], actions=#event{type=click, postback={fold, Record}}},
         #panel{class="row-fluid", body=[
                 #panel{class="span12", body=Text}
                 ]},
         #panel{class="row-fluid", body=[
                 #panel{class="span3 offset4", body=[
-                        #span{class="icon-reply icon-large", text=" "},
-                        #span{class="icon-refresh icon-large", text=" "},
+                            #link{body=[
+                                    #span{class="icon-reply icon-large", text=" "}
+                                    ], postback={reply, Subject}, new=false},
+                            
+                        %#span{class="icon-refresh icon-large", text=" "},
                         #span{class="icon-reorder icon-large"}
                         ]}]},
             case Attachments of
@@ -51,7 +54,7 @@ render_element(#update_element{from=From, text=Text, age=Age, collapse=paragraph
     [
         #panel{class="row", body=[
                 #panel{class="span9", body="<b>Subject: </b>" ++ From},
-                #panel{class="span2 cell-right", body=Age}
+                #panel{class="span2 cell-right", body=sugar:date_format(Age)}
                 ]},
         #panel{class="row", body=[
                 #panel{class="span12", body=Text}

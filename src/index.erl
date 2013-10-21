@@ -28,7 +28,7 @@ buttons() ->
 
 left() ->
     {ok, Updates} = db:get_updates(),
-    #panel{id=left,class="span3", body=[ #update_preview{icon="globe", from=From, age=wf:f("~p", [ Age ]), subject=Subject, text=Text, flag=true} || 
+    #panel{id=left,class="span3", body=[ #update_preview{icon="globe", from=From, age=Age, subject=Subject, text=Text, flag=true} || 
             #db_update{from=From, date=Age, subject=Subject, text=Text} <- Updates]}.
 
 body() ->
@@ -39,7 +39,7 @@ render_body(Subject) ->
     [
         #h1{html_encode=false, text="<i class='icon-globe'></i> " ++ Subject},
         [
-        #update_element{collapse=true, from=From, text=Text, age=wf:f("~p", [ Age ]), uid=Id} || #db_update{id=Id, from=From, text=Text, date=Age} <- Updates
+        #update_element{collapse=true, from=From, text=Text, age= Age, uid=Id, subject=Subject} || #db_update{id=Id, subject=Subject, from=From, text=Text, date=Age} <- Updates
             ]
 
 
@@ -49,13 +49,17 @@ render_body(Subject) ->
 event({selected, Subject}) ->
     wf:update(body, render_body(Subject));
 event({unfold, #update_element{id=Id, uid=Uid}=Update}) ->
-    io:format("~p ~p~n", [Uid, Update]),
     {ok,Attachments} = db:get_attachments(#db_update{id=Uid}),
     wf:replace(Id, Update#update_element{collapse=false, attachments=[
                 #attachment{filename=File, size=Size, time=Time} || #db_file{path=File, size=Size, date=Time} <- Attachments
                                                                ]});
 event({fold, #update_element{id=Id}=Update}) ->
-    io:format("~p ~p~n", [Id, Update]),
     wf:replace(Id, Update#update_element{collapse=true});
+event({reply, Subject}) ->
+    {ok, Id} = db:next_id(db_update),
+    wf:session(current_subject, Subject),
+    wf:session(current_update, #db_update{id=Id, subject=Subject}),
+    wf:session(attached_files, undefined),
+    wf:redirect("/edit_update");
 event(Click) ->
     io:format("Event ~p in ~p~n", [Click, ?MODULE]).
