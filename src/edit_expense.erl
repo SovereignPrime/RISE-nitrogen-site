@@ -56,7 +56,7 @@ render_left() ->
               },
             #panel{ class="row-fluid", body=[
                     #panel{ class="span12", body=[
-                            #textbox{id="amount", placeholder="Amount", next=order, class="input-block-level"}
+                            #textbox{id="amount", placeholder="Amount", text=Amount, next=order, class="input-block-level"}
                             ]}
                     ]},
             #panel{ class="row-fluid", body=[
@@ -126,18 +126,19 @@ body() ->
                                             ]}
                                     ]};
                         assert ->
+                            {B, E} = Due,
                             [
                             #panel{ class="input-prepend span6", body=[
                                     #span{ class="add-on", body=[
                                             #span{html_encode=false, text="<i class='icon-calendar'></i>"}
                                             ]},
-                                    #datepicker_textbox{id=purchase, placeholder="Purchase date", text=Due, class="span10"}
+                                    #datepicker_textbox{id=purchase, placeholder="Purchase date", text=B, class="span10"}
                                     ]},
                             #panel{ class="input-prepend span6", body=[
                                     #span{ class="add-on", body=[
                                             #span{html_encode=false, text="<i class='icon-calendar'></i>"}
                                             ]},
-                                    #datepicker_textbox{id=due, placeholder="End of life", text=Due, class="span10"}
+                                    #datepicker_textbox{id=due, placeholder="End of life", text=E, class="span10"}
                                     ]}
                                 ]
                     end
@@ -176,7 +177,7 @@ event(save) ->
     Text = wf:q(text),
     Status = wf:q(status),
     #db_expense{id=Id, type=Type} = CE = wf:session(current_expense),
-    [ #db_contact{id=UID} ] = wf:user(),
+    #db_contact{id=UID} = wf:user(),
     NCE = case Type of
         expense ->
             CE#db_expense{name=Name, amount=Amount, text=Text, status=Status, date=Due, from=UID};

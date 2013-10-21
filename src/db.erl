@@ -85,6 +85,11 @@ get_tasks(C, _N) ->
 %% Expense routines
 %%%
 
+get_expense(Id) ->
+    transaction(fun() ->
+                mnesia:read(db_expense, Id)
+        end).
+
 get_expense_tasks(EId) ->
     transaction(fun() ->
                 T = mnesia:read(db_expense_tasks, EId),

@@ -12,7 +12,7 @@
 reflect() -> record_info(fields, payment_row).
 
 -spec render_element(#payment_row{}) -> body().
-render_element(_Record = #payment_row{id=Id,
+render_element(_Record = #payment_row{pid=Id,
                                       from=From,
                                       to=To,
                                       tasks=Tasks,
@@ -23,7 +23,7 @@ render_element(_Record = #payment_row{id=Id,
                                       type=Type}) ->
     #tablerow{ cells=[
             #tablecell{body=[
-                    #checkbox{id=check,  postback={check, Id}, checked=false}
+                    #checkbox{id=wf:f("check~p", [ Id ]),  postback={check, Id}, checked=false}
                     ], class=""},
             #tablecell{text=From, class=""},
             #tablecell{text=To, class=""},

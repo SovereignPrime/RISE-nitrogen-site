@@ -66,6 +66,7 @@
                    status
     }).
 -record(payment_row, {?ELEMENT_BASE(element_payment_row),
+                      pid,
                       from,
                       to,
                       tasks,

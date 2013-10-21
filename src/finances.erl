@@ -22,7 +22,7 @@ buttons() ->
                                           body=["<i class='icon-reorder'></i> More options"], url="#", new=false},
                                     #list{class="dropdown-menu", numbered=false,
                                           body=[
-                                            #listitem{body=#link{body=["<i class='icon-edit></i> Edit selected"], postback=edit, new=false}},
+                                            #listitem{body=#link{body=["<i class='icon-edit'></i> Edit selected"], postback=edit, new=false}},
                                             #listitem{body=#link{body=["<i class='icon-list-alt'></i> Archive selected"], postback=edit, new=false}},
                                             #listitem{body=#link{body=["<i class='icon-external-link'></i> Export as CSV"], postback=edit, new=false}},
                                             #listitem{body=#link{body=["<i class=''></i> Pay now"], postback=edit, new=false}},
@@ -73,7 +73,7 @@ body() ->
                             {ok, #db_contact{name=ToS}} = db:get_contact(To),
                             {ok, Tasks} = db:get_expense_tasks(Id),
                             #payment_row{
-                                %id=Id,
+                                pid=Id,
                                 from=FromS,
                                 to=ToS,
                                 tasks=lists:map(fun(#db_task{name=TN}) ->
@@ -93,5 +93,27 @@ body() ->
                 ]}
 
         ].    
+
+event({check, Id}) ->
+    Checked = wf:session_default(checked, sets:new()),
+    io:format("~p ~p~n", [wf:q(wf:f("check~p", [Id])), sets:to_list(Checked)]),
+    case wf:q(wf:f( "check~p", [ Id ] )) of
+        undefined ->
+                wf:session(checked, sets:del_element(Id, Checked));
+            "on" ->
+                wf:session(checked, sets:add_element(Id, Checked))
+    end;
+event(edit) ->
+    Checked = wf:session_default(checked, sets:new()),
+    case sets:size(Checked) of
+        1 ->
+            [Cur] = sets:to_list(Checked),
+            {ok, [ Expense ]} = db:get_expense(Cur),
+            wf:session(current_expense, Expense),
+            wf:redirect("/edit_expense");
+        N->
+            io:format("~p~n", [N]),
+            wf:wire(#alert{text="Can't edit more than one expense at a time"})
+    end;
 event(Click) ->
     io:format("~p~n",[Click]).

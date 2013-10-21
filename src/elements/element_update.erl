@@ -29,7 +29,7 @@ render_element(#update_element{id=Id, from=From, text=Text, age=Age, subject=Sub
                 ]},
         #panel{class="row-fluid", body=[
                 #panel{class="span3 offset4", body=[
-                            #link{body=[
+                            #link{class="btn btn-link", body=[
                                     #span{class="icon-reply icon-large", text=" "}
                                     ], postback={reply, Subject}, new=false},
                             
