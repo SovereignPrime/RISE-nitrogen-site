@@ -89,7 +89,8 @@ start_upload_event(_) ->
 finish_upload_event(filename, FName, FPath, _Node) ->
     FID = filename:basename(FPath),
     io:format("File uploaded: ~p to ~p for ~p~n", [FName, FPath, new]),
-    db:save_file(FName, FPath, wf:user()),
+    [User] = wf:user(),
+    db:save_file(FName, FPath,User),
     wf:session(attached_files, wf:session_default(attached_files, []) ++ [FID]),
     wf:update(files, render_files()).
 

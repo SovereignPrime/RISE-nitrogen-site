@@ -96,32 +96,22 @@ get_expense_tasks(EId) ->
 %% Updates routines
 %%%
 
-new_update(Subject, Text) ->
-    {atomic, ok} = mnesia:transaction(fun() ->
-                    N = case mnesia:table_info(db_update, size) of
-                        '$end_of_table' ->
-                            0;
-                        A -> 
-                            A
-                    end,
-                    Task = #db_update{id=N+1,
-                                      date=now(),
-                                      from="Me",
-                                      subject=Subject,
-                                      text=Text,
-                                      status=new
-                                     },
-                    ok = mnesia:write(Task)
-            end).
-
 get_updates() ->
     transaction(fun() ->
-                mnesia:select(db_update, [{#db_update{status='$1', _='_'}, [{'/=', '$1', archive}], ['$_']}])
+                Upd = mnesia:select(db_update, [{#db_update{status='$1', _='_'}, [{'/=', '$1', archive}], ['$_']}]),
+                iterate(db_contact, Upd, fun(Type, #db_update{from=F}=R) ->
+                                [#db_contact{name=U}] = mnesia:read(db_contact, F),
+                                [ R#db_update{from=U} ]
+                        end)
         end).
 
 get_updates_by_subject(Subject) ->
     transaction(fun() ->
-                mnesia:select(db_update, [{#db_update{status='$1', subject=Subject, _='_'}, [{'/=', '$1', archive}], ['$_']}])
+                Upd = mnesia:select(db_update, [{#db_update{status='$1', subject=Subject, _='_'}, [{'/=', '$1', archive}], ['$_']}]),
+                iterate(db_contact, Upd, fun(Type, #db_update{from=F}=R) ->
+                                [#db_contact{name=U}] = mnesia:read(db_contact, F),
+                                [ R#db_update{from=U} ]
+                        end)
         end).
 
 get_updates_by_user(UID) ->

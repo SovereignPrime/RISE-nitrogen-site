@@ -25,18 +25,11 @@ buttons() ->
 left() ->
     Subject = wf:session(subject),
     {ok, Updates} = db:get_updates_by_subject(Subject),
+    [
     #panel{ class="span3", body=[
             #panel{ class="row-fluid", body=[
-                    #panel{ class="span12", body=[
-                            "<i class='icon-file-alt'></i> Attachments", #br{},
-                            #droppable{tag=filename, body=[
-                                    #panel{ class="filedrop", body=[
-                                            #br{}, "Drag and drop files here", #br{},#br{}
-                                            ]}
-                                    ]},
-
+                    common:render_files(),
                             "<i class='icon-th-large'></i> Select from my files", #br{}
-                            ]}
                     ]},
             #panel{ class="row-fluid", body=[
                     case Updates of
@@ -49,7 +42,7 @@ left() ->
                                     ]}
                     end
                     ]}
-            ]}.
+                ]}].
 body() ->
     #panel{ class="span9", body=[
             #panel{ class="row-fluid", body=[
@@ -60,7 +53,7 @@ body() ->
                             #textbox{id=name, placeholder="Re:something", next=due, class="span12"}
                             ]}
                     ]},
-            #addable_row{id=roles, body= #involved{}},
+            #addable_row{id=roles, body= #to{}},
             #panel{ class="row-fluid", body=[
                     #panel{class="span12", body=[
                             #textarea{class="input-block-level",rows=15, placeholder="Some text here", id=text}
@@ -78,10 +71,14 @@ body() ->
             
     
 event(save) ->
-    Name = wf:q(name),
+    Subject = wf:q(name),
     Involved = wf:qs(person),
     Text = wf:q(text),
-    db:new_update(Name, Text);
-
+    Update = wf:session(current_update),
+    [ #db_contact{id=UID} ] = wf:user(),
+    NUpdate = Update#db_update{subject=Subject, text=Text, from=UID,to="To", date=date(), status=new},
+    db:save(NUpdate),
+    db:save_attachments(NUpdate, wf:session_default(attached_files, [])),
+    wf:redirect("/");
 event(Ev) ->
     io:format("Event ~p in module ~p~n", [Ev, ?MODULE]).
