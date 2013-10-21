@@ -15,8 +15,19 @@ main() ->
             wf:wire('new_group', #event{type=click, postback=add_group, delegate=?MODULE}),
             wf:wire('new_task', #event{type=click, postback=add_task, delegate=?MODULE}),
             wf:wire('new_expense', #event{type=click, postback=add_expense, delegate=?MODULE}),
+            wf:wire('new_update', #event{type=click, postback=add_update, delegate=?MODULE}),
             T
     end.
+
+render_files() ->
+    {ok, Attachments} = db:get_files(wf:session_default(attached_files, [])),
+    #panel{ class="span12", body=[
+            "<i class='icon-file-alt'></i> Attachments", #br{},
+            #upload{id=attachments, tag=filename, delegate=common, droppable=true,show_button=false, droppable_text="Drag and drop files here",  file_text=" Select my files"},
+            lists:map(fun(#db_file{path=Path, size=Size, date=Date, id=Id}) ->
+                        #attachment{filename=Path, size=Size, time=Date}
+                end, Attachments)
+            ]}.
 
 event(add_group) ->
     {ok, Id} = db:next_id(db_group),
@@ -45,6 +56,19 @@ event(add_expense) ->
     wf:session(current_expense_id, Id),
     wf:session(current_expense, #db_expense{id=Id}),
     wf:redirect("/edit_expense");
+event(add_update) ->
+    {ok, Id} = db:next_id(db_update),
+    wf:session(current_subject, undefined),
+    wf:session(current_update_id, Id),
+    wf:session(current_update, #db_update{id=Id}),
+    wf:redirect("/edit_update");
+event(check_all) ->
+    case wf:q(check_all) of
+        "on" ->
+            wf:replace(check, #checkbox{id=check,  postback=check_all, checked=true, delegate=common});
+        undefined ->
+            wf:replace(check, #checkbox{id=check,  postback=check_all, checked=false, delegate=common})
+    end;
 event(E) ->
     io:format("Event ~p occured in ~p~n", [E, ?MODULE]).
 
@@ -59,6 +83,15 @@ autocomplete_enter_event(Term, _Tag) ->
 autocomplete_select_event({struct, [{<<"id">>, K}, {<<"value">>, V}]} = Selected, _Tag) ->
     io:format("Selected ~p~n", [Selected]),
     wf:session(V, wf:to_integer(K)).
+
+start_upload_event(_) ->
+    ok.
+finish_upload_event(filename, FName, FPath, _Node) ->
+    FID = filename:basename(FPath),
+    io:format("File uploaded: ~p to ~p for ~p~n", [FName, FPath, new]),
+    db:save_file(FName, FPath, wf:user()),
+    wf:session(attached_files, wf:session_default(attached_files, []) ++ [FID]),
+    wf:update(files, render_files()).
 
 save_involved(Type, TId) ->
     Involved = wf:qs(person),

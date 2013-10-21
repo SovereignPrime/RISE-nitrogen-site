@@ -69,13 +69,11 @@ left() ->
                             #link{url="/tasks", body="<i class='icon-th-large'></i> Edit/View task tree"}, #br{}
                             ]}
                     ]},
-            #panel{ class="row-fluid", body=[
-                    #panel{ class="span12", body=[
-                            "<i class='icon-file-alt'></i> Attachments", #br{},
-                            #upload{id=attachments, tag=filename, delegate=?MODULE, droppable=true,show_button=false, droppable_text="Drag and drop files here",  file_text=" Select my files"}
-                            ]}
+            #panel{id=files, class="row-fluid", body=[
+                    common:render_files()
                     ]}
             ]}.
+
 
 body() ->
     #db_task{id=Id, name=Name, due=Due, text=Text} = wf:session(current_task),
@@ -122,7 +120,7 @@ event(save) ->
     NTask = Task#db_task{name=TaskName, due=Due, text=Text},
     db:save(NTask),
     wf:session(current_task, NTask),
-    db:save_attachments(wf:session(current_task), wf:session_default(task_attached_files, [])),
+    db:save_attachments(wf:session(current_task), wf:session_default(attached_files, [])),
     save_payments(TaskName),
     common:save_involved(db_task, Id),
     wf:session(task_attached_files, undefined),
@@ -131,13 +129,6 @@ event(save) ->
 event(Ev) ->
     io:format("Event ~p in module ~p~n", [Ev, ?MODULE]).
 
-start_upload_event(_) ->
-    ok.
-finish_upload_event(filename, FName, FPath, _Node) ->
-    FID = filename:basename(FPath),
-    io:format("File uploaded: ~p to ~p for ~p~n", [FName, FPath, new]),
-    db:save_file(FName, FPath, wf:user()),
-    wf:session(task_attached_files, wf:session_default(task_attached_files, []) ++ [FID]).
 
 
 %%%

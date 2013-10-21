@@ -34,7 +34,7 @@ render_element(#vcard{id=Id, photo=Photo, name=Name, email=Email, phone=Phone, a
                                 #inplace_textbox{text=Name, tag={name, Id}}
                                                  },% " <i class='clearfix icon-edit icon-large'></i>",
                             #panel{body= [ "e-mail: ",
-                                        #inplace_textbox{class="inline", tag={ email, Id}, text=  Email }
+                                          #inplace_textbox{class="inline", tag={ email, Id}, text=  Email, validators=#is_email{text="You provided wrong e-mail address"}}
                                          ]},
                             #panel{body= [
                                     "tel.: ",

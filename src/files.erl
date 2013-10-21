@@ -34,7 +34,7 @@ body() ->
         #table{ rows=[
                 #tablerow{ cells=[
                         #tablecell{body=[
-                                #checkbox{id=check_all,  postback=check_all, checked=false}
+                                #checkbox{id=check_all,  postback=check_all, checked=false, delegate=common}
                                 ], class=""},
                         #tableheader{text="File name", class=""},
                         #tableheader{text="Type", class=""},

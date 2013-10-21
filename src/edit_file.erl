@@ -37,11 +37,7 @@ left() ->
 body() ->
     #panel{ class="span9", body=[
             #panel{ class="row-fluid", body=[
-                    #panel{ class="span12", body=[
-                            "<i class='icon-file-alt'></i> Attachments", #br{},
-                            #upload{tag=filename, delegate=?MODULE, droppable=true,show_button=false, droppable_text="Drag and drop files here",  file_text=" Select my files"},
-                            "<i class='icon-upload'></i> Classic upload", #br{}
-                            ]}
+                            common:render_files()
                     ]}]}.
     
 event(click) ->
@@ -50,9 +46,3 @@ event(click) ->
         actions=#effect { effect=highlight }
     }).
 
-start_upload_event(_) ->
-    ok.
-finish_upload_event(filename, FName, FPath, _Node) ->
-    FID = filename:basename(FPath),
-    io:format("File uploaded: ~p to ~p ~n", [FName, FPath]),
-    db:save_file(FName, FPath, wf:user()).

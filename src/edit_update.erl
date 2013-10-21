@@ -3,6 +3,7 @@
 -compile(export_all).
 -include_lib("nitrogen_core/include/wf.hrl").
 -include("records.hrl").
+-include("db.hrl").
 
 main() -> common:main().
 
@@ -22,6 +23,8 @@ buttons() ->
             ]}.
 
 left() ->
+    Subject = wf:session(subject),
+    {ok, Updates} = db:get_updates_by_subject(Subject),
     #panel{ class="span3", body=[
             #panel{ class="row-fluid", body=[
                     #panel{ class="span12", body=[
@@ -36,10 +39,15 @@ left() ->
                             ]}
                     ]},
             #panel{ class="row-fluid", body=[
-                    #panel{ class="span12", body=[
-                            "<i class='icon-file-alt'></i> Previous updates", #br{},
-                            #update_preview{flag=false, age="10 May (2 days ago)", from="John Smith", text="Lorem ipsum dolor sit amet, consectetur adipiscing elit. Aenean sit amet ligula non tellus scelerisque bibendum. Cras mollis elit eu nunc imperdiet, et dignissim velit cursus. Nulla sagittis velit in congue egestas. Vestibulum nunc diam, accumsan sit amet imperdiet sed, dictum vel est. Etiam consectetur, libero tempus ornare egestas, orci arcu placerat orci, nec tempor lectus tellus non dolor. Nulla sit amet est non enim mollis ultrices. Fusce et nulla sollicitudin, posuere nisl non, placerat metus. Donec fermentum turpis ut ligula feugiat mattis.", icon="chevron-down"}
-                            ]}
+                    case Updates of
+                        [] ->
+                            [];
+                        U -> 
+                            #panel{ class="span12", body=[
+                                    "<i class='icon-file-alt'></i> Previous updates", #br{},
+                                    [#update_preview{flag=false, age=Age, from=From, text=Text, icon="chevron-down"} || #db_update{from=From, date=Age, text=Text} <- U]
+                                    ]}
+                    end
                     ]}
             ]}.
 body() ->

@@ -16,9 +16,32 @@ buttons() ->
     #panel{class='row-fluid', body=[
 
     #panel{class='span9 offset2', body=[
-            #panel{class="row-fluid", body=[
-                    #panel{ class='span2', body="<i class='icon-reorder'></i> More options"},
-                    #panel{ class='span2', body="<i class='icon-user'></i> All accounts"},
+                    #panel{class="row-fluid", body=[
+                            #panel{ class='span2 btn-group', body=[
+                                    #link{class="btn btn-link dropdown-toggle",data_fields=[{toggle, "dropdown"}], 
+                                          body=["<i class='icon-reorder'></i> More options"], url="#", new=false},
+                                    #list{class="dropdown-menu", numbered=false,
+                                          body=[
+                                            #listitem{body=#link{body=["<i class='icon-edit></i> Edit selected"], postback=edit, new=false}},
+                                            #listitem{body=#link{body=["<i class='icon-list-alt'></i> Archive selected"], postback=edit, new=false}},
+                                            #listitem{body=#link{body=["<i class='icon-external-link'></i> Export as CSV"], postback=edit, new=false}},
+                                            #listitem{body=#link{body=["<i class=''></i> Pay now"], postback=edit, new=false}},
+                                            #listitem{body=#link{body=["<i class=''></i> Request payment"], postback=edit, new=false}}
+                                            ]}
+
+                                    ]},
+                            #panel{ class='span2 btn-group', body=[
+                                    #link{class="btn btn-link dropdown-toggle",data_fields=[{toggle, "dropdown"}], 
+                                          body=["<i class='icon-user'></i> All accounts"], url="#", new=false},
+                                    #list{class="dropdown-menu", numbered=false,
+                                          body=[
+                                            #listitem{body=#link{body=["<i class='icon-edit></i> Edit selected"], postback=edit, new=false}},
+                                            #listitem{body=#link{body=["<i class='icon-list-alt'></i> Archive selected"], postback=edit, new=false}},
+                                            #listitem{body=#link{body=["<i class='icon-external-link'></i> Export as CSV"], postback=edit, new=false}},
+                                            #listitem{body=#link{body=["<i class=''></i> Pay now"], postback=edit, new=false}},
+                                            #listitem{body=#link{body=["<i class=''></i> Request payment"], postback=edit, new=false}}
+                                            ]}
+                                    ]},
                     #panel{ class='span2', body="<i class='icon-filter'></i> Smart filter"},
                     #panel{ class='span2', body="<i class='icon-sort'></i> Sort"},
                     #panel{ class='span2', body="<i class='icon-list-alt'></i> Archive"}
@@ -34,7 +57,7 @@ body() ->
         #table{ rows=[
                 #tablerow{ cells=[
                         #tablecell{body=[
-                                #checkbox{id=check_all,  postback=check_all, checked=false}
+                                #checkbox{id=check_all,  postback=check_all, checked=false, delegate=common}
                                 ], class=""},
                         #tableheader{text="Payable", class=""},
                         #tableheader{text="Chargable", class=""},

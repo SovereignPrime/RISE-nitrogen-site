@@ -11,10 +11,10 @@ title() -> "Hello from login.erl!".
 
 body() -> 
     [
-        #textbox{id=login, placeholder="Email",class="input-block-level", next=passwd},
+        #textbox{id=login, placeholder="Email",class="input-block-level", next=passwd, actions=#validate{on=blur, validators=#is_email{text="E-mail required"}}},
         #password{id=passwd, placeholder="Password", class="input-block-level", next=remember},
         #checkbox{id=remember, text="Remember my password",  checked=false},
-        #button{html_encode=false, class="pull-right", text="<i class='icon-arrow-right'></i>", postback=login}
+        #button{html_encode=false, class="pull-right btn btn-link", body="<i class='icon-arrow-right icon-2x'></i>", postback=login}
         ].
         
         

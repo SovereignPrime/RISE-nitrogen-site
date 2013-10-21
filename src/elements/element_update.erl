@@ -12,22 +12,41 @@
 reflect() -> record_info(fields, update_element).
 
 -spec render_element(#update_element{}) -> body().
-render_element(#update_element{from=From, text=Text, age=Age, collapse=true}) ->
-        #panel{class="row-fluid", body=[
+render_element(#update_element{id=Id, from=From, text=Text, age=Age, collapse=true}=Record) ->
+        #panel{id=Id, class="row-fluid", body=[
                 #panel{class="span2", body="<i class='icon-chevron-down'></i> " ++ From},
             #panel{class="span8", body=io_lib:format("~100s", [Text])},
                 #panel{class="span2", body=Age}
-                ]};
-render_element(#update_element{from=From, text=Text, age=Age, collapse=false}) ->
-    [
+            ], actions=#event{type=click, postback={unfold, Record}}};
+render_element(#update_element{id=Id, from=From, text=Text, age=Age, collapse=false, attachments=Attachments}=Record) ->
+    #panel{id=Id, body=[
         #panel{class="row-fluid", body=[
                 #panel{class="span1", body=From},
                 #panel{class="span2 offset9", body=Age}
-                ]},
+                ], actions=#event{type=click, postback={fold, Record}}},
         #panel{class="row-fluid", body=[
                 #panel{class="span12", body=Text}
-                ]}
-        ];
+                ]},
+        #panel{class="row-fluid", body=[
+                #panel{class="span3 offset4", body=[
+                        #span{class="icon-reply icon-large", text=" "},
+                        #span{class="icon-refresh icon-large", text=" "},
+                        #span{class="icon-reorder icon-large"}
+                        ]}]},
+            case Attachments of
+                [] ->
+                    [];
+                A ->
+                    [
+                    #panel{class="row-fluid", body=[
+                            #panel{class="span6", body="<i class='icon-file-alt'></i> Attachment"},
+                            #panel{class="span2 offset4", body="<i class='icon-download-alt'></i> Download all"}
+                            ]},
+                        Attachments
+                        ]
+            end
+
+            ]};
 render_element(#update_element{from=From, text=Text, age=Age, collapse=paragraph}) ->
     [
         #panel{class="row", body=[

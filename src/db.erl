@@ -114,9 +114,24 @@ new_update(Subject, Text) ->
                     ok = mnesia:write(Task)
             end).
 
+get_updates() ->
+    transaction(fun() ->
+                mnesia:select(db_update, [{#db_update{status='$1', _='_'}, [{'/=', '$1', archive}], ['$_']}])
+        end).
+
+get_updates_by_subject(Subject) ->
+    transaction(fun() ->
+                mnesia:select(db_update, [{#db_update{status='$1', subject=Subject, _='_'}, [{'/=', '$1', archive}], ['$_']}])
+        end).
+
 get_updates_by_user(UID) ->
     transaction(fun() ->
                 mnesia:match_object(#db_update{from=UID, _='_'})
+        end).
+
+get_unread_updates() ->
+    transaction(fun() ->
+                mnesia:match_object(#db_update{status=unread, _='_'})
         end).
 
 %%%
@@ -151,7 +166,9 @@ add_user_to_group(Group, User) ->
                 mnesia:write(#db_group_members{group=Group, contact=User})
         end).
 get_contacts_by_group(all) ->
-    all_contacts();
+    transaction(fun() ->
+                mnesia:match_object(#db_contact{my=false, _='_'})
+        end);
 get_contacts_by_group(Group) ->
     transaction(fun() ->
                 G = mnesia:select(db_group, [{#db_group{id='$1', subgroups=Group, _='_'}, [], ['$1']}]),
@@ -209,7 +226,7 @@ save_file(Name, Path, #db_contact{id=UID}) ->
                 mnesia:write(#db_file{id=filename:basename(Path), 
                                       path=Name, 
                                       size=Size,
-                                      date=now(),
+                                      date=date(),
                                       status=uploaded,
                                       user=UID,
                                       type=Type
@@ -236,6 +253,10 @@ save_attachments(Record, Files) ->
                 save_attachment(Type, Id, Files, NId)
             end).
 
+get_files(FIDs) ->
+    transaction(fun() ->
+                iterate(db_file, FIDs)
+        end).
 %%%
 %%  Admin functions
 %%%
@@ -307,7 +328,7 @@ create_account(User, Passwd) ->
                                 A
                         end,
                         mnesia:write(#db_contact{id=N+1,
-                                                 name="My",
+                                                 name="Me",
                                                  email=User,
                                                  my=Passwd
                                                 }),

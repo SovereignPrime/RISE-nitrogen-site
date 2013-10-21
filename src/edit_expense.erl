@@ -96,13 +96,7 @@ render_left() ->
                     ]},
             #panel{ class="row-fluid", body=[
                     #panel{ class="span12", body=[
-                            "<i class='icon-file-alt'></i> Attachments", #br{},
-                            #droppable{tag=filename, body=[
-                                    #panel{ class="filedrop", body=[
-                                            #br{}, "Drag and drop files here", #br{},#br{}
-                                            ]}
-                                    ]},
-
+                        common:render_files(),
                             "<i class='icon-th-large'></i> Select from my files", #br{}
                             ]}
                     ]}
@@ -191,6 +185,7 @@ event(save) ->
             CE#db_expense{name=Name, amount=Amount, text=Text, status=Status, date={Purchase, Due}, from=UID}
     end,
     db:save(NCE),
+    db:save_attachments(Id, wf:session_default(attached_files, [])),
     common:save_involved(db_expense, Id),
     wf:redirect("/finances");
 

@@ -13,7 +13,7 @@ reflect() -> record_info(fields, update_preview).
 
 -spec render_element(#update_preview{}) -> body().
 render_element(#update_preview{icon=Icon, from=From, age=Age, subject=Subject, text=Text, flag=Flag}) ->
-    [
+    #panel{body=[
         #panel{class="row-fluid", body=[
                 #panel{class='span1', body=["<i class='icon-" ++ Icon ++ "'></i>"]},
                 #panel{class='span7 ', body=["<b>From: </b>", From]},
@@ -34,4 +34,4 @@ render_element(#update_preview{icon=Icon, from=From, age=Age, subject=Subject, t
                         #panel{class='span12', body=[io_lib:format("~200s...", [Text])]}
                 end
                 ]}
-        ].
+            ], actions=#event{type=click, postback={selected, Subject}}}.

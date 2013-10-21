@@ -14,7 +14,7 @@ body {
     border: 0px #fff solid;
     width: 40px;
 }
-a.btn-link, a.btn-link:hover, a.btn-link:visited, a.btn-link:active {
+.btn-link, .btn-link:hover, .btn-link:visited, .btn-link:active, .btn-link:focus {
     color: #000;
     text-decoration: none;
 }
