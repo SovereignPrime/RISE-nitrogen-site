@@ -1,6 +1,7 @@
 -module(common).
 -compile([export_all]).
 -include_lib("nitrogen_core/include/wf.hrl").
+-include_lib("bitmessage/include/bm.hrl").
 -include("records.hrl").
 -include("db.hrl").
 
@@ -10,6 +11,8 @@ main() ->
             wf:redirect_to_login("/login");
         R ->
             io:format("~p~n", [R]),
+            {ok, In} = wf:comet_global(fun  incoming/0, incoming),
+            bitmessage:register_receiver(In),
             T = #template { file="./site/templates/bare.html" },
             wf:wire('new_contact', #event{type=click, postback=add_contact, delegate=?MODULE}),
             wf:wire('new_group', #event{type=click, postback=add_group, delegate=?MODULE}),
@@ -97,6 +100,53 @@ finish_upload_event(filename, FName, FPath, _Node) ->
     wf:session(attached_files, wf:session_default(attached_files, []) ++ [FID]),
     wf:update(files, render_files()).
 
+incoming() ->
+    receive
+        {msg, Hash} ->
+            io:format("~p~n", [Hash]),
+            {ok, #message{from=From, to=To, subject=Subject, text=Text, enc=Enc}}= bitmessage:get_message(Hash),
+            {ok, #db_contact{id=FID}} = db:get_contact_by_address(From),
+            {ok, #db_contact{id=ToID}} = db:get_contact_by_address(To),
+            case Enc of 
+                E when E == 1; E == 4; E == 3 ->
+                    {ok, Id} = db:next_id(db_update),
+                    db:save(#db_update{id=Id, date=date(), from=FID, to=ToID, subject=wf:to_list(Subject), text=Text, status=unread}),
+                    wf:replace(left, index:left()),
+                    {ok, New} = db:get_unread_updates(),
+                    wf:replace(count, #span{id=count, class='label label-inverse',text=wf:f("~p new", [length(New)])}),
+                    wf:flush(),
+                    incoming();
+                2 ->
+                    {ok, Id} = db:next_id(db_task),
+                    %io:format("~p~n", [Text]),
+                    {match, [_, <<Name/bytes>>, <<InvolvedB/bytes>>, <<Due/bytes>>, <<Status/bytes>>]} = re:run(Text, "^(.*)\nInvolved:(.*)\nDue:(.*)\nStatus:(.*)$", [{capture, all, binary}, ungreedy, dotall, firstline, {newline, any}]),
+                    io:format("~p ~p ~p~n", [Name, InvolvedB, Due]),
+                    Involved = binary:split(InvolvedB, <<";">>, [global, trim]),
+                    db:save(#db_task{id=Id, due=Due,  name=wf:to_list(Subject), text=Name, status=Status}),
+                    lists:foreach(fun(I) ->
+                                [BM, Role] = binary:split(I, <<":">>),
+                                {ok, NPId} = db:next_id(db_contact_roles),
+                                C = case db:get_contact_by_address(BM) of
+                                    {ok,  none } ->
+                                        {ok, CID} = db:next_id(db_contact),
+                                        db:save(#db_contact{id=CID, bitmessage=BM, address=BM}),
+                                        get_vcard(BM, From),
+                                        CID;
+                                    {ok, Contact} ->
+                                        #db_contact{id=CID} = Contact,
+                                        CID
+                                end,
+                                db:save(#db_contact_roles{id=NPId, type=db_task, role=Role, tid=Id, contact=C})
+                        end, Involved),
+                    CT = wf:session(current_task_id),
+                    {ok, [#db_task{parent=PP}=PT]} = db:get_task(CT),
+                    wf:update(groups, tasks:render_tasks(PP)),
+                    wf:update(subgroups, tasks:render_tasks(CT)),
+                    wf:flush(),
+                    incoming()
+            end 
+    end.
+
 save_involved(Type, TId) ->
     Involved = wf:qs(person),
     Role = wf:qs(responsible),
@@ -106,3 +156,28 @@ save_involved(Type, TId) ->
                 {ok, NPId} = db:next_id(db_contact_roles),
                 db:save(P#db_contact_roles{id=NPId})
         end, List).
+
+send_messages(#db_update{subject=Subject, text=Text, from=FID, to=Tos, date=Date}) ->
+    ToIDs = [wf:session(wf:to_binary(T))|| T  <- Tos],
+    #db_contact{address=From} = wf:user(),
+    error_logger:info_msg("~p ~p~n", [ToIDs, From]),
+    lists:foreach(fun(T) ->
+                {ok, #db_contact{address=To}} = db:get_contact(T),
+                bitmessage:send_message(From, wf:to_binary(To), wf:to_binary(Subject), wf:to_binary(Text), 2)
+        end, ToIDs);
+send_messages(#db_task{id=Id, name=Subject, text=Text, due=Date, parent=Parent, status=Status}) ->
+    {ok, Involved} = db:get_involved(Id),
+    % {_My, InvolvedN} =  lists:partition(fun({"Me", _, _}) -> true; (_) -> false end, Involved), 
+    Contacts = [{C, R} || {_, R, C}  <- Involved],
+    #db_contact{address=From} = wf:user(),
+    %error_logger:info_msg("~p ~p~n", [Contacts, From]),
+    InvolvedB =  <<"Involved:", << <<A/bytes, ":", (wf:to_binary(R))/bytes, ";">> || {#db_contact{bitmessage=A}, R} <- Contacts>>/bytes>>,
+    lists:foreach(fun({#db_contact{address=To}, _}) ->
+                bitmessage:send_message(From, wf:to_binary(To), wf:to_binary(Subject), wf:to_binary(<<Text/bytes, 10,  InvolvedB/bytes, 10, "Due:", (wf:to_binary(Date))/bytes, 10, "Status:", (wf:to_binary(Status))/bytes>>), 2)
+        end, Contacts).
+
+
+get_vcard(BM, To) ->
+    io:format("Getting vcard for ~p~n", [BM]),
+    #db_contact{address=From} = wf:user(),
+    bitmessage:send_message(From, To, <<"Get vCard">>, BM, 6).

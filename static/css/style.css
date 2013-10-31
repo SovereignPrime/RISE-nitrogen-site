@@ -47,3 +47,6 @@ body {
 .hover {
     border: 1px #000 solid;
 }
+.scrollable {
+    overflow: auto;
+}

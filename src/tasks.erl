@@ -86,8 +86,8 @@ body() ->
             ]}.
 render_task(#db_task{id=Id, name=Name, due=Due, text=Text, parent=Parent, status=Status}=Task) ->
     {ok, Involved} = db:get_involved(Id),
-    {My, InvolvedN} = case lists:partition(fun({"My", _}) -> true; (_) -> false end, Involved) of
-        {[{_,M}], I} ->
+    {My, InvolvedN} = case lists:partition(fun({"Me", _, _}) -> true; (_) -> false end, Involved) of
+        {[{_,M, _}], I} ->
             {M, I};
         {[], I} ->
             {no, I}
@@ -101,7 +101,7 @@ render_task(#db_task{id=Id, name=Name, due=Due, text=Text, parent=Parent, status
                         "Due: ", Due , #br{},
                         #br{},
                         "My role - ", My, #br{},
-                        lists:map(fun({Name, Role}) ->
+                        lists:map(fun({Name, Role, _}) ->
                                     [ Name, " - ", Role, #br{}]
                             end, InvolvedN)
                         ]},

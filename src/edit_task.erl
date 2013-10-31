@@ -117,12 +117,13 @@ event(save) ->
     Text = wf:q(text),
     Id = wf:session(current_task_id),
     Task = wf:session(current_task),
-    NTask = Task#db_task{name=TaskName, due=Due, text=Text},
+    NTask = Task#db_task{name=wf:to_binary( TaskName ), due=Due, text=wf:to_binary(Text)},
     db:save(NTask),
     wf:session(current_task, NTask),
     db:save_attachments(wf:session(current_task), wf:session_default(attached_files, [])),
     save_payments(TaskName),
     common:save_involved(db_task, Id),
+    common:send_messages(NTask),
     wf:session(task_attached_files, undefined),
     wf:redirect("/tasks");
 
@@ -137,7 +138,7 @@ event(Ev) ->
 save_payments(TaskName) ->
     Payable = wf:qs(payable),
     Amounts = wf:qs(amount),
-    [#db_contact{id=UID}] = wf:user(),
+    #db_contact{id=UID} = wf:user(),
     Payments = [ #db_expense{name=TaskName, from=wf:session(wf:to_binary(Pay)), to=UID, amount=Am, status=new, type=expense} || {Pay, Am} <- lists:zip(Payable, Amounts)], 
     lists:foreach(fun(P) -> 
                 {ok, NPId} = db:next_id(db_expense),

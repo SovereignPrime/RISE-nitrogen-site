@@ -8,6 +8,7 @@
 
 start(_StartType, _StartArgs) ->
     application:start(mnesia),
+    application:start(bitmessage),
     case mnesia:wait_for_tables([db_group], 3000) of
         ok ->
             ok;

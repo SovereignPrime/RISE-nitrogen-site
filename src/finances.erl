@@ -77,7 +77,7 @@ body() ->
                                 from=FromS,
                                 to=ToS,
                                 tasks=lists:map(fun(#db_task{name=TN}) ->
-                                            TN ++ ";"
+                                            [ TN, ";" ] 
                                     end, Tasks),
                                 due=case Date of
                                     {Statrt, Due} ->

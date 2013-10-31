@@ -26,8 +26,12 @@ event(login) ->
     Passwd = wf:q(passwd),
     case db:get_account(User, Passwd) of 
         {ok, []} ->
-            {ok, U} = db:create_account(User, Passwd),
-            wf:user(U),
+            bitmessage:generate_address(self()),
+            receive
+                {address, Address} ->
+                    {ok, U} = db:create_account(User, Passwd, Address),
+                    wf:user(U)
+            end,
             wf:redirect_from_login("/");
         {ok, [U]} ->
             wf:user(U),

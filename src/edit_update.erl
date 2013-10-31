@@ -77,9 +77,10 @@ event(save) ->
     Involved = wf:qs(person),
     Text = wf:q(text),
     Update = wf:session(current_update),
-    [ #db_contact{id=UID} ] = wf:user(),
+    #db_contact{id=UID} = wf:user(),
     NUpdate = Update#db_update{subject=Subject, text=Text, from=UID,to=Involved, date=date(), status=new},
     db:save(NUpdate),
+    common:send_messages(NUpdate),
     db:save_attachments(NUpdate, wf:session_default(attached_files, [])),
     wf:redirect("/");
 event(Ev) ->

@@ -130,7 +130,7 @@ inplace_textbox_event({phone, Id}, Name) ->
     Name;
 inplace_textbox_event({address, Id}, Name) ->
     Contact = wf:session(current_contact),
-    db:save(Contact#db_contact{address=Name}),
+    db:save(Contact#db_contact{bitmessage=wf:to_binary(Name), address=wf:to_binary(Name)}),
     Name;
 inplace_textbox_event(T, Name) ->
     io:format("Saved ~p tag ~p", [Name, T]),

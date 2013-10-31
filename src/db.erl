@@ -7,7 +7,7 @@ install()->
     mnesia:create_schema([node()]),
     mnesia:start(),
     {atomic, ok} = mnesia:create_table(db_group, [{disc_copies, [node()]}, {attributes, record_info(fields, db_group)}, {type, ordered_set}]),
-    {atomic, ok} = mnesia:create_table(db_contact, [{disc_copies, [node()]}, {attributes, record_info(fields, db_contact)}, {type, ordered_set}]),
+    {atomic, ok} = mnesia:create_table(db_contact, [{disc_copies, [node()]}, {attributes, record_info(fields, db_contact)}, {type, ordered_set}, {index, [address]}]),
     {atomic, ok} = mnesia:create_table(db_task, [{disc_copies, [node()]}, {attributes, record_info(fields, db_task)}, {type, ordered_set}]),
     {atomic, ok} = mnesia:create_table(db_file, [{disc_copies, [node()]}, {attributes, record_info(fields, db_file)}, {type, ordered_set}]),
     {atomic, ok} = mnesia:create_table(db_expense, [{disc_copies, [node()]}, {attributes, record_info(fields, db_expense)}, {type, ordered_set}]),
@@ -68,7 +68,7 @@ get_tasks_by_user(UID) ->
                 Tasks = mnesia:match_object(#db_contact_roles{contact=UID, type=db_task, _='_'}),
                 iterate(db_task, Tasks, fun(_, #db_contact_roles{tid=I, role=Role}) ->
                             [Task] = mnesia:read(db_task, I),
-                            Task#db_task{parent=Role}
+                            [ Task#db_task{parent=Role} ]
                     end)
         end).
 
@@ -129,6 +129,13 @@ get_unread_updates() ->
                 mnesia:match_object(#db_update{status=unread, _='_'})
         end).
 
+set_read(Id) ->
+    transaction(fun() ->
+                [#db_update{status=S} = U] = mnesia:wread({ db_update, Id }),
+                mnesia:write(U#db_update{status=read}),
+                S
+        end).
+
 %%%
 %% Contact routines
 %%%
@@ -141,12 +148,22 @@ get_contact(Id) ->
                 U
         end).
 
+get_contact_by_address(Address) ->
+    transaction(fun() ->
+                case mnesia:index_read(db_contact, Address, #db_contact.address) of
+                    [U] ->
+                        U;
+                    [] ->
+                        none
+                end
+        end).
+
 get_involved(Id) ->
     transaction(fun() ->
                 R = mnesia:match_object(#db_contact_roles{type=db_task, tid=Id, _='_'}),
                 L = lists:map(fun(#db_contact_roles{role=Role, contact=Contact}) ->
-                            [ #db_contact{name=Name, email=Email} ] = mnesia:read(db_contact, Contact),
-                            {Name, Role}
+                            [ #db_contact{name=Name, email=Email}=C ] = mnesia:read(db_contact, Contact),
+                            {Name, Role, C}
                     end, R)
         end).
 
@@ -312,7 +329,7 @@ get_account(User, Passwd) ->
                 mnesia:match_object(db_contact, #db_contact{email=User, my=Passwd, _='_'}, read)
         end).
 
-create_account(User, Passwd) ->
+create_account(User, Passwd, Address) ->
     transaction(fun() ->
                 case mnesia:match_object(db_contact, #db_contact{email=User, my=Passwd, _='_'}, write) of
                     [] -> 
@@ -325,6 +342,8 @@ create_account(User, Passwd) ->
                         mnesia:write(#db_contact{id=N+1,
                                                  name="Me",
                                                  email=User,
+                                                 address=Address,
+                                                 bitmessage=Address,
                                                  my=Passwd
                                                 }),
                         mnesia:read(db_contact, N+1);
