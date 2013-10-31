@@ -151,3 +151,8 @@ drop_event({group, CId}, {subgroup, SId}) when CId /= SId ->
     wf:update(group_list, render_group_list());
 drop_event(G, P) ->
     io:format("D&D ~p to ~p~n", [G, P]).
+
+incoming() ->
+    Id = wf:session(current_group_id),
+    {ok, Contacts} = db:get_contacts_by_group(Id),
+    wf:update(user_list, render_contact_list(Contacts)).

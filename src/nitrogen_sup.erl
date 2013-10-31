@@ -44,7 +44,7 @@ init([]) ->
         {max_keepalive, 50}
     ]),
 
-    {ok, { {one_for_one, 5, 10}, []} }.
+    {ok, { {one_for_one, 5, 10}, [{receiver, {receiver, start_link, []}, permanent, 2, worker, dynamic}]} }.
 
 init_dispatch(DocRoot,StaticPaths) ->
     Handler = cowboy_static,

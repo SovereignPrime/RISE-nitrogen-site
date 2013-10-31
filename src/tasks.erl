@@ -167,3 +167,9 @@ drop_event({task, Id}, subtask) ->
 drop_event({task, Id}, task) ->
     #db_task{parent=PId} = wf:session(current_task),
     db:save_subtask(Id, PId).
+incoming() ->
+    CT = wf:session(current_task_id),
+    {ok, [#db_task{parent=PP}]} = db:get_task(CT),
+    wf:update(groups, tasks:render_tasks(PP)),
+    wf:update(subgroups, tasks:render_tasks(CT)),
+    wf:flush().
