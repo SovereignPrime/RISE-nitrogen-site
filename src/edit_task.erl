@@ -119,17 +119,23 @@ add_existing_rows(Id) ->
                 wf:session(wf:to_binary(C), I),
                 element_addable_row:event({add, #addable_row{id=roles, num= N - 1, body=#involved{person=C, role=R}}})
         end, Tos),
-    element_addable_row:event({del, #addable_row{id=roles, num= 0}}),
-    element_addable_row:event({add, #addable_row{id=roles, num= length(Tos), body=#involved{}}}),
+    case length(Tos) of
+        0 ->
+            ok;
+        _ ->
+            element_addable_row:event({del, #addable_row{id=roles, num= 0}}),
+            element_addable_row:event({add, #addable_row{id=roles, num= length(Tos), body=#involved{}}})
+    end,
     [].
     
 event(save) ->
-    TaskName = wf:q(name),
+    TaskName = wf:to_binary(wf:q(name)),
     Due = wf:q(due),
-    Text = wf:q(text),
+    Text = wf:to_binary(wf:q(text)),
     Id = wf:session(current_task_id),
     Task = wf:session(current_task),
-    NTask = Task#db_task{name=wf:to_binary( TaskName ), due=Due, text=wf:to_binary(Text)},
+    UID = crypto:hash(sha512, <<TaskName/bytes, Text/bytes>>),
+    NTask = Task#db_task{name= TaskName , uid=UID, due=Due, text=Text},
     db:save(NTask),
     wf:session(current_task, NTask),
     db:save_attachments(wf:session(current_task), wf:session_default(attached_files, [])),

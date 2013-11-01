@@ -123,7 +123,7 @@ send_messages(#db_update{subject=Subject, text=Text, from=FID, to=Contacts, date
     lists:foreach(fun(To) ->
                 bitmessage:send_message(From, wf:to_binary(To), wf:to_binary(Subject), <<(wf:to_binary(Text))/bytes, 10, InvolvedB/bytes>>, 2)
         end, Contacts);
-send_messages(#db_task{id=Id, name=Subject, text=Text, due=Date, parent=Parent, status=Status}) ->
+send_messages(#db_task{id=Id, uid=UID, name=Subject, text=Text, due=Date, parent=Parent, status=Status}) ->
     {ok, Involved} = db:get_involved(Id),
     % {_My, InvolvedN} =  lists:partition(fun({"Me", _, _}) -> true; (_) -> false end, Involved), 
     Contacts = [{C, R} || {_, R, C}  <- Involved],
@@ -131,5 +131,9 @@ send_messages(#db_task{id=Id, name=Subject, text=Text, due=Date, parent=Parent, 
     %error_logger:info_msg("~p ~p~n", [Contacts, From]),
     InvolvedB =  <<"Involved:", << <<A/bytes, ":", (wf:to_binary(R))/bytes, ";">> || {#db_contact{bitmessage=A}, R} <- Contacts>>/bytes>>,
     lists:foreach(fun({#db_contact{address=To}, _}) ->
-                bitmessage:send_message(From, wf:to_binary(To), wf:to_binary(Subject), wf:to_binary(<<Text/bytes, 10,  InvolvedB/bytes, 10, "Due:", (wf:to_binary(Date))/bytes, 10, "Status:", (wf:to_binary(Status))/bytes>>), 2)
+                bitmessage:send_message(From,
+                                        wf:to_binary(To), 
+                                        wf:to_binary(Subject), 
+                                        wf:to_binary(<<Text/bytes, 10,  InvolvedB/bytes, 10, "Due:", (wf:to_binary(Date))/bytes, 10, "Status:", (wf:to_binary(Status))/bytes, 10, "UID:", UID/bytes>>), 
+                                        2)
         end, Contacts).
