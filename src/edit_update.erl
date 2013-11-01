@@ -44,8 +44,7 @@ left() ->
                     ]}
                 ]}].
 body() ->
-    Subject = wf:session(current_subject),
-    io:format("~p~n",[Subject]),
+    #db_update{subject=Subject, to=To}  = wf:session(current_update),
     #panel{ class="span9", body=[
             #panel{ class="row-fluid", body=[
                     #panel{ class="input-prepend span11", body=[
@@ -55,7 +54,9 @@ body() ->
                             #textbox{id=name, placeholder="Re:something", text=Subject, next=due, class="span12"}
                             ]}
                     ]},
-            #addable_row{id=roles, body= #to{}},
+            #addable_row{id=roles, num=0, body= #to{}},
+            add_existing_rows(To),
+
             #panel{ class="row-fluid", body=[
                     #panel{class="span12", body=[
                             #textarea{class="input-block-level",rows=15, placeholder="Some text here", id=text}
@@ -71,6 +72,15 @@ body() ->
                     ]}
             ]}.
             
+add_existing_rows(To) ->
+    Tos = lists:zip(To, lists:seq(1, length(To))),
+    lists:foreach(fun({ T, N }) ->
+                {ok, #db_contact{id=CID, name=Name} } = db:get_contact_by_address(T),
+                wf:session(wf:to_binary(Name), CID),
+                element_addable_row:event({add, #addable_row{id=roles, num= N - 1, body=#to{text=Name}}})
+        end, Tos),
+    element_addable_row:event({del, #addable_row{id=roles, num= 0}}),
+    #addable_row{id=roles, num=length(To) + 1, body= #to{}}.
     
 event(save) ->
     Subject = wf:q(name),
@@ -78,13 +88,18 @@ event(save) ->
     Text = wf:q(text),
     Update = wf:session(current_update),
     #db_contact{id=UID} = wf:user(),
-    Involved = lists:map(fun(N) ->
+    Involved = lists:map(fun([]) ->
+                    <<"">>;
+                (N) ->
+                    io:format("~p~n", [N]),
                     I = wf:session(wf:to_binary(N)),
+                    io:format("~p~n", [I]),
                     {ok,  #db_contact{bitmessage=BM} } = db:get_contact(I),
                     BM
-            end, InvolvedS),
+            end, InvolvedS) -- [<<"">>],
+    io:format("~p~n", [Involved]),
     NUpdate = Update#db_update{subject=Subject, text=Text, from=UID, 
-                              % to=Involved,
+                               to=Involved,
                                date=date(), status=new},
     db:save(NUpdate),
     common:send_messages(NUpdate),

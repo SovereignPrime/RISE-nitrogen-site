@@ -98,6 +98,7 @@ body() ->
                             ]}
                     ]},
             #addable_row{id=roles, body= #involved{}},
+            add_existing_rows(Id),
             #panel{ class="row-fluid", body=[
                     #panel{class="span12", body=[
                             #textarea{class="input-block-level",rows=15, placeholder="Some text here", id=text, text=Text}
@@ -109,7 +110,18 @@ body() ->
                             ]}
                     ]}
             ]}.
-            
+
+add_existing_rows(Id) ->
+    {ok, Involved} = db:get_involved(Id),
+    Contacts = [{C, R} || {_, R, C}  <- Involved],
+    Tos = lists:zip(Contacts, lists:seq(1, length(Contacts))),
+    lists:foreach(fun({ {#db_contact{id=I, name=C}, R  }, N }) ->
+                wf:session(wf:to_binary(C), I),
+                element_addable_row:event({add, #addable_row{id=roles, num= N - 1, body=#involved{person=C, role=R}}})
+        end, Tos),
+    element_addable_row:event({del, #addable_row{id=roles, num= 0}}),
+    element_addable_row:event({add, #addable_row{id=roles, num= length(Tos), body=#involved{}}}),
+    [].
     
 event(save) ->
     TaskName = wf:q(name),

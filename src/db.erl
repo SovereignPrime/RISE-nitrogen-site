@@ -198,6 +198,19 @@ get_groups_for_user(UID) ->
                 iterate(db_group, GIDS)
         end).
 
+clear_roles(Type, Id) ->
+    transaction(fun() ->
+                case mnesia:match_object(#db_contact_roles{type=Type, tid=Id, _='_'}) of
+                    [] ->
+                        ok;
+                    R  ->
+                        iterate(db_contact_roles, R, fun(T, R) ->
+                                    mnesia:delete_object(R),
+                                    []
+                            end)
+                end
+        end).
+
 %%%
 %% Group routines
 %%%

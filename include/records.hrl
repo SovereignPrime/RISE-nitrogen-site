@@ -40,8 +40,12 @@
                   name,
                   due
     }).
--record(involved, {?ELEMENT_BASE(element_involved)}).
--record(to, {?ELEMENT_BASE(element_to)}).
+-record(involved, {?ELEMENT_BASE(element_involved),
+                   person="",
+                   role
+                  }).
+-record(to, {?ELEMENT_BASE(element_to),
+            text}).
 -record(addable_row, {?ELEMENT_BASE(element_addable_row),
                       num=0,
                       body,

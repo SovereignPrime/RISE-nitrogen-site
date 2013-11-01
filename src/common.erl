@@ -111,6 +111,7 @@ save_involved(Type, TId) ->
     Role = wf:qs(responsible),
     io:format("~p ~p~n", [Involved, Role]),
     List = [ #db_contact_roles{type=Type, tid=TId, role=Role, contact=wf:session(wf:to_binary(Contact))} || {Contact, Role} <- lists:zip(Involved, Role), Involved /= [[]], Contact /= ""],
+    db:clear_roles(Type, TId),
     lists:foreach(fun(P) -> 
                 {ok, NPId} = db:next_id(db_contact_roles),
                 db:save(P#db_contact_roles{id=NPId})
