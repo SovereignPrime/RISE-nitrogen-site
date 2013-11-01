@@ -15,7 +15,7 @@ icon() -> "<i class='icon-globe icon-2x'></i>".
 buttons() ->
     {ok, New} = db:get_unread_updates(),
     wf:session(unread, length(New)),
-    #panel{class='row-fluid', body=[
+    #panel{id=buttons, class='row-fluid', body=[
             #panel{class='span1 offset1', body=[
                     #span{id=count, class='label label-inverse',text=wf:f("~p new", [length(New)])}
                     ]},
@@ -46,7 +46,7 @@ render_body(Subject) ->
     [
         #h1{html_encode=false, text="<i class='icon-globe'></i> " ++ Subject},
         [
-        #update_element{collapse=true, from=From, text=Text, age= Age, uid=Id, subject=Subject} || #db_update{id=Id, subject=Subject, from=From, text=Text, date=Age} <- lists:reverse(Updates)
+        #update_element{collapse=true, from=From, to=To, text=Text, age= Age, uid=Id, subject=Subject} || #db_update{id=Id, to=To, subject=Subject, from=From, text=Text, date=Age} <- lists:reverse(Updates)
             ]
 
 
@@ -71,10 +71,10 @@ event({unfold, #update_element{id=Id, uid=Uid}=Update}) ->
                                                                ]});
 event({fold, #update_element{id=Id}=Update}) ->
     wf:replace(Id, Update#update_element{collapse=true});
-event({reply, Subject}) ->
+event({reply, Subject, To}) ->
     {ok, Id} = db:next_id(db_update),
     wf:session(current_subject, Subject),
-    wf:session(current_update, #db_update{id=Id, subject=Subject}),
+    wf:session(current_update, #db_update{id=Id, to=To, subject=Subject}),
     wf:session(attached_files, undefined),
     wf:redirect("/edit_update");
 event(Click) ->

@@ -20,7 +20,7 @@
 </head>
 <body>
 <div class="container-fluid" style='padding-top:10px;'>
-    <div class="row-fluid">
+    <div id="top" class="row-fluid">
         <div class="dropdown span1">
         <a href="#" class="btn btn-link dropdown-toggle btn-block" data-toggle="dropdown">
                 [[[page:icon()]]]
@@ -67,6 +67,12 @@
             [[[page:body()]]]
     </div>
 </div>
+<script>
+$(".wfid_main").css('height', $(window).innerHeight() - $("#top").outerHeight() - $(".wfid_buttons").outerHeight() - 10 + 'px');
+$(window).resize(function() {
+        $(".wfid_main").css('height', $(window).innerHeight() - $("#top").outerHeight() - $(".wfid_buttons").outerHeight() - 10 + 'px');
+        });
+</script>
 <script>
 [[[script]]]
 </script>

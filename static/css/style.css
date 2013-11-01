@@ -49,4 +49,5 @@ body {
 }
 .scrollable {
     overflow: auto;
+    height: inherit;
 }

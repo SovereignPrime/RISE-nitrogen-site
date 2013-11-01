@@ -39,22 +39,27 @@ left() ->
                                 #listitem{class="previous", body=[
                                         #link{html_encode=false, text="<i class='icon-arrow-left'></i>", postback={task_list, prrev}}
                                         ]}
-                                                                        ]},
-                                #panel{ class="row-fluid", body=[
-                                        #panel{class="span6", body=[
-                                                #droppable{id=groups, tag=task, accept_groups=tasks, body=[
-                                                        render_tasks(undefined)
-                                                        ]}
-                                                ]},
-                                        #panel{class="span6", body=[
-                                                #droppable{id=subgroups, style="height:100%;", tag=subtask, accept_groups=tasks, body=[
-                                                render_tasks(CId)
-                                                        ]}
+                                ]},
+                        #panel{ class="row-fluid", body=[
+                                #panel{class="span6", body=[
+                                        #droppable{id=groups, tag=task, accept_groups=tasks, body=[
+                                                render_tasks(undefined)
+                                                ]}
+                                        ]},
+                                #panel{class="span6", body=[
+                                        #droppable{id=subgroups, style="height:100%;", tag=subtask, accept_groups=tasks, body=[
+                                                if 
+                                                    CId /= undefined ->
+                                                        render_tasks(CId);
+                                                    true ->
+                                                        []
+                                                end
                                                 ]}
                                         ]}
+                                ]}
 
-                                ]}]}
-                ].
+                        ]}]}
+        ].
 
 render_tasks(Parent) ->
     CId = wf:session(current_task_id),
@@ -153,6 +158,18 @@ event({edit, Id}) ->
     Task = wf:session(current_task),
     wf:session(current_task, Task#db_task{status=changed}),
     wf:redirect("/edit_task");
+event(hide) ->
+    wf:replace(hide_show, #button{id=hide_show, class="btn btn-link span2", body="Show tasks <i class='icon-angle-right'></i>", 
+                                    actions=#event{type=click, actions=[
+                                        #show{trigger=hide_show,target=tasks}, 
+                                        #event{postback=show}
+                                        ]}});
+event(show) ->
+    wf:replace(hide_show, #button{id=hide_show, class="btn btn-link span2", body="<i class='icon-angle-left'></i> Hide tasks", 
+                                    actions=#event{type=click, actions=[
+                                        #hide{trigger=hide_show,target=tasks}, 
+                                        #event{postback=hide}
+                                        ]}});
 event(Click) ->
     io:format("~p~n",[Click]).
 

@@ -13,6 +13,7 @@
 -record(update_element, {?ELEMENT_BASE(element_update),
                          uid,
                          from,
+                         to,
                          text,
                          age,
                          attachments,

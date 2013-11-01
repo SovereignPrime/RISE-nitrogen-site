@@ -74,11 +74,18 @@ body() ->
     
 event(save) ->
     Subject = wf:q(name),
-    Involved = wf:qs(person),
+    InvolvedS = wf:qs(person),
     Text = wf:q(text),
     Update = wf:session(current_update),
     #db_contact{id=UID} = wf:user(),
-    NUpdate = Update#db_update{subject=Subject, text=Text, from=UID,to=Involved, date=date(), status=new},
+    Involved = lists:map(fun(N) ->
+                    I = wf:session(wf:to_binary(N)),
+                    {ok,  #db_contact{bitmessage=BM} } = db:get_contact(I),
+                    BM
+            end, InvolvedS),
+    NUpdate = Update#db_update{subject=Subject, text=Text, from=UID, 
+                              % to=Involved,
+                               date=date(), status=new},
     db:save(NUpdate),
     common:send_messages(NUpdate),
     db:save_attachments(NUpdate, wf:session_default(attached_files, [])),

@@ -18,7 +18,7 @@ render_element(#update_element{id=Id, from=From, text=Text, age=Age, collapse=tr
             #panel{class="span8", body=io_lib:format("~100s", [Text])},
                 #panel{class="span2", body=sugar:date_format(Age)}
             ], actions=#event{type=click, postback={unfold, Record}}};
-render_element(#update_element{id=Id, from=From, text=Text, age=Age, subject=Subject, collapse=false, attachments=Attachments}=Record) ->
+render_element(#update_element{id=Id, from=From, to=To, text=Text, age=Age, subject=Subject, collapse=false, attachments=Attachments}=Record) ->
     #panel{id=Id, body=[
         #panel{class="row-fluid", body=[
                 #panel{class="span1", body=From},
@@ -31,7 +31,7 @@ render_element(#update_element{id=Id, from=From, text=Text, age=Age, subject=Sub
                 #panel{class="span3 offset4", body=[
                             #link{class="btn btn-link", body=[
                                     #span{class="icon-reply icon-large", text=" "}
-                                    ], postback={reply, Subject}, new=false},
+                                    ], postback={reply, Subject, To}, new=false},
                             
                         %#span{class="icon-refresh icon-large", text=" "},
                         #span{class="icon-reorder icon-large"}

@@ -10,7 +10,6 @@ main() ->
         'undefined' ->
             wf:redirect_to_login("/login");
         R ->
-            io:format("~p~n", [R]),
             {ok, Pid} = wf:comet_global(fun  incoming/0, incoming),
             receiver:register_receiver(Pid),
             T = #template { file="./site/templates/bare.html" },
@@ -117,14 +116,12 @@ save_involved(Type, TId) ->
                 db:save(P#db_contact_roles{id=NPId})
         end, List).
 
-send_messages(#db_update{subject=Subject, text=Text, from=FID, to=Tos, date=Date}) ->
-    ToIDs = [wf:session(wf:to_binary(T))|| T  <- Tos],
+send_messages(#db_update{subject=Subject, text=Text, from=FID, to=Contacts, date=Date}) ->
     #db_contact{address=From} = wf:user(),
-    error_logger:info_msg("~p ~p~n", [ToIDs, From]),
-    lists:foreach(fun(T) ->
-                {ok, #db_contact{address=To}} = db:get_contact(T),
-                bitmessage:send_message(From, wf:to_binary(To), wf:to_binary(Subject), wf:to_binary(Text), 2)
-        end, ToIDs);
+    InvolvedB =  <<"Involved:", << <<A/bytes, ";">> || A <- Contacts>>/bytes>>,
+    lists:foreach(fun(To) ->
+                bitmessage:send_message(From, wf:to_binary(To), wf:to_binary(Subject), <<(wf:to_binary(Text))/bytes, 10, InvolvedB/bytes>>, 2)
+        end, Contacts);
 send_messages(#db_task{id=Id, name=Subject, text=Text, due=Date, parent=Parent, status=Status}) ->
     {ok, Involved} = db:get_involved(Id),
     % {_My, InvolvedN} =  lists:partition(fun({"Me", _, _}) -> true; (_) -> false end, Involved), 
@@ -135,5 +132,3 @@ send_messages(#db_task{id=Id, name=Subject, text=Text, due=Date, parent=Parent, 
     lists:foreach(fun({#db_contact{address=To}, _}) ->
                 bitmessage:send_message(From, wf:to_binary(To), wf:to_binary(Subject), wf:to_binary(<<Text/bytes, 10,  InvolvedB/bytes, 10, "Due:", (wf:to_binary(Date))/bytes, 10, "Status:", (wf:to_binary(Status))/bytes>>), 2)
         end, Contacts).
-
-
