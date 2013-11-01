@@ -50,8 +50,8 @@ render_group(Id, Name, Icon) ->
                                         #event{target=wf:f("group_edit~p", [Id]),  actions=#hide{}}
                                         ]}}
                             ], actions=#hide{}},
-                    #span{class="",  body=[
-                            #link{class="btn btn-link dropdown-toggle",data_fields=[{toggle, "dropdown"}], body=[
+                    #span{class="btn-group",  body=[
+                            #link{class="btn  btn-link dropdown-toggle",data_fields=[{toggle, "dropdown"}], body=[
                                     "<i class='icon-tasks'></i>"
                                     ], url="#", new=false},
                             #list{numbered=false, class="dropdown-menu",
