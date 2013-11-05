@@ -72,15 +72,23 @@ body() ->
                     ]}
             ]}.
             
-add_existing_rows(To) ->
+add_existing_rows(To) when is_list(To) ->
     Tos = lists:zip(To, lists:seq(1, length(To))),
     lists:foreach(fun({ T, N }) ->
                 {ok, #db_contact{id=CID, name=Name} } = db:get_contact_by_address(T),
                 wf:session(wf:to_binary(Name), CID),
                 element_addable_row:event({add, #addable_row{id=roles, num= N - 1, body=#to{text=Name}}})
         end, Tos),
-    element_addable_row:event({del, #addable_row{id=roles, num= 0}}),
-    #addable_row{id=roles, num=length(To) + 1, body= #to{}}.
+    case length(Tos) of
+        0 ->
+            ok;
+        _ ->
+            element_addable_row:event({del, #addable_row{id=roles, num= 0}}),
+            element_addable_row:event({add, #addable_row{id=roles, num= length(Tos), body=#involved{}}})
+    end,
+    [];
+add_existing_rows(_To) ->
+    [].
     
 event(save) ->
     Subject = wf:q(name),
