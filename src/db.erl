@@ -370,7 +370,8 @@ create_account(User, Passwd, Address) ->
                                                  bitmessage=Address,
                                                  my=Passwd
                                                 }),
-                        [U] = mnesia:read(db_contact, N+1);
+                        [U] = mnesia:read(db_contact, N+1),
+                        U;
                     [U] ->
                         U
                 end
