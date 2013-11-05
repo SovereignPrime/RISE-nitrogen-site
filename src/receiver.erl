@@ -137,13 +137,13 @@ code_change(_OldVsn, State, _Extra) ->
 %%%===================================================================
 %%% Internal functions
 %%%===================================================================
-apply_message(#message{from=BMF, to=BMT, subject=Subject, text=Data, enc=Enc}, FID, ToID) when Enc == 0; Enc == 3 ->
+apply_message(#message{from=BMF, to=BMT, subject=Subject, text=Data, enc=Enc}, FID, ToID) when Enc == 2; Enc == 3 ->
     {ok, Id} = db:next_id(db_update),
     {match, [_, <<Text/bytes>>, <<InvolvedB/bytes>>]} = re:run(Data, "^(.*)\nInvolved:(.*)$", 
                                                                                                 [{capture, all, binary}, ungreedy, dotall, firstline, {newline, any}]),
     Involved = binary:split(InvolvedB, <<";">>, [global, trim]),
     db:save(#db_update{id=Id, date=date(), from=FID, to=Involved, subject=wf:to_list(Subject), text=Text, status=unread});
-apply_message(#message{from=BMF, to=BMT, subject=Subject, text=Data, enc=Enc}, FID, ToID) when Enc == 2; Enc == 5 ->
+apply_message(#message{from=BMF, to=BMT, subject=Subject, text=Data, enc=Enc}, FID, ToID) when Enc == 4; Enc == 5 ->
     {match, [_, <<Name/bytes>>, <<InvolvedB/bytes>>, <<Due/bytes>>, <<Status/bytes>>, UID]} = re:run(Data, "^(.*)\nInvolved:(.*)\nDue:(.*)\nStatus:(.*)\nUID:(.*)$", 
                                                                                                 [{capture, all, binary}, ungreedy, dotall, firstline, {newline, any}]),
     Involved = binary:split(InvolvedB, <<";">>, [global, trim]),
