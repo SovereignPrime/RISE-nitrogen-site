@@ -36,11 +36,15 @@ render_group_list() ->
     {ok, Groups} = db:get_groups(),
     G = wf:session(current_group_id),
     wf:wire(wf:f("group~p", [G]), #add_class{class="active"}),
+    [ #list{numbered=false,
+          body=
+            #group_item{gid=my, name="My accounts", sub=[] }%[
+         },
     #list{numbered=false,
           body=
           #group_item{gid=all, name="All contacts", sub=Groups }%[
             %#listitem{text="Most contacted"}
-         }.
+         } ].
 
 render_contact_list(Users) ->
     [

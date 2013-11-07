@@ -188,6 +188,11 @@ add_user_to_group(Group, User) ->
     transaction(fun() ->
                 mnesia:write(#db_group_members{group=Group, contact=User})
         end).
+
+get_contacts_by_group(my) ->
+    transaction(fun() ->
+                mnesia:match_object(#db_contact{my=true, _='_'})
+        end);
 get_contacts_by_group(all) ->
     transaction(fun() ->
                 mnesia:match_object(#db_contact{my=false, _='_'})
