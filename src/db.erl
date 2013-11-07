@@ -348,9 +348,9 @@ all_involved() ->
 %% Account routines
 %%%
 
-get_account(User, Passwd) ->
+get_my_accounts() ->
     transaction(fun() ->
-                mnesia:match_object(db_contact, #db_contact{email=User, my=Passwd, _='_'}, read)
+                mnesia:match_object(db_contact, #db_contact{my=true, _='_'}, read)
         end).
 
 create_account(User, Passwd, Address) ->

@@ -8,7 +8,18 @@
 main() -> 
     case wf:user() of
         'undefined' ->
-            wf:redirect_to_login("/login");
+            case db:get_my_accounts() of 
+                {ok, []} ->
+                    bitmessage:generate_address(self()),
+                    receive
+                        {address, Address} ->
+                            {ok, U} = db:create_account("", true, Address),
+                            wf:user(U)
+                    end;
+                {ok, [U]} ->
+                    wf:user(U)
+            end,
+            main();
         R ->
             {ok, Pid} = wf:comet_global(fun  incoming/0, incoming),
             receiver:register_receiver(Pid),
@@ -119,7 +130,7 @@ save_involved(Type, TId) ->
 
 send_messages(#db_update{subject=Subject, text=Text, from=FID, to=Contacts, date=Date}) ->
     #db_contact{address=From} = wf:user(),
-    InvolvedB =  <<"Involved:", << <<A/bytes, ";">> || A <- Contacts>>/bytes>>,
+    InvolvedB =  <<"Involved:", << <<A/bytes, ";">> || A <- [From | Contacts]>>/bytes>>,
     lists:foreach(fun(To) ->
                 bitmessage:send_message(From, wf:to_binary(To), wf:to_binary(Subject), <<(wf:to_binary(Text))/bytes, 10, InvolvedB/bytes>>, 2)
         end, Contacts);

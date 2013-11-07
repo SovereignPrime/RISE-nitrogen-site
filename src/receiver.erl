@@ -101,7 +101,7 @@ handle_cast(_Msg, State) ->
 handle_info({msg, Hash}, State) ->
     io:format("~p~n", [Hash]),
     {ok, #message{from=From, to=To, subject=Subject, text=Text, enc=Enc} = Message}= bitmessage:get_message(Hash),
-    {ok, #db_contact{id=FID}} = db:get_contact_by_address(From),
+    FID = get_or_request_contact(From, From, To),
     {ok, #db_contact{id=ToID}} = db:get_contact_by_address(To),
     apply_message(Message, FID, ToID),
     State#state.pid ! update,
@@ -142,7 +142,7 @@ apply_message(#message{from=BMF, to=BMT, subject=Subject, text=Data, enc=Enc}, F
     {match, [_, <<Text/bytes>>, <<InvolvedB/bytes>>]} = re:run(Data, "^(.*)\nInvolved:(.*)$", 
                                                                                                 [{capture, all, binary}, ungreedy, dotall, firstline, {newline, any}]),
     Involved = binary:split(InvolvedB, <<";">>, [global, trim]),
-    db:save(#db_update{id=Id, date=date(), from=FID, to=Involved, subject=wf:to_list(Subject), text=Text, status=unread});
+    db:save(#db_update{id=Id, date=date(), from=FID, to=Involved -- [BMT], subject=wf:to_list(Subject), text=Text, status=unread});
 apply_message(#message{from=BMF, to=BMT, subject=Subject, text=Data, enc=Enc}, FID, ToID) when Enc == 4; Enc == 5 ->
     {match, [_, <<Name/bytes>>, <<InvolvedB/bytes>>, <<Due/bytes>>, <<Status/bytes>>, UID]} = re:run(Data, "^(.*)\nInvolved:(.*)\nDue:(.*)\nStatus:(.*)\nUID:(.*)$", 
                                                                                                 [{capture, all, binary}, ungreedy, dotall, firstline, {newline, any}]),
@@ -152,16 +152,7 @@ apply_message(#message{from=BMF, to=BMT, subject=Subject, text=Data, enc=Enc}, F
     lists:foreach(fun(I) ->
                 [BM, Role] = binary:split(I, <<":">>),
                 {ok, NPId} = db:next_id(db_contact_roles),
-                C = case db:get_contact_by_address(BM) of
-                    {ok,  none } ->
-                        {ok, CID} = db:next_id(db_contact),
-                        db:save(#db_contact{id=CID, bitmessage=BM, address=BM}),
-                        get_vcard(BM, BMF, BMT),
-                        CID;
-                    {ok, Contact} ->
-                        #db_contact{id=CID} = Contact,
-                        CID
-                end,
+                C = get_or_request_contact(BM, BMF, BMT),
                 db:save(#db_contact_roles{id=NPId, type=db_task, role=Role, tid=Id, contact=C})
         end, Involved);
 apply_message(#message{from=BMF, to=BMT, subject= <<"Get vCard">>, text=Data, enc=2}, FID, ToID) ->
@@ -176,3 +167,14 @@ apply_message(Message, FID, ToID) ->
 
 get_vcard(BM, To, From) ->
     bitmessage:send_message(From, To, <<"Get vCard">>, BM, 6).
+get_or_request_contact(BM, From, To) ->
+    case db:get_contact_by_address(BM) of
+        {ok,  none } ->
+            {ok, CID} = db:next_id(db_contact),
+            db:save(#db_contact{id=CID, bitmessage=BM, address=BM}),
+            get_vcard(BM, From, To),
+            CID;
+        {ok, Contact} ->
+            #db_contact{id=CID} = Contact,
+            CID
+    end.
