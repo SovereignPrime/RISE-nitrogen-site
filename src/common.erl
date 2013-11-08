@@ -146,5 +146,5 @@ send_messages(#db_task{id=Id, uid=UID, name=Subject, text=Text, due=Date, parent
                                         wf:to_binary(To), 
                                         wf:to_binary(Subject), 
                                         wf:to_binary(<<Text/bytes, 10,  InvolvedB/bytes, 10, "Due:", (wf:to_binary(Date))/bytes, 10, "Status:", (wf:to_binary(Status))/bytes, 10, "UID:", UID/bytes>>), 
-                                        2)
-        end, Contacts).
+                                        4)
+        end, Contacts). % -- [{#db_contact{address=From, _='_'}, '_'}]).
