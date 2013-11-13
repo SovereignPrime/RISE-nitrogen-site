@@ -28,8 +28,8 @@ left() ->
     [
     #panel{ class="span3", body=[
             #panel{ class="row-fluid", body=[
-                    common:render_files(),
-                            "<i class='icon-th-large'></i> Select from my files", #br{}
+                    common:render_files()
+                            %"<i class='icon-th-large'></i> Select from my files", #br{}
                     ]},
             #panel{ class="row-fluid", body=[
                     case Updates of
@@ -110,8 +110,8 @@ event(save) ->
                                to=Involved,
                                date=date(), status=new},
     db:save(NUpdate),
-    common:send_messages(NUpdate),
     db:save_attachments(NUpdate, wf:session_default(attached_files, [])),
+    common:send_messages(NUpdate),
     wf:redirect("/");
 event(Ev) ->
     io:format("Event ~p in module ~p~n", [Ev, ?MODULE]).

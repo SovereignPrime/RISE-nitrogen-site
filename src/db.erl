@@ -263,16 +263,18 @@ delete_group(Id) ->
 save_file(Name, Path, #db_contact{id=UID}) ->
     Size = filelib:file_size(Path),
     Type = filename:extension(Name),
-    transaction(fun() ->
-                mnesia:write(#db_file{id=filename:basename(Path), 
+    File = #db_file{id=filename:basename(Path), 
                                       path=Name, 
                                       size=Size,
                                       date=date(),
                                       status=uploaded,
                                       user=UID,
                                       type=Type
-                                     })
-        end).
+                                     },
+    transaction(fun() ->
+                mnesia:write(File)
+        end),
+    File.
 
 %%%
 %% Attachment routines

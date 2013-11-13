@@ -105,8 +105,10 @@ start_upload_event(_) ->
 finish_upload_event(filename, FName, FPath, _Node) ->
     FID = filename:basename(FPath),
     io:format("File uploaded: ~p to ~p for ~p~n", [FName, FPath, new]),
-    [User] = wf:user(),
-    db:save_file(FName, FPath,User),
+    TName = wf:f("scratch/~s.torrent", [FID]),
+    etorrent_mktorrent:create(FPath, undefined, TName),
+    User = wf:user(),
+    File = db:save_file(FName, FPath,User),
     wf:session(attached_files, wf:session_default(attached_files, []) ++ [FID]),
     wf:update(files, render_files()).
 
@@ -128,11 +130,17 @@ save_involved(Type, TId) ->
                 db:save(P#db_contact_roles{id=NPId})
         end, List).
 
-send_messages(#db_update{subject=Subject, text=Text, from=FID, to=Contacts, date=Date}) ->
+send_messages(#db_update{subject=Subject, text=Text, from=FID, to=Contacts, date=Date}=U) ->
     #db_contact{address=From} = wf:user(),
     InvolvedB =  <<"Involved:", << <<A/bytes, ";">> || A <- [From | Contacts]>>/bytes>>,
+    {ok, Attachments} = db:get_attachments(U),
+    AttachmentsL = lists:map(fun(A) ->
+                    term_to_binary(A)
+            end, Attachments),
+    io:format("~p~n", [Attachments]),
+    AttachmentsB = <<"Attachments:", << <<A/bytes,";">> || A <- AttachmentsL>>/bytes>>,
     lists:foreach(fun(To) ->
-                bitmessage:send_message(From, wf:to_binary(To), wf:to_binary(Subject), <<(wf:to_binary(Text))/bytes, 10, InvolvedB/bytes>>, 2)
+                bitmessage:send_message(From, wf:to_binary(To), wf:to_binary(Subject), <<(wf:to_binary(Text))/bytes, 10, InvolvedB/bytes,  AttachmentsB/bytes>>, 3)
         end, Contacts);
 send_messages(#db_task{id=Id, uid=UID, name=Subject, text=Text, due=Date, parent=Parent, status=Status}) ->
     {ok, Involved} = db:get_involved(Id),
