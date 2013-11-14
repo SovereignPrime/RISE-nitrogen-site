@@ -35,8 +35,11 @@ main() ->
 render_files() ->
     {ok, Attachments} = db:get_files(wf:session_default(attached_files, [])),
     #panel{ class="span12", body=[
-            "<i class='icon-file-alt'></i> Attachments", #br{},
-            #upload{id=attachments, tag=filename, delegate=common, droppable=true,show_button=false, droppable_text="Drag and drop files here",  file_text=" Select my files"},
+            #panel{ class="row-fluid", body=[
+                    "<i class='icon-file-alt'></i> Attachments", #br{},
+                    #upload{id=attachments, tag=filename, delegate=common, droppable=true,show_button=false, droppable_text="Drag and drop files here",  file_text=" Select my files"}
+                    ]},
+            #br{},
             lists:map(fun(#db_file{path=Path, size=Size, date=Date, id=Id}) ->
                         #attachment{filename=Path, size=Size, time=Date}
                 end, Attachments)
@@ -133,15 +136,17 @@ save_involved(Type, TId) ->
 send_messages(#db_update{subject=Subject, text=Text, from=FID, to=Contacts, date=Date}=U) ->
     #db_contact{address=From} = wf:user(),
     InvolvedB =  <<"Involved:", << <<A/bytes, ";">> || A <- [From | Contacts]>>/bytes>>,
-    {ok, Attachments} = db:get_attachments(U),
-    AttachmentsL = lists:map(fun(A) ->
-                    term_to_binary(A)
-            end, Attachments),
-    io:format("~p~n", [Attachments]),
-    AttachmentsB = <<"Attachments:", << <<A/bytes,";">> || A <- AttachmentsL>>/bytes>>,
-    lists:foreach(fun(To) ->
-                bitmessage:send_message(From, wf:to_binary(To), wf:to_binary(Subject), <<(wf:to_binary(Text))/bytes, 10, InvolvedB/bytes,  AttachmentsB/bytes>>, 3)
-        end, Contacts);
+    case db:get_attachments(U) of
+        {ok, []} ->
+            lists:foreach(fun(To) ->
+                        bitmessage:send_message(From, wf:to_binary(To), wf:to_binary(Subject), <<(wf:to_binary(Text))/bytes, 10, InvolvedB/bytes>>, 2)
+                end, Contacts);
+        {ok, Attachments} -> 
+            AttachmentsB = encode_attachments(Attachments),
+            lists:foreach(fun(To) ->
+                        bitmessage:send_message(From, wf:to_binary(To), wf:to_binary(Subject), <<(wf:to_binary(Text))/bytes, 10, InvolvedB/bytes,  AttachmentsB/bytes>>, 3)
+                end, Contacts)
+    end;
 send_messages(#db_task{id=Id, uid=UID, name=Subject, text=Text, due=Date, parent=Parent, status=Status}) ->
     {ok, Involved} = db:get_involved(Id),
     % {_My, InvolvedN} =  lists:partition(fun({"Me", _, _}) -> true; (_) -> false end, Involved), 
@@ -156,3 +161,10 @@ send_messages(#db_task{id=Id, uid=UID, name=Subject, text=Text, due=Date, parent
                                         wf:to_binary(<<Text/bytes, 10,  InvolvedB/bytes, 10, "Due:", (wf:to_binary(Date))/bytes, 10, "Status:", (wf:to_binary(Status))/bytes, 10, "UID:", UID/bytes>>), 
                                         4)
         end, Contacts). % -- [{#db_contact{address=From, _='_'}, '_'}]).
+
+encode_attachments(Attachments) ->
+    AttachmentsL = lists:map(fun(#db_file{user=UID}=A) ->
+                    {ok, #db_contact{bitmessage=Addr}} = db:get_contact(UID),
+                    term_to_binary(A#db_file{user=Addr})
+            end, Attachments),
+    <<"Attachments:", << <<A/bytes,";">> || A <- AttachmentsL>>/bytes>>.

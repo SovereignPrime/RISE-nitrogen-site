@@ -27,7 +27,7 @@ left() ->
     {ok, Updates} = db:get_updates_by_subject(Subject),
     [
     #panel{ class="span3", body=[
-            #panel{ class="row-fluid", body=[
+            #panel{id=files, class="row-fluid", body=[
                     common:render_files()
                             %"<i class='icon-th-large'></i> Select from my files", #br{}
                     ]},
