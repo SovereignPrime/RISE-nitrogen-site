@@ -137,6 +137,13 @@ code_change(_OldVsn, State, _Extra) ->
 %%%===================================================================
 %%% Internal functions
 %%%===================================================================
+apply_message(#message{from=BMF, to=BMT, subject= <<"Get vCard">>, text=Data, enc=2}, FID, ToID) ->
+                       {ok,  #db_contact{name=Name, email=Email, phone=Phone, bitmessage=BM, address=Address} } = db:get_contact_by_address(Data),
+                       bitmessage:send_message(BMT, BMF, <<"vCard">>, <<(wf:to_binary(Name))/bytes, ",", (wf:to_binary(Email))/bytes, ",", (wf:to_binary(Phone))/bytes, ",", (wf:to_binary(Address))/bytes, ",", (wf:to_binary(BM))/bytes>>, 6);
+apply_message(#message{from=BMF, to=BMT, subject= <<"vCard">>, text=Data, enc=2}, FID, ToID) ->
+    [Name, Email, Phone, Address, BM] = binary:split(Data, <<",">>, [global, trim]),
+    {ok, Contact } = db:get_contact_by_address(BM),
+    db:save(Contact#db_contact{name=Name, email=Email, phone=Phone, address=Address});
 apply_message(#message{from=BMF, to=BMT, subject=Subject, text=Data, enc=Enc}, FID, ToID) when Enc == 2; Enc == 3 ->
     {ok, Id} = db:next_id(db_update),
     {match, [_, <<Text/bytes>>, <<InvolvedB/bytes>>]} = re:run(Data, "^(.*)\nInvolved:(.*)$", 
@@ -172,13 +179,6 @@ apply_message(#message{from=BMF, to=BMT, subject=Subject, text=Data, enc=Enc}, F
                 C = get_or_request_contact(BM, BMF, BMT),
                 db:save(#db_contact_roles{id=NPId, type=db_task, role=Role, tid=Id, contact=C})
         end, Involved);
-apply_message(#message{from=BMF, to=BMT, subject= <<"Get vCard">>, text=Data, enc=2}, FID, ToID) ->
-                       {ok,  #db_contact{name=Name, email=Email, phone=Phone, bitmessage=BM, address=Address} } = db:get_contact_by_address(Data),
-                       bitmessage:send_message(BMT, BMF, <<"vCard">>, <<(wf:to_binary(Name))/bytes, ",", (wf:to_binary(Email))/bytes, ",", (wf:to_binary(Phone))/bytes, ",", (wf:to_binary(Address))/bytes, ",", (wf:to_binary(BM))/bytes>>, 6);
-apply_message(#message{from=BMF, to=BMT, subject= <<"vCard">>, text=Data, enc=2}, FID, ToID) ->
-    [Name, Email, Phone, Address, BM] = binary:split(Data, <<",">>, [global, trim]),
-    {ok, Contact } = db:get_contact_by_address(BM),
-    db:save(Contact#db_contact{name=Name, email=Email, phone=Phone, address=Address});
 apply_message(Message, FID, ToID) ->
     error_logger:warning_img("Wrong incomming message: ~p from ~p~n", [Message]).
 

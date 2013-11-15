@@ -40,8 +40,8 @@ render_files() ->
                     #upload{id=attachments, tag=filename, delegate=common, droppable=true,show_button=false, droppable_text="Drag and drop files here",  file_text=" Select my files"}
                     ]},
             #br{},
-            lists:map(fun(#db_file{path=Path, size=Size, date=Date, id=Id}) ->
-                        #attachment{filename=Path, size=Size, time=Date}
+            lists:map(fun(#db_file{path=Path, size=Size, date=Date, id=Id, status=Status}) ->
+                        #attachment{filename=Path, size=Size, time=Date, status=Status}
                 end, Attachments)
             ]}.
 
