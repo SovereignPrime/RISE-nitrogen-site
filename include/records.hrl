@@ -23,7 +23,8 @@
 -record(attachment, {?ELEMENT_BASE(element_attachment),
                      filename,
                      size,
-                     time
+                     time,
+                     status
     }).
 
 -record(vcard, {?ELEMENT_BASE(element_vcard),
