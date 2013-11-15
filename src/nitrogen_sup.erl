@@ -37,12 +37,12 @@ init([]) ->
 
     io:format("Starting Cowboy Server (~s) on ~s:~p, root: '~s'~n",
               [ServerName, BindAddress, Port, DocRoot]),
-    
-    Dispatch = init_dispatch(DocRoot, StaticPaths),
+
+    Dispatch =  init_dispatch(DocRoot, StaticPaths),
     {ok, _} = cowboy:start_http(http, 100, [{port, Port}], [
-        {env, [{dispatch, Dispatch}]},
-        {max_keepalive, 50}
-    ]),
+                {env, [{dispatch, Dispatch}]},
+                {max_keepalive, 50}
+                ]),
 
     {ok, { {one_for_one, 5, 10}, [{receiver, {receiver, start_link, []}, permanent, 2, worker, dynamic}]} }.
 

@@ -168,3 +168,8 @@ encode_attachments(Attachments) ->
                     term_to_binary(A#db_file{user=Addr})
             end, Attachments),
     <<"Attachments:", << <<A/bytes,";">> || A <- AttachmentsL>>/bytes>>.
+
+get_torrent(FID) ->
+    #db_contact{bitmessage=From} = wf:user(),
+    {ok, To} = db:get_owner(FID),
+    bitmessage:send_message(From, To, <<"Get torrent">>, FID, 6).

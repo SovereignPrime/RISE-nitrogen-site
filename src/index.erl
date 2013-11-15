@@ -67,7 +67,7 @@ event({unfold, #update_element{id=Id, uid=Uid}=Update}) ->
     end,
 
     wf:replace(Id, Update#update_element{collapse=false, attachments=[
-                #attachment{filename=File, size=Size, time=Time, status=Status} || #db_file{path=File, size=Size, date=Time, status=Status} <- Attachments
+                #attachment{fid=FId, filename=File, size=Size, time=Time, status=Status} || #db_file{id=FId, path=File, size=Size, date=Time, status=Status} <- Attachments
                                                                ]});
 event({fold, #update_element{id=Id}=Update}) ->
     wf:replace(Id, Update#update_element{collapse=true});

@@ -137,13 +137,22 @@ code_change(_OldVsn, State, _Extra) ->
 %%%===================================================================
 %%% Internal functions
 %%%===================================================================
-apply_message(#message{from=BMF, to=BMT, subject= <<"Get vCard">>, text=Data, enc=2}, FID, ToID) ->
+apply_message(#message{from=BMF, to=BMT, subject= <<"Get vCard">>, text=Data, enc=6}, FID, ToID) ->
                        {ok,  #db_contact{name=Name, email=Email, phone=Phone, bitmessage=BM, address=Address} } = db:get_contact_by_address(Data),
                        bitmessage:send_message(BMT, BMF, <<"vCard">>, <<(wf:to_binary(Name))/bytes, ",", (wf:to_binary(Email))/bytes, ",", (wf:to_binary(Phone))/bytes, ",", (wf:to_binary(Address))/bytes, ",", (wf:to_binary(BM))/bytes>>, 6);
-apply_message(#message{from=BMF, to=BMT, subject= <<"vCard">>, text=Data, enc=2}, FID, ToID) ->
+apply_message(#message{from=BMF, to=BMT, subject= <<"vCard">>, text=Data, enc=6}, FID, ToID) ->
     [Name, Email, Phone, Address, BM] = binary:split(Data, <<",">>, [global, trim]),
     {ok, Contact } = db:get_contact_by_address(BM),
     db:save(Contact#db_contact{name=Name, email=Email, phone=Phone, address=Address});
+
+apply_message(#message{from=BMF, to=BMT, subject= <<"Get torrent">>, text=Data, enc=6}, FID, ToID) ->
+    {ok,  F } = file:read_file("scratch/" ++ wf:to_list(Data)),
+    bitmessage:send_message(BMT, BMF, <<"torrent">>, F);
+
+apply_message(#message{from=BMF, to=BMT, subject= <<"torrent">>, text=Data, enc=6}, FID, ToID) ->
+    [Id, Torrent] = binary:split(Data, <<";">>, [global, trim]),
+    file:write_file(wf:f("scratch/~s.torrent", [Id]), Torrent);
+
 apply_message(#message{from=BMF, to=BMT, subject=Subject, text=Data, enc=Enc}, FID, ToID) when Enc == 2; Enc == 3 ->
     {ok, Id} = db:next_id(db_update),
     {match, [_, <<Text/bytes>>, <<InvolvedB/bytes>>]} = re:run(Data, "^(.*)\nInvolved:(.*)$", 
