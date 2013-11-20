@@ -308,6 +308,12 @@ get_owner(FID) ->
                 Address
         end).
 
+mark_downloaded(Id) ->
+    transaction(fun() ->
+                [F] = mnesia:wread({ db_file, Id }),
+                mnesia:write(F#db_file{status=downloaded})
+        end).
+
 %%%
 %%  Admin functions
 %%%

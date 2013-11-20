@@ -146,12 +146,16 @@ apply_message(#message{from=BMF, to=BMT, subject= <<"vCard">>, text=Data, enc=6}
     db:save(Contact#db_contact{name=Name, email=Email, phone=Phone, address=Address});
 
 apply_message(#message{from=BMF, to=BMT, subject= <<"Get torrent">>, text=Data, enc=6}, FID, ToID) ->
-    {ok,  F } = file:read_file("scratch/" ++ wf:to_list(Data)),
+    {ok,  F } = file:read_file("scratch/" ++ wf:to_list(Data) ++ ".torrent"),
     bitmessage:send_message(BMT, BMF, <<"torrent">>, F);
 
 apply_message(#message{from=BMF, to=BMT, subject= <<"torrent">>, text=Data, enc=6}, FID, ToID) ->
     [Id, Torrent] = binary:split(Data, <<";">>, [global, trim]),
-    file:write_file(wf:f("scratch/~s.torrent", [Id]), Torrent);
+    Path = wf:f("scratch/~s.torrent", [Id]),
+    file:write_file(Path, Torrent),
+    etorrent:start(Path, fun() ->
+                db:mark_downloaded(Id)
+        end);
 
 apply_message(#message{from=BMF, to=BMT, subject=Subject, text=Data, enc=Enc}, FID, ToID) when Enc == 2; Enc == 3 ->
     {ok, Id} = db:next_id(db_update),
