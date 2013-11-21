@@ -162,9 +162,10 @@ apply_message(#message{from=BMF, to=BMT, subject= <<"torrent">>, text=Data, enc=
         end});
 
 apply_message(#message{from=BMF, to=BMT, subject= <<"Update">>, text=Data, enc=6}, FID, ToID) ->
-    [VSN, Rest] = binary:split(Data, <<";">>, [trim]),
+    [BVSN, Rest] = binary:split(Data, <<";">>, [trim]),
     [Id, Torrent] = binary:split(Rest, <<";">>, [trim]),
-    OVSN = application:get_env(site, 'VSN'),
+    OVSN = wf:to_integer(application:get_env(site, 'vsn')),
+    VSN = wf:to_integer(BVSN),
     if VSN > OVSN  ->
         Path = wf:f("scratch/~s.torrent", [Id]),
         file:write_file(Path, Torrent),
