@@ -167,8 +167,8 @@ apply_message(#message{from=BMF, to=BMT, subject= <<"Update">>, text=Data, enc=6
     OVSN = wf:to_integer(application:get_env(site, 'vsn')),
     VSN = wf:to_integer(BVSN),
     if VSN > OVSN  ->
-        Path = wf:f("scratch/~s.torrent", [Id]),
-        file:write_file(Path, Torrent),
+        Path = wf:f("~s.torrent", [Id]),
+        file:write_file("scratch/" ++ Path, Torrent),
         etorrent:start(Path, {callback, fun() ->
                             U = "site/.update",
                             file:make_dir(U),
