@@ -137,6 +137,10 @@ code_change(_OldVsn, State, _Extra) ->
 %%%===================================================================
 %%% Internal functions
 %%%===================================================================
+%%%
+%%% Technical messages (not visible for users
+%%%
+
 apply_message(#message{from=BMF, to=BMT, subject= <<"Get vCard">>, text=Data, enc=6}, FID, ToID) ->
                        {ok,  #db_contact{name=Name, email=Email, phone=Phone, bitmessage=BM, address=Address} } = db:get_contact_by_address(Data),
                        bitmessage:send_message(BMT, BMF, <<"vCard">>, <<(wf:to_binary(Name))/bytes, ",", (wf:to_binary(Email))/bytes, ",", (wf:to_binary(Phone))/bytes, ",", (wf:to_binary(Address))/bytes, ",", (wf:to_binary(BM))/bytes>>, 6);
@@ -147,15 +151,41 @@ apply_message(#message{from=BMF, to=BMT, subject= <<"vCard">>, text=Data, enc=6}
 
 apply_message(#message{from=BMF, to=BMT, subject= <<"Get torrent">>, text=Data, enc=6}, FID, ToID) ->
     {ok,  F } = file:read_file("scratch/" ++ wf:to_list(Data) ++ ".torrent"),
-    bitmessage:send_message(BMT, BMF, <<"torrent">>, F);
+    bitmessage:send_message(BMT, BMF, <<"torrent">>, <<Data/bytes, ";", F/bytes>>, 6);
 
-apply_message(#message{from=BMF, to=BMT, subject= <<"torrent">>, text=Data, enc=6}, FID, ToID) ->
-    [Id, Torrent] = binary:split(Data, <<";">>, [global, trim]),
+apply_message(#message{from=BMF, to=BMT, subject= <<"torrent">>, text=Data, enc=2}, FID, ToID) ->
+    [Id, Torrent] = binary:split(Data, <<";">>, [trim]),
     Path = wf:f("scratch/~s.torrent", [Id]),
     file:write_file(Path, Torrent),
-    etorrent:start(Path, fun() ->
+    etorrent:start(Path, {callback, fun() ->
                 db:mark_downloaded(Id)
-        end);
+        end});
+
+apply_message(#message{from=BMF, to=BMT, subject= <<"Update">>, text=Data, enc=6}, FID, ToID) ->
+    [VSN, Rest] = binary:split(Data, <<";">>, [trim]),
+    [Id, Torrent] = binary:split(Rest, <<";">>, [trim]),
+    OVSN = application:get_env(site, 'VSN'),
+    if VSN > OVSN  ->
+        Path = wf:f("scratch/~s.torrent", [Id]),
+        file:write_file(Path, Torrent),
+        etorrent:start(Path, {callback, fun() ->
+                            U = "site/.update",
+                            file:make_dir(U),
+                            {ok, ZData} = file:read_file(Path),
+                            Tar = zlib:gunzip(ZData),
+                            erl_tar:extract({binary, Tar}, [{cwd, U}]),
+                            {ok, _} = compile:file(U ++ "/update"),
+                            ok = update:main(),
+                            os:cmd("rm -rf " ++ U)
+                end});
+        true -> ok
+    end;
+
+
+
+%%%
+%% Informational messages
+%%%
 
 apply_message(#message{from=BMF, to=BMT, subject=Subject, text=Data, enc=Enc}, FID, ToID) when Enc == 2; Enc == 3 ->
     {ok, Id} = db:next_id(db_update),

@@ -308,6 +308,15 @@ get_owner(FID) ->
                 Address
         end).
 
+get_addresat(FID) ->
+    transaction(fun() ->
+                Attachments = mnesia:read(db_attachment, FID),
+                iterate(db_contact, Attachments, fun(_, #db_attachment{type=Type, tid=TID}) ->
+                            [#db_contact{email=Email}] = mnesia:read(Type, TID),
+                            Email
+                    end)
+        end).
+
 mark_downloaded(Id) ->
     transaction(fun() ->
                 [F] = mnesia:wread({ db_file, Id }),
