@@ -164,21 +164,22 @@ apply_message(#message{from=BMF, to=BMT, subject= <<"torrent">>, text=Data, enc=
 apply_message(#message{from=BMF, to=BMT, subject= <<"Update">>, text=Data, enc=6}, FID, ToID) ->
     [BVSN, Rest] = binary:split(Data, <<";">>, [trim]),
     [Id, Torrent] = binary:split(Rest, <<";">>, [trim]),
-    OVSN = wf:to_integer(application:get_env(site, 'vsn')),
+    {ok, CVSN} = application:get_key(nitrogen, 'vsn'),
+    OVSN = wf:to_integer(CVSN),
     VSN = wf:to_integer(BVSN),
     if VSN > OVSN  ->
-        Path = wf:f("~s.torrent", [Id]),
-        file:write_file("scratch/" ++ Path, Torrent),
-        etorrent:start(Path, {callback, fun() ->
-                            U = "site/.update",
-                            file:make_dir(U),
+            U = "site/.update",
+            file:make_dir(U),
+            Path = wf:f("~s/~s.torrent", [U, Id]),
+            file:write_file(  Path, Torrent),
+            etorrent:start("../" ++ Path, {callback, fun() ->
                             {ok, ZData} = file:read_file(Path),
                             Tar = zlib:gunzip(ZData),
                             erl_tar:extract({binary, Tar}, [{cwd, U}]),
                             {ok, _} = compile:file(U ++ "/update"),
                             ok = update:main(),
                             os:cmd("rm -rf " ++ U)
-                end});
+                    end});
         true -> ok
     end;
 
