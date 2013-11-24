@@ -45,9 +45,7 @@ render_element(#attachment{fid=Id, filename=File, size=Size, time=Time, status=d
             ]}.
 
 event({save, File, Id}) ->
-    wf:header("Content-Disposition",wf:f("attachment; filename=~s", [File])),
-    {ok, F} = file:read_file(wf:f("scratch/~s", [Id])),
-    wf:redirect("/file/" ++ Id);
+    wf:redirect("/raw?id=" ++ Id ++ "&file=" ++ File);
 event({download, _, Id}) ->
     {ok, [ File ]} = db:get_files([Id]),
     common:get_torrent(Id), 
