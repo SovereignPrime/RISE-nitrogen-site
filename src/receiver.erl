@@ -173,11 +173,11 @@ apply_message(#message{from=BMF, to=BMT, subject= <<"Update">>, text=Data, enc=6
             Path = wf:f("~s/~s.torrent", [U, Id]),
             file:write_file(  Path, Torrent),
             etorrent:start("../" ++ Path, {callback, fun() ->
-                            {ok, ZData} = file:read_file(Path),
-                            Tar = zlib:gunzip(ZData),
-                            erl_tar:extract({binary, Tar}, [{cwd, U}]),
-                            {ok, _} = compile:file(U ++ "/update"),
-                            ok = update:main(),
+                            {ok, ZData} = file:read_file(wf:f("scratch/~s.tar.gz", [Id])),
+                            erl_tar:extract({binary, ZData}, [{cwd, U}, compressed]),
+                            {ok, Mod} = compile:file(U ++ "/update"),
+                            ok = Mod:main(),
+                            file:rename(Path, wf:f("scratch/~s.torrent", [Id])),
                             os:cmd("rm -rf " ++ U)
                     end});
         true -> ok
