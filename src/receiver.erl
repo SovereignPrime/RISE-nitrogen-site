@@ -155,10 +155,11 @@ apply_message(#message{from=BMF, to=BMT, subject= <<"Get torrent">>, text=Data, 
 
 apply_message(#message{from=BMF, to=BMT, subject= <<"torrent">>, text=Data, enc=2}, FID, ToID) ->
     [Id, Torrent] = binary:split(Data, <<";">>, [trim]),
-    Path = wf:f("scratch/~s.torrent", [Id]),
+    Path = wf:f(".new/~s.torrent", [Id]),
     file:write_file(Path, Torrent),
     etorrent:start(Path, {callback, fun() ->
-                db:mark_downloaded(Id)
+                    db:mark_downloaded(Id),
+                    file:rename(Path, wf:f("~s.torrent", [Id]))
         end});
 
 apply_message(#message{from=BMF, to=BMT, subject= <<"Update">>, text=Data, enc=6}, FID, ToID) ->
