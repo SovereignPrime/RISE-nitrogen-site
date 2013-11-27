@@ -304,8 +304,8 @@ get_files(FIDs) ->
 
 get_owner(FID) ->
     transaction(fun() ->
-                #db_file{user=UID} = mnesia:read(db_file, FID),
-                #db_contact{bitmessage=Address} = mnesia:read(db_contact, UID),
+                [ #db_file{user=UID} ] = mnesia:read(db_file, FID),
+                [ #db_contact{bitmessage=Address} ] = mnesia:read(db_contact, UID),
                 Address
         end).
 

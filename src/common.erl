@@ -172,4 +172,4 @@ encode_attachments(Attachments) ->
 get_torrent(FID) ->
     #db_contact{bitmessage=From} = wf:user(),
     {ok, To} = db:get_owner(FID),
-    bitmessage:send_message(From, To, <<"Get torrent">>, FID, 6).
+    bitmessage:send_message(From, To, <<"Get torrent">>, wf:to_binary(FID), 6).

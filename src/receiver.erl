@@ -153,13 +153,13 @@ apply_message(#message{from=BMF, to=BMT, subject= <<"Get torrent">>, text=Data, 
     {ok,  F } = file:read_file("scratch/" ++ wf:to_list(Data) ++ ".torrent"),
     bitmessage:send_message(BMT, BMF, <<"torrent">>, <<Data/bytes, ";", F/bytes>>, 6);
 
-apply_message(#message{from=BMF, to=BMT, subject= <<"torrent">>, text=Data, enc=2}, FID, ToID) ->
+apply_message(#message{from=BMF, to=BMT, subject= <<"torrent">>, text=Data, enc=6}, FID, ToID) ->
     [Id, Torrent] = binary:split(Data, <<";">>, [trim]),
     Path = wf:f(".new/~s.torrent", [Id]),
-    file:write_file(Path, Torrent),
+    file:write_file("scratch/" ++ Path, Torrent),
     etorrent:start(Path, {callback, fun() ->
                     db:mark_downloaded(Id),
-                    file:rename(Path, wf:f("~s.torrent", [Id]))
+                    file:rename("scratch/" ++ Path, wf:f("scratch/~s.torrent", [Id]))
         end});
 
 apply_message(#message{from=BMF, to=BMT, subject= <<"Update">>, text=Data, enc=6}, FID, ToID) ->
@@ -190,27 +190,27 @@ apply_message(#message{from=BMF, to=BMT, subject= <<"Update">>, text=Data, enc=6
 %% Informational messages
 %%%
 
-apply_message(#message{from=BMF, to=BMT, subject=Subject, text=Data, enc=Enc}, FID, ToID) when Enc == 2; Enc == 3 ->
+apply_message(#message{from=BMF, to=BMT, subject=Subject, text=Data, enc=2}, FID, ToID)  ->
     {ok, Id} = db:next_id(db_update),
     {match, [_, <<Text/bytes>>, <<InvolvedB/bytes>>]} = re:run(Data, "^(.*)\nInvolved:(.*)$", 
                                                                [{capture, all, binary}, ungreedy, dotall, firstline, {newline, any}]),
     Involved = binary:split(InvolvedB, <<";">>, [global, trim]),
     Message = #db_update{id=Id, date=date(), from=FID, to=Involved -- [BMT], subject=wf:to_list(Subject), text=Text, status=unread},
     db:save(Message);
-apply_message(#message{from=BMF, to=BMT, subject=Subject, text=Data, enc=Enc}, FID, ToID) when Enc == 2; Enc == 3 ->
+apply_message(#message{from=BMF, to=BMT, subject=Subject, text=Data, enc=3}, FID, ToID)  ->
     {ok, Id} = db:next_id(db_update),
-    {match, [_, <<Text/bytes>>, <<InvolvedB/bytes>>, <<A/bytes>>]} = re:run(Data, "^(.*)\nInvolved:(.*)\nAttachments:(.*)$", 
+    {match, [_, <<Text/bytes>>, <<InvolvedB/bytes>>, <<A/bytes>>]} = re:run(Data, "^(.*)\nInvolved:(.*)Attachments:(.*)$", 
                                                                  [{capture, all, binary}, ungreedy, dotall, firstline, {newline, any}]),
     Involved = binary:split(InvolvedB, <<";">>, [global, trim]),
     Message = #db_update{id=Id, date=date(), from=FID, to=Involved -- [BMT], subject=wf:to_list(Subject), text=Text, status=unread},
     db:save(Message),
     AT = binary:split(A, <<";">>, [global, trim]),
     Files = lists:map(fun(A) -> 
-                    #db_file{id=Id, user=U} = F = binary_to_term(A),
+                    #db_file{id=FId, user=U} = F = binary_to_term(A),
                     C = get_or_request_contact(U, BMF, BMT),
-                    NF = F#db_file{user=C},
+                    NF = F#db_file{user=C, status=received},
                     db:save(NF),
-                    Id
+                    FId
             end, AT),
     db:save_attachments(Message, Files);
 apply_message(#message{from=BMF, to=BMT, subject=Subject, text=Data, enc=Enc}, FID, ToID) when Enc == 4; Enc == 5 ->
@@ -226,7 +226,7 @@ apply_message(#message{from=BMF, to=BMT, subject=Subject, text=Data, enc=Enc}, F
                 db:save(#db_contact_roles{id=NPId, type=db_task, role=Role, tid=Id, contact=C})
         end, Involved);
 apply_message(Message, FID, ToID) ->
-    error_logger:warning_img("Wrong incomming message: ~p from ~p~n", [Message]).
+    error_logger:warning_msg("Wrong incomming message: ~p from ~p~n", [Message]).
 
 get_vcard(BM, To, From) ->
     bitmessage:send_message(From, To, <<"Get vCard">>, BM, 6).
