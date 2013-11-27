@@ -154,13 +154,25 @@ send_messages(#db_task{id=Id, uid=UID, name=Subject, text=Text, due=Date, parent
     #db_contact{address=From} = wf:user(),
     %error_logger:info_msg("~p ~p~n", [Contacts, From]),
     InvolvedB =  <<"Involved:", << <<A/bytes, ":", (wf:to_binary(R))/bytes, ";">> || {#db_contact{bitmessage=A}, R} <- Contacts>>/bytes>>,
-    lists:foreach(fun({#db_contact{address=To}, _}) ->
-                bitmessage:send_message(From,
-                                        wf:to_binary(To), 
-                                        wf:to_binary(Subject), 
-                                        wf:to_binary(<<Text/bytes, 10,  InvolvedB/bytes, 10, "Due:", (wf:to_binary(Date))/bytes, 10, "Status:", (wf:to_binary(Status))/bytes, 10, "UID:", UID/bytes>>), 
-                                        4)
-        end, Contacts). % -- [{#db_contact{address=From, _='_'}, '_'}]).
+    case db:get_attachments(U) of
+        {ok, []} ->
+            lists:foreach(fun({#db_contact{address=To}, _}) ->
+                        bitmessage:send_message(From,
+                                                wf:to_binary(To), 
+                                                wf:to_binary(Subject), 
+                                                wf:to_binary(<<Text/bytes, 10,  InvolvedB/bytes, 10, "Due:", (wf:to_binary(Date))/bytes, 10, "Status:", (wf:to_binary(Status))/bytes, 10, "UID:", UID/bytes>>), 
+                                                4)
+                end, Contacts); % -- [{#db_contact{address=From, _='_'}, '_'}]).
+        {ok, Attachments} -> 
+            AttachmentsB = encode_attachments(Attachments),
+            lists:foreach(fun({#db_contact{address=To}, _}) ->
+                        bitmessage:send_message(From,
+                                                wf:to_binary(To), 
+                                                wf:to_binary(Subject), 
+                                                wf:to_binary(<<Text/bytes, 10,  InvolvedB/bytes, 10, "Due:", (wf:to_binary(Date))/bytes, 10, "Status:", (wf:to_binary(Status))/bytes, 10, "UID:", UID/bytes, AttachmentsB/bytes>>), 
+                                                5)
+                end, Contacts); % -- [{#db_contact{address=From, _='_'}, '_'}]).
+    end.
 
 encode_attachments(Attachments) ->
     AttachmentsL = lists:map(fun(#db_file{user=UID}=A) ->

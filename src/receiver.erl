@@ -199,26 +199,35 @@ apply_message(#message{from=BMF, to=BMT, subject=Subject, text=Data, enc=2}, FID
     db:save(Message);
 apply_message(#message{from=BMF, to=BMT, subject=Subject, text=Data, enc=3}, FID, ToID)  ->
     {ok, Id} = db:next_id(db_update),
-    {match, [_, <<Text/bytes>>, <<InvolvedB/bytes>>, <<A/bytes>>]} = re:run(Data, "^(.*)\nInvolved:(.*)Attachments:(.*)$", 
+    {match, [_, <<Text/bytes>>, <<InvolvedB/bytes>>, <<A/bytes>>]} = re:run(Data, "^(.*)\nInvolved:(.*)\nAttachments:(.*)$", 
                                                                  [{capture, all, binary}, ungreedy, dotall, firstline, {newline, any}]),
     Involved = binary:split(InvolvedB, <<";">>, [global, trim]),
     Message = #db_update{id=Id, date=date(), from=FID, to=Involved -- [BMT], subject=wf:to_list(Subject), text=Text, status=unread},
     db:save(Message),
     AT = binary:split(A, <<";">>, [global, trim]),
-    Files = lists:map(fun(A) -> 
-                    #db_file{id=FId, user=U} = F = binary_to_term(A),
-                    C = get_or_request_contact(U, BMF, BMT),
-                    NF = F#db_file{user=C, status=received},
-                    db:save(NF),
-                    FId
-            end, AT),
+    Files = decode_attachments(A, BMF, BMT),
     db:save_attachments(Message, Files);
-apply_message(#message{from=BMF, to=BMT, subject=Subject, text=Data, enc=Enc}, FID, ToID) when Enc == 4; Enc == 5 ->
+apply_message(#message{from=BMF, to=BMT, subject=Subject, text=Data, enc=4}, FID, ToID)  ->
     {match, [_, <<Name/bytes>>, <<InvolvedB/bytes>>, <<Due/bytes>>, <<Status/bytes>>, UID]} = re:run(Data, "^(.*)\nInvolved:(.*)\nDue:(.*)\nStatus:(.*)\nUID:(.*)$", 
                                                                                                 [{capture, all, binary}, ungreedy, dotall, firstline, {newline, any}]),
     Involved = binary:split(InvolvedB, <<";">>, [global, trim]),
     {ok, Id} = db:get_task_by_uid(UID),
     db:save(#db_task{id=Id, uid=UID, due=Due,  name=wf:to_list(Subject), text=Name, status=Status}),
+    lists:foreach(fun(I) ->
+                [BM, Role] = binary:split(I, <<":">>),
+                {ok, NPId} = db:next_id(db_contact_roles),
+                C = get_or_request_contact(BM, BMF, BMT),
+                db:save(#db_contact_roles{id=NPId, type=db_task, role=Role, tid=Id, contact=C})
+        end, Involved);
+apply_message(#message{from=BMF, to=BMT, subject=Subject, text=Data, enc=5}, FID, ToID)  ->
+    {match, [_, <<Name/bytes>>, <<InvolvedB/bytes>>, <<Due/bytes>>, <<Status/bytes>>, UID, <<A/bytes>>]} = re:run(Data, "^(.*)\nInvolved:(.*)\nDue:(.*)\nStatus:(.*)\nUID:(.*)\nAttachments:(.*)$", 
+                                                                                                [{capture, all, binary}, ungreedy, dotall, firstline, {newline, any}]),
+    Involved = binary:split(InvolvedB, <<";">>, [global, trim]),
+    {ok, Id} = db:get_task_by_uid(UID),
+    Message = #db_task{id=Id, uid=UID, due=Due,  name=wf:to_list(Subject), text=Name, status=Status},
+    db:save(Message),
+    Files = decode_attachments(A, BMF, BMT),
+    db:save_attachments(Message, Files),
     lists:foreach(fun(I) ->
                 [BM, Role] = binary:split(I, <<":">>),
                 {ok, NPId} = db:next_id(db_contact_roles),
@@ -241,3 +250,13 @@ get_or_request_contact(BM, From, To) ->
             #db_contact{id=CID} = Contact,
             CID
     end.
+
+decode_attachments(A, BMF, BMT) ->
+    AT = binary:split(A, <<";">>, [global, trim]),
+    lists:map(fun(A) -> 
+                    #db_file{id=FId, user=U} = F = binary_to_term(A),
+                    C = get_or_request_contact(U, BMF, BMT),
+                    NF = F#db_file{user=C, status=received},
+                    db:save(NF),
+                    FId
+            end, AT).
