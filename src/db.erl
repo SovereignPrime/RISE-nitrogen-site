@@ -152,7 +152,8 @@ set_read(Id) ->
 %%%
 
 get_contact(undefined) ->
-    {ok, #db_contact{}};
+    {ok, Id} = next_id(db_contact),
+    {ok, #db_contact{id=Id}};
 get_contact(Id) ->
     transaction(fun() ->
                 [U] = mnesia:read(db_contact, Id),
