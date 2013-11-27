@@ -147,7 +147,7 @@ send_messages(#db_update{subject=Subject, text=Text, from=FID, to=Contacts, date
                         bitmessage:send_message(From, wf:to_binary(To), wf:to_binary(Subject), <<(wf:to_binary(Text))/bytes, 10, InvolvedB/bytes,  AttachmentsB/bytes>>, 3)
                 end, Contacts)
     end;
-send_messages(#db_task{id=Id, uid=UID, name=Subject, text=Text, due=Date, parent=Parent, status=Status}) ->
+send_messages(#db_task{id=Id, uid=UID, name=Subject, text=Text, due=Date, parent=Parent, status=Status} = U) ->
     {ok, Involved} = db:get_involved(Id),
     % {_My, InvolvedN} =  lists:partition(fun({"Me", _, _}) -> true; (_) -> false end, Involved), 
     Contacts = [{C, R} || {_, R, C}  <- Involved],
@@ -171,8 +171,8 @@ send_messages(#db_task{id=Id, uid=UID, name=Subject, text=Text, due=Date, parent
                                                 wf:to_binary(Subject), 
                                                 wf:to_binary(<<Text/bytes, 10,  InvolvedB/bytes, 10, "Due:", (wf:to_binary(Date))/bytes, 10, "Status:", (wf:to_binary(Status))/bytes, 10, "UID:", UID/bytes, AttachmentsB/bytes>>), 
                                                 5)
-                end, Contacts); % -- [{#db_contact{address=From, _='_'}, '_'}]).
-    end.
+                end, Contacts) % -- [{#db_contact{address=From, _='_'}, '_'}]).
+        end.
 
 encode_attachments(Attachments) ->
     AttachmentsL = lists:map(fun(#db_file{user=UID}=A) ->
