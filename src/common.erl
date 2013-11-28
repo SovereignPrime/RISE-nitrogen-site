@@ -135,7 +135,7 @@ save_involved(Type, TId) ->
 
 send_messages(#db_update{subject=Subject, text=Text, from=FID, to=Contacts, date=Date}=U) ->
     #db_contact{address=From} = wf:user(),
-    InvolvedB =  <<"Involved:", << <<A/bytes, ";">> || A <- [From | Contacts]>>/bytes>>,
+    InvolvedB =  <<"Involved:", << <<A/bytes, ";">> || A <- [From | Contacts]>>/bytes, 10>>,
     case db:get_attachments(U) of
         {ok, []} ->
             lists:foreach(fun(To) ->
@@ -153,7 +153,7 @@ send_messages(#db_task{id=Id, uid=UID, name=Subject, text=Text, due=Date, parent
     Contacts = [{C, R} || {_, R, C}  <- Involved],
     #db_contact{address=From} = wf:user(),
     %error_logger:info_msg("~p ~p~n", [Contacts, From]),
-    InvolvedB =  <<"Involved:", << <<A/bytes, ":", (wf:to_binary(R))/bytes, ";">> || {#db_contact{bitmessage=A}, R} <- Contacts>>/bytes>>,
+    InvolvedB =  <<"Involved:", << <<A/bytes, ":", (wf:to_binary(R))/bytes, ";">> || {#db_contact{bitmessage=A}, R} <- Contacts>>/bytes, 10>>,
     case db:get_attachments(U) of
         {ok, []} ->
             lists:foreach(fun({#db_contact{address=To}, _}) ->
@@ -179,7 +179,7 @@ encode_attachments(Attachments) ->
                     {ok, #db_contact{bitmessage=Addr}} = db:get_contact(UID),
                     term_to_binary(A#db_file{user=Addr})
             end, Attachments),
-    <<"Attachments:", << <<A/bytes,";">> || A <- AttachmentsL>>/bytes>>.
+    <<"Attachments:", << <<A/bytes,";">> || A <- AttachmentsL>>/bytes, 10>>.
 
 get_torrent(FID) ->
     #db_contact{bitmessage=From} = wf:user(),
