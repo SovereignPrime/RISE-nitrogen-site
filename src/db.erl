@@ -38,6 +38,17 @@ save(Contact) ->
     transaction(fun() ->
                 mnesia:write(Contact)
         end).
+
+save_uniq(Contact) ->
+    transaction(fun() ->
+                case mnesia:match_object(Contact) of
+                    [_] ->
+                        ok;
+                    [] ->
+                        mnesia:write(Contact)
+                end
+        end).
+
 delete(Type, Id) ->
     transaction(fun() ->
                 mnesia:delete({Type, Id})
