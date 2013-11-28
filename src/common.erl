@@ -37,7 +37,7 @@ render_files() ->
     #panel{ class="span12", body=[
             #panel{ class="row-fluid", body=[
                     "<i class='icon-file-alt'></i> Attachments", #br{},
-                    #upload{id=attachments, tag=filename, delegate=common, droppable=true,show_button=false, droppable_text="Drag and drop files here",  file_text=" Select my files"}
+                    #upload{id=attachments, tag=filename, delegate=common, droppable=true,show_button=false, droppable_text="Drag and drop files here",  file_text=" Select my files", multiple=true}
                     ]},
             #br{},
             lists:map(fun(#db_file{path=Path, size=Size, date=Date, id=Id, status=Status}) ->
