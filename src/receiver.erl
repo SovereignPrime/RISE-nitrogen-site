@@ -217,7 +217,7 @@ apply_message(#message{from=BMF, to=BMT, subject=Subject, text=Data, enc=4}, FID
                 [BM, Role] = binary:split(I, <<":">>),
                 {ok, NPId} = db:next_id(db_contact_roles),
                 C = get_or_request_contact(BM, BMF, BMT),
-                db:save(#db_contact_roles{id=NPId, type=db_task, role=Role, tid=Id, contact=C})
+                db:save(#db_contact_roles{id=NPId, type=db_task, role=wf:to_list(Role), tid=Id, contact=C})
         end, Involved);
 apply_message(#message{from=BMF, to=BMT, subject=Subject, text=Data, enc=5}, FID, ToID)  ->
     {match, [_, <<Name/bytes>>, <<InvolvedB/bytes>>, <<Due/bytes>>, <<Status/bytes>>, UID, <<A/bytes>>]} = re:run(Data, "^(.*)\nInvolved:(.*)\nDue:(.*)\nStatus:(.*)\nUID:(.*)\nAttachments:(.*)$", 
