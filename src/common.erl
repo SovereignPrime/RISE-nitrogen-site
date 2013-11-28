@@ -156,22 +156,26 @@ send_messages(#db_task{id=Id, uid=UID, name=Subject, text=Text, due=Date, parent
     InvolvedB =  <<"Involved:", << <<A/bytes, ":", (wf:to_binary(R))/bytes, ";">> || {#db_contact{bitmessage=A}, R} <- Contacts>>/bytes, 10>>,
     case db:get_attachments(U) of
         {ok, []} ->
-            lists:foreach(fun({#db_contact{address=To}, _}) ->
+            lists:foreach(fun({#db_contact{address=To}, _}) when To /= From ->
                         bitmessage:send_message(From,
                                                 wf:to_binary(To), 
                                                 wf:to_binary(Subject), 
                                                 wf:to_binary(<<Text/bytes, 10,  InvolvedB/bytes, 10, "Due:", (wf:to_binary(Date))/bytes, 10, "Status:", (wf:to_binary(Status))/bytes, 10, "UID:", UID/bytes>>), 
-                                                4)
-                end, Contacts); % -- [{#db_contact{address=From, _='_'}, '_'}]).
+                                                4);
+                    (_) ->
+                        ok
+                end, Contacts);
         {ok, Attachments} -> 
             AttachmentsB = encode_attachments(Attachments),
-            lists:foreach(fun({#db_contact{address=To}, _}) ->
+            lists:foreach(fun({#db_contact{address=To}, _}) when To /= From ->
                         bitmessage:send_message(From,
                                                 wf:to_binary(To), 
                                                 wf:to_binary(Subject), 
                                                 wf:to_binary(<<Text/bytes, 10,  InvolvedB/bytes, 10, "Due:", (wf:to_binary(Date))/bytes, 10, "Status:", (wf:to_binary(Status))/bytes, 10, "UID:", UID/bytes, 10, AttachmentsB/bytes>>), 
-                                                5)
-                end, Contacts) % -- [{#db_contact{address=From, _='_'}, '_'}]).
+                                                5);
+                    (_) ->
+                        ok
+                end, Contacts)
         end.
 
 encode_attachments(Attachments) ->

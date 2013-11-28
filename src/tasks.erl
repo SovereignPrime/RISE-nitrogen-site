@@ -132,8 +132,8 @@ render_task(#db_task{id=Id, name=Name, due=Due, text=Text, parent=Parent, status
                             #panel{class="span6", body="<i class='icon-file-alt'></i> Attachment"},
                             #panel{class="span2 offset4", body="<i class='icon-download-alt'></i> Download all"}
                             ]},
-                    lists:map(fun(#db_file{path=Path, size=Size, date=Date, id=Id}) ->
-                                #attachment{filename=Path, size=Size, time=Date}
+                    lists:map(fun(#db_file{path=Path, size=Size, date=Date, id=Id, status=State}) ->
+                                #attachment{filename=Path, size=Size, time=Date, status=State}
                         end, Attachments)
                     ]
         end
