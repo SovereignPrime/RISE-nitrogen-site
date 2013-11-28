@@ -158,7 +158,7 @@ apply_message(#message{from=BMF, to=BMT, subject= <<"torrent">>, text=Data, enc=
     Path = wf:f(".new/~s.torrent", [Id]),
     file:write_file("scratch/" ++ Path, Torrent),
     etorrent:start(Path, {callback, fun() ->
-                    db:mark_downloaded(Id),
+                    db:mark_downloaded(wf:to_list(Id)),
                     file:rename("scratch/" ++ Path, wf:f("scratch/~s.torrent", [Id]))
         end});
 
@@ -199,7 +199,7 @@ apply_message(#message{from=BMF, to=BMT, subject=Subject, text=Data, enc=2}, FID
     db:save(Message);
 apply_message(#message{from=BMF, to=BMT, subject=Subject, text=Data, enc=3}, FID, ToID)  ->
     {ok, Id} = db:next_id(db_update),
-    {match, [_, <<Text/bytes>>, <<InvolvedB/bytes>>, <<A/bytes>>]} = re:run(Data, "^(.*)\nInvolved:(.*)\nAttachments:(.*)$", 
+    {match, [_, <<Text/bytes>>, <<InvolvedB/bytes>>, <<A/bytes>>]} = re:run(Data, "^(.*)\nInvolved:(.*)Attachments:(.*)$", 
                                                                  [{capture, all, binary}, ungreedy, dotall, firstline, {newline, any}]),
     Involved = binary:split(InvolvedB, <<";">>, [global, trim]),
     Message = #db_update{id=Id, date=date(), from=FID, to=Involved -- [BMT], subject=wf:to_list(Subject), text=Text, status=unread},
