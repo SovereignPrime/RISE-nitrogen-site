@@ -17,7 +17,7 @@ buttons() ->
                     #panel{class="row-fluid", body=[
                             #button{ class='btn btn-link span2', body="<i class='icon-remove'></i> Discard", 
    					click=#script{script="window.history.back();"}},
-                            #button{ class='btn btn-link span2', body="<i class='icon-ok'></i> Save", postback=save, delegate=?MODULE}
+                            #button{ class='btn btn-link span2', body="<i class='icon-ok'></i> Send", postback=save, delegate=?MODULE}
                             ]}
                     ]}
             ]}.
