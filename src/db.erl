@@ -15,7 +15,7 @@ install()->
     {atomic, ok} = mnesia:create_table(db_contact_roles, [{disc_copies, [node()]}, {attributes, record_info(fields, db_contact_roles)}, {type, ordered_set}]),
     {atomic, ok} = mnesia:create_table(db_group_members, [{disc_copies, [node()]}, {attributes, record_info(fields, db_group_members)}, {type, bag}]),
     {atomic, ok} = mnesia:create_table(db_expense_tasks, [{disc_copies, [node()]}, {attributes, record_info(fields, db_expense_tasks)}, {type, bag}]),
-    {atomic, ok} = mnesia:create_table(db_attachment, [{disc_copies, [node()]}, {attributes, record_info(fields, db_attachment)}, {type, ordered_set}]).
+    {atomic, ok} = mnesia:create_table(db_attachment, [{disc_copies, [node()]}, {attributes, record_info(fields, db_attachment)}, {type, ordered_set}, {index, [file]}]).
 
 
 %%%
@@ -335,6 +335,22 @@ mark_downloaded(Id) ->
                 mnesia:write(F#db_file{status=downloaded})
         end).
 
+get_linked_messages(FID) ->
+    transaction(fun() ->
+                Attachments = mnesia:index_read(db_attachment, FID, #db_attachment.file),
+                iterate(db_attachment, Attachments, fun(_Ty, #db_attachment{type=T, tid=Id}) when T == db_update ->
+                            [#db_update{subject=Subject}] = mnesia:read(T, Id),
+                            [ <<(wf:to_binary(Subject))/bytes, "; ">> ];
+                        (_Ty, #db_attachment{type=T, tid=Id}) when T == db_task ->
+                            [#db_task{name=Subject}] = mnesia:read(T, Id),
+                            [ <<(wf:to_binary(Subject))/bytes, "; ">> ];
+                        (_Ty, #db_attachment{type=T, tid=Id}) when T == db_expense ->
+                            [#db_expense{name=Subject}] = mnesia:read(T, Id),
+                            [ <<(wf:to_binary(Subject))/bytes, "; ">> ]
+                    end)
+        end).
+                            
+
 %%%
 %%  Admin functions
 %%%
@@ -439,8 +455,14 @@ transaction(Fun) ->
 save_attachment(_Type, _Id, [], _N) ->
     ok;
 save_attachment(Type, Id, [File|Rest], N) ->
-    mnesia:write(#db_attachment{id=N, file=File, type=Type, tid=Id}),
-    save_attachment(Type, Id, Rest, N+1).
+    case mnesia:match_object(#db_attachment{file=File, type=Type, tid=Id, _='_'}) of
+        [] ->
+            mnesia:write(#db_attachment{id=N, file=File, type=Type, tid=Id}),
+            save_attachment(Type, Id, Rest, N+1);
+        _ ->
+            save_attachment(Type, Id, Rest, N)
+    end.
+
 iterate(_, []) ->
     [];
 iterate(Type, [Id|R]) ->

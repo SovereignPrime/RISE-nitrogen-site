@@ -67,9 +67,7 @@
                    size,
                    for,
                    date,
-                   linked,
-                   seed,
-                   peer,
+                   fid,
                    status
     }).
 -record(payment_row, {?ELEMENT_BASE(element_payment_row),

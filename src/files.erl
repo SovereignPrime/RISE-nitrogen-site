@@ -48,7 +48,7 @@ body() ->
                         ]},
                 lists:map(fun(#db_file{id=Id, path=Name, size=Size, type=Type,user=For, date=Date, status=Status} ) ->
                             {ok, #db_contact{name=U}} = db:get_contact(For),
-                            #file_row{name=Name, size=Size, type=Type, for=U, date=Date, status=Status}
+                            #file_row{fid=Id, name=Name, size=Size, type=Type, for=U, date=Date, status=Status}
                     end, Files)
                 ]}
 

@@ -213,6 +213,7 @@ apply_message(#message{from=BMF, to=BMT, subject=Subject, text=Data, enc=4}, FID
     Involved = binary:split(InvolvedB, <<";">>, [global, trim]),
     {ok, Id} = db:get_task_by_uid(UID),
     db:save(#db_task{id=Id, uid=UID, due=Due,  name=wf:to_list(Subject), text=Name, status=Status}),
+    db:clear_roles(db_task, Id),
     lists:foreach(fun(I) ->
                 [BM, Role] = binary:split(I, <<":">>),
                 {ok, NPId} = db:next_id(db_contact_roles),
@@ -220,7 +221,7 @@ apply_message(#message{from=BMF, to=BMT, subject=Subject, text=Data, enc=4}, FID
                 db:save(#db_contact_roles{id=NPId, type=db_task, role=wf:to_list(Role), tid=Id, contact=C})
         end, Involved);
 apply_message(#message{from=BMF, to=BMT, subject=Subject, text=Data, enc=5}, FID, ToID)  ->
-    {match, [_, <<Name/bytes>>, <<InvolvedB/bytes>>, <<Due/bytes>>, <<Status/bytes>>, UID, <<A/bytes>>]} = re:run(Data, "^(.*)\nInvolved:(.*)\nDue:(.*)\nStatus:(.*)\nUID:(.*)\nAttachments:(.*)$", 
+    {match, [_, <<Name/bytes>>, <<InvolvedB/bytes>>, <<Due/bytes>>, <<Status/bytes>>, UID, <<A/bytes>>]} = re:run(Data, "^(.*)\nInvolved:(.*)\nDue:(.*)\nStatus:(.*)\nUID:(.*)\nAttachments:(.*)\n$", 
                                                                                                 [{capture, all, binary}, ungreedy, dotall, firstline, {newline, any}]),
     Involved = binary:split(InvolvedB, <<";">>, [global, trim]),
     {ok, Id} = db:get_task_by_uid(UID),
@@ -228,6 +229,7 @@ apply_message(#message{from=BMF, to=BMT, subject=Subject, text=Data, enc=5}, FID
     db:save(Message),
     Files = decode_attachments(A, BMF, BMT),
     db:save_attachments(Message, Files),
+    db:clear_roles(db_task, Id),
     lists:foreach(fun(I) ->
                 [BM, Role] = binary:split(I, <<":">>),
                 {ok, NPId} = db:next_id(db_contact_roles),
