@@ -89,6 +89,7 @@ do_init(Config) ->
     wxMenu:append(Menu, wxMenuItem:new([{parentMenu, Menu}, 
                                       {id, 6},
                                        {text, "Quite RISE"}])),
+    ok = wxFrame:connect(Icon, command_menu_selected), 
     %wxHtmlWindow:loadFile(HtmlWin, "site/templates/bare.html"),
 
     %% Add to sizers
@@ -110,7 +111,6 @@ handle_event(#wx{event = #wxHtmlLink{linkInfo = #wxHtmlLinkInfo{href=Link}}},
 handle_event(#wx{event=#wxTaskBarIcon{type=taskbar_right_up}},
 	     State = #state{menu=Menu, icon=Icon}) ->
     wxTaskBarIcon:popupMenu(Icon, Menu),
-    ok = wxFrame:connect(Icon, command_menu_selected), 
     {noreply, State#state{menu=Menu}};
 handle_event(#wx{id=4, event=#wxCommand{type=command_menu_selected}},
 	     State = #state{menu=Menu, icon=Icon}) ->
@@ -140,6 +140,11 @@ handle_event(#wx{id=3, event=#wxCommand{type=command_menu_selected}},
 %    wxMenu:enable(Menu, 1, false),
 %    wxMenu:enable(Menu, 2, true),
 %    {noreply, State};
+handle_event(#wx{id=5, event=#wxCommand{type=command_menu_selected}},
+	     State = #state{menu=Menu, icon=Icon}) ->
+    io:format("Item ~p~n", [wxMenu:findItem(Menu, 4)]),
+    os:cmd("open http://localhost:8000/"),
+    {noreply, State};
 handle_event(#wx{id=6, event=#wxCommand{type=command_menu_selected}},
 	     State = #state{menu=Menu, icon=Icon}) ->
     io:format("Item ~p~n", [wxMenu:findItem(Menu, 4)]),
