@@ -21,7 +21,7 @@
 -behaviour(wx_object).
 
 %% Client API
--export([start/1]).
+-export([start/0]).
 
 %% wx_object callbacks
 -export([init/1, terminate/2,  code_change/3,
@@ -31,51 +31,123 @@
 
 -record(state, 
 	{
-	  parent,
-	  config
+        parent,
+        icon,
+        menu,
+        config
 	}).
 
-start(Config) ->
-    wx_object:start_link(?MODULE, Config, []).
+start() ->
+    wx_object:start_link(?MODULE, [], []).
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-init(_Config) ->
+init([]) ->
     WX = wx:new(),
-    inets:start(),
+    %inets:start(),
     wx:batch(fun() -> do_init(WX) end).
     %wxWindow:should(Frame).
 
 do_init(Config) ->
     %Parent = proplists:get_value(parent, Config),  
     Panel = wxFrame:new(Config, -1, "RISE", []),
-
+%
     %% Setup sizers
-    MainSizer = wxBoxSizer:new(?wxVERTICAL),
-    Sizer = wxStaticBoxSizer:new(?wxVERTICAL, Panel, 
-				 [{label, "wxHtmlWindow"}]),
+    %MainSizer = wxBoxSizer:new(?wxVERTICAL),
+    %Sizer = wxStaticBoxSizer:new(?wxVERTICAL, Panel, 
+				 %[{label, "wxHtmlWindow"}]),
 
     %% Create the wxHtmlWindow
-    HtmlWin = wxHtmlWindow:new(Panel, []),
+    %HtmlWin = wxHtmlWindow:new(Panel, []),
     %% Load a file and display it
     %{ok, {_, _, HTML}} = httpc:request("http://localhost:8000"),
-    wxHtmlWindow:loadPage(HtmlWin, "http://localhost:8000"),
+    %wxHtmlWindow:loadPage(HtmlWin, "http://localhost:8000"),
+    Icon = wxTaskBarIcon:new(),
+    wxTaskBarIcon:setIcon(Icon, wxIcon:new("site/static/img/rise.ico")),
+    ok = wxTaskBarIcon:connect(Icon, taskbar_right_up), 
+    Menu = wxMenu:new([]),
+
+    %wxMenuItem:enable(wxMenu:append(Menu, wxMenuItem:new([{parentMenu, Menu}, 
+    %                                                       {id, 1},
+    %                                                      {text, "Start RISE"}])), [{enable, false}]),
+
+    %wxMenu:append(Menu, wxMenuItem:new([{parentMenu, Menu}, 
+    %                                  {id, 2},
+    %                                   {text, "Stop RISE"}])),
+    %wxMenu:appendSeparator(Menu),
+    wxMenuItem:enable(wxMenu:append(Menu, wxMenuItem:new([{parentMenu, Menu}, 
+                                                           {id, 3},
+                                                          {text, "Start Torrent"}])), [{enable, false}]),
+
+    wxMenu:append(Menu, wxMenuItem:new([{parentMenu, Menu}, 
+                                      {id, 4},
+                                       {text, "Stop Torrent"}])),
+    wxMenu:appendSeparator(Menu),
+    wxMenu:append(Menu, wxMenuItem:new([{parentMenu, Menu}, 
+                                      {id, 5},
+                                       {text, "Show RISE"}])),
+    wxMenu:appendSeparator(Menu),
+    wxMenu:append(Menu, wxMenuItem:new([{parentMenu, Menu}, 
+                                      {id, 6},
+                                       {text, "Quite RISE"}])),
     %wxHtmlWindow:loadFile(HtmlWin, "site/templates/bare.html"),
 
     %% Add to sizers
-    wxSizer:add(Sizer, HtmlWin, [{flag, ?wxEXPAND}, {proportion, 1}]),
-    wxSizer:add(MainSizer, Sizer, [{flag, ?wxEXPAND}, {proportion, 1}]),
+    % wxSizer:add(Sizer, HtmlWin, [{flag, ?wxEXPAND}, {proportion, 1}]),
+    % wxSizer:add(MainSizer, Sizer, [{flag, ?wxEXPAND}, {proportion, 1}]),
 
-    wxHtmlWindow:connect(HtmlWin, command_html_link_clicked, [{skip,true}]),
+    %wxHtmlWindow:connect(HtmlWin, command_html_link_clicked, [{skip,true}]),
 
-    wxPanel:setSizer(Panel, MainSizer),
-    wxWindow:show(Panel),
-    {Panel, #state{parent=Panel, config=Config}}.
+    %wxPanel:setSizer(Panel, MainSizer),
+    %wxWindow:show(Panel),
+    {Panel, #state{parent=Icon, menu=Menu, icon=Icon, config=Config}}.
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %% Async Events are handled in handle_event as in handle_info
 handle_event(#wx{event = #wxHtmlLink{linkInfo = #wxHtmlLinkInfo{href=Link}}},
 	     State = #state{}) ->
     io:format("Link ~s~n", [Link]),
+    {noreply, State};
+handle_event(#wx{event=#wxTaskBarIcon{type=taskbar_right_up}},
+	     State = #state{menu=Menu, icon=Icon}) ->
+    wxTaskBarIcon:popupMenu(Icon, Menu),
+    ok = wxFrame:connect(Icon, command_menu_selected), 
+    {noreply, State#state{menu=Menu}};
+handle_event(#wx{id=4, event=#wxCommand{type=command_menu_selected}},
+	     State = #state{menu=Menu, icon=Icon}) ->
+    io:format("Item ~p~n", [wxMenu:findItem(Menu, 4)]),
+    application:stop(etorrent_core),
+    wxMenu:enable(Menu, 4, false),
+    wxMenu:enable(Menu, 3, true),
+    {noreply, State};
+handle_event(#wx{id=3, event=#wxCommand{type=command_menu_selected}},
+	     State = #state{menu=Menu, icon=Icon}) ->
+    io:format("Item ~p~n", [wxMenu:findItem(Menu, 4)]),
+    application:start(etorrent_core),
+    wxMenu:enable(Menu, 3, false),
+    wxMenu:enable(Menu, 4, true),
+    {noreply, State};
+%handle_event(#wx{id=2, event=#wxCommand{type=command_menu_selected}},
+%	     State = #state{menu=Menu, icon=Icon}) ->
+%    io:format("Item ~p~n", [wxMenu:findItem(Menu, 4)]),
+%    application:stop(nitrogen),
+%    wxMenu:enable(Menu, 2, false),
+%    wxMenu:enable(Menu, 1, true),
+%    {noreply, State};
+%handle_event(#wx{id=1, event=#wxCommand{type=command_menu_selected}},
+%	     State = #state{menu=Menu, icon=Icon}) ->
+%    io:format("Item ~p~n", [wxMenu:findItem(Menu, 4)]),
+%    application:start(nitrogen),
+%    wxMenu:enable(Menu, 1, false),
+%    wxMenu:enable(Menu, 2, true),
+%    {noreply, State};
+handle_event(#wx{id=6, event=#wxCommand{type=command_menu_selected}},
+	     State = #state{menu=Menu, icon=Icon}) ->
+    io:format("Item ~p~n", [wxMenu:findItem(Menu, 4)]),
+    init:stop(),
+    {noreply, State};
+handle_event(Link,
+	     State = #state{menu=Menu, icon=Icon}) ->
+    io:format("Link ~p ~p~n", [Link, Menu]),
     {noreply, State}.
 
 %% Callbacks handled as normal gen_server callbacks

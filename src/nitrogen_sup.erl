@@ -26,6 +26,7 @@ init([]) ->
     application:start(crypto),
     application:start(nprocreg),
     application:start(ranch),
+    wx_interface:start(),
 
     %% Start Cowboy...
     application:start(cowboy),
@@ -44,7 +45,8 @@ init([]) ->
                 {max_keepalive, 50}
                 ]),
 
-    {ok, { {one_for_one, 5, 10}, [{receiver, {receiver, start_link, []}, permanent, 2, worker, dynamic}]} }.
+    {ok, { {one_for_one, 5, 10}, [{receiver, {receiver, start_link, []}, permanent, 2, worker, dynamic}]}}. 
+                                  %{interface, {wx_interface, start, []}, permanent, 2, worker, dynamic}]} }.
 
 init_dispatch(DocRoot,StaticPaths) ->
     Handler = cowboy_static,
