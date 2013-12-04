@@ -87,8 +87,8 @@ do_init(Config) ->
                                        {text, "Show RISE"}])),
     wxMenu:appendSeparator(Menu),
     wxMenu:append(Menu, wxMenuItem:new([{parentMenu, Menu}, 
-                                      {id, 6},
-                                       {text, "Quite RISE"}])),
+                                      {id, ?wxID_EXIT},
+                                       {text, "Quit"}])),
     ok = wxFrame:connect(Icon, command_menu_selected), 
     %wxHtmlWindow:loadFile(HtmlWin, "site/templates/bare.html"),
 
@@ -143,9 +143,9 @@ handle_event(#wx{id=3, event=#wxCommand{type=command_menu_selected}},
 handle_event(#wx{id=5, event=#wxCommand{type=command_menu_selected}},
 	     State = #state{menu=Menu, icon=Icon}) ->
     io:format("Item ~p~n", [wxMenu:findItem(Menu, 4)]),
-    os:cmd("open http://localhost:8000/"),
+    wx_misc:launchDefaultBrowser("http://localhost:8000"),
     {noreply, State};
-handle_event(#wx{id=6, event=#wxCommand{type=command_menu_selected}},
+handle_event(#wx{id=?wxID_EXIT, event=#wxCommand{type=command_menu_selected}},
 	     State = #state{menu=Menu, icon=Icon}) ->
     io:format("Item ~p~n", [wxMenu:findItem(Menu, 4)]),
     init:stop(),
