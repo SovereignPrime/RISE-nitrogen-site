@@ -26,7 +26,7 @@ init([]) ->
     application:start(crypto),
     application:start(nprocreg),
     application:start(ranch),
-    wx_interface:start(),
+    %wx_interface:start(),
 
     %% Start Cowboy...
     application:start(cowboy),
