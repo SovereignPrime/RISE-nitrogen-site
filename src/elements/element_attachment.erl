@@ -20,7 +20,7 @@ render_element(#attachment{id=I, fid=Id, filename=File, size=Size, time=Time, st
     DateS = io_lib:format("~p-~p-~p", [Y, M, D]),
     #panel{id=I, class="row-fluid", body=[
             #panel{class="span5", body=File},
-            #panel{class="span1", body=wf:to_list(Size)},
+            #panel{class="span1", body=sugar:format_file_size(Size)},
             #panel{class="span4", body=DateS},
             #panel{class="span2", body="<i class='icon-download-alt'></i>", style="text-align:center;", actions=#event{type=click, postback={download, Attachment}, delegate=?MODULE}}
             ]};
@@ -29,7 +29,7 @@ render_element(#attachment{id=I, fid=Id, filename=File, size=Size, time=Time, st
     DateS = io_lib:format("~p-~p-~p", [Y, M, D]),
     #panel{id=I, class="row-fluid", body=[
             #panel{class="span6", body=File},
-            #panel{class="span2", body=wf:to_list(Size)},
+            #panel{class="span2", body=sugar:format_file_size(Size)},
             #panel{class="span3", body=DateS},
             #panel{class="span1", body="<i class='icon icon-save'></i>", style="text-align:center;", actions=#event{type=click, postback={save, File, Id}, delegate=?MODULE}}
             ]};
