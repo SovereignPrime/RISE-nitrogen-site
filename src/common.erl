@@ -33,7 +33,7 @@ main() ->
     end.
 
 render_files() ->
-    {ok, Attachments} = db:get_files(wf:session_default(attached_files, [])),
+    {ok, Attachments} = db:get_files(sets:to_list(wf:session_default(attached_files, sets:new()))),
     #panel{ class="span12", body=[
             #panel{ class="row-fluid", body=[
                     "<i class='icon-file-alt'></i> Attachments", #br{},
@@ -66,20 +66,20 @@ event(add_task) ->
     {ok, Id} = db:next_id(db_task),
     wf:session(current_task_id, Id),
     wf:session(current_task, #db_task{id=Id}),
-    wf:session(attached_files, undefined),
+    wf:session(attached_files, sets:new()),
     wf:redirect("/edit_task");
 event(add_expense) ->
     {ok, Id} = db:next_id(db_expense),
     wf:session(current_expense_id, Id),
     wf:session(current_expense, #db_expense{id=Id}),
-    wf:session(attached_files, undefined),
+    wf:session(attached_files, sets:new()),
     wf:redirect("/edit_expense");
 event(add_update) ->
     {ok, Id} = db:next_id(db_update),
     wf:session(current_subject, undefined),
     wf:session(current_update_id, Id),
     wf:session(current_update, #db_update{id=Id}),
-    wf:session(attached_files, undefined),
+    wf:session(attached_files, sets:new()),
     wf:redirect("/edit_update");
 event(check_all) ->
     case wf:q(check_all) of
@@ -112,7 +112,8 @@ finish_upload_event(filename, FName, FPath, _Node) ->
     etorrent_mktorrent:create(FPath, undefined, TName),
     User = wf:user(),
     File = db:save_file(FName, FPath,User),
-    wf:session(attached_files, wf:session_default(attached_files, []) ++ [FID]),
+    AF = wf:session_default(attached_files, sets:new()),
+    wf:session(attached_files, sets:add_element( FID )),
     wf:update(files, render_files()).
 
 incoming() ->

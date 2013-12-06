@@ -30,9 +30,10 @@ render_element(_Record = #file_row{fid=FID, id=Id, name=Name, type=Type, size=Si
             {0, 0, wf:to_list(0)}
     end,
     Peer = Leechers + Seed,
+    Check =  sets:is_element(FID, wf:session_default(attached_files, sets:new())),
     #tablerow{ cells=[
             #tablecell{body=[
-                    #checkbox{id=check,  postback={check, id}, checked=false}
+                            #checkbox{id=check,  postback={check, FID ,Check}, checked=Check}
                     ], class=""},
             #tablecell{text=Name, class=""},
             #tablecell{text=FType, class=""},

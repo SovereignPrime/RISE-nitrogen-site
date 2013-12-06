@@ -13,17 +13,25 @@ title() -> "Hello from relationships.erl!".
 icon() -> "<i class='icon-file-text-alt icon-2x'></i>".
 
 buttons() ->
-    #panel{class='row-fluid', body=[
+    #panel{class="row-fluid", body=[
+            #panel{ class='span2 offset2 btn-group', body=[
+                    #link{class="btn btn-link dropdown-toggle",data_fields=[{toggle, "dropdown"}], 
+                          body=["<i class='icon-reorder'></i> More options"], url="#", new=false},
+                    #list{class="dropdown-menu", numbered=false,
+                          body=[
+                            #listitem{body=#link{body=["<i class='icon icon-list-alt'></i> Archive selected"], postback=archive, new=false}},
+                            #listitem{body=#link{body="Add to message", url = "/edit_update", new=false}},
+                            #listitem{body=#link{body="Add to task", url = "/edit_task", new=false}}%,
+                            %#listitem{body=#link{body="Add to expense", postback=edit, new=false}},
+                            %#listitem{body=#link{body="Add to assert", postback=edit, new=false}}
+                            ]}
 
-    #panel{class='span9 offset2', body=[
-            #panel{class="row-fluid", body=[
-                    #panel{ class='span2', body="<i class='icon-reorder'></i> More options"},
-                    #panel{ class='span2', body="<i class='icon-user'></i> All accounts"},
-                    #panel{ class='span2', body="<i class='icon-filter'></i> Smart filter"},
-                    #panel{ class='span2', body="<i class='icon-sort'></i> Sort"},
-                    #panel{ class='span2', body="<i class='icon-list-alt'></i> Archive"}
-                    ]}
-            ]}]}.
+                    ]},
+            %#panel{ class='span2', body="<i class='icon-user'></i> All accounts"},
+            #panel{ class='span2', body="<i class='icon-filter'></i> Smart filter"},
+            #panel{ class='span2', body="<i class='icon-sort'></i> Sort"},
+            #panel{ class='span2', body="<i class='icon-list-alt'></i> Archive"}
+            ]}.
 
 left() ->
     [].
@@ -34,7 +42,7 @@ body() ->
         #table{ rows=[
                 #tablerow{ cells=[
                         #tablecell{body=[
-                                #checkbox{id=check_all,  postback=check_all, checked=false, delegate=common}
+                                %#checkbox{id=check_all,  postback=check_all, checked=false, delegate=common}
                                 ], class=""},
                         #tableheader{text="File name", class=""},
                         #tableheader{text="Type", class=""},
@@ -54,5 +62,11 @@ body() ->
 
         ].    
 
+event({check, FID, true}) ->
+    AF = wf:session_default(attached_files, sets:new()),
+    wf:session(attached_files,  sets:del_element( FID, AF));
+event({check, FID, false}) ->
+    AF = wf:session_default(attached_files, sets:new()),
+    wf:session(attached_files,  sets:add_element( FID, AF));
 event(Click) ->
     io:format("~p~n",[Click]).
