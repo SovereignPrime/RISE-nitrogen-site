@@ -34,10 +34,10 @@ main() ->
 
 render_files() ->
     {ok, Attachments} = db:get_files(sets:to_list(wf:session_default(attached_files, sets:new()))),
-    #panel{ class="span12", body=[
+    #panel{id=files, class="span12", body=[
             #panel{ class="row-fluid", body=[
                     "<i class='icon-file-alt'></i> Attachments", #br{},
-                    #upload{id=attachments, tag=filename, delegate=common, droppable=true,show_button=false, droppable_text="Drag and drop files here",  file_text=" Select my files", multiple=true}
+                    #upload{id=attachments, tag=filename, delegate=common, droppable=true, show_button=false, droppable_text="Drag and drop files here",  multiple=false}
                     ]},
             #br{},
             lists:map(fun(#db_file{path=Path, size=Size, date=Date, id=Id, status=Status}) ->
@@ -113,7 +113,7 @@ finish_upload_event(filename, FName, FPath, _Node) ->
     User = wf:user(),
     File = db:save_file(FName, FPath,User),
     AF = wf:session_default(attached_files, sets:new()),
-    wf:session(attached_files, sets:add_element( FID )),
+    wf:session(attached_files, sets:add_element( FID , AF)),
     wf:update(files, render_files()).
 
 incoming() ->
