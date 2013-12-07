@@ -3,6 +3,7 @@
 -compile(export_all).
 -include_lib("nitrogen_core/include/wf.hrl").
 -include("records.hrl").
+-include("db.hrl").
 
 main() -> common:main().
 
@@ -26,10 +27,10 @@ left() ->
             #panel{ class="span12", body=[
                     "<i class='icon-plus'></i> Create new with uploaded files:"
                     ]},
-            #panel{ class="span12", body=["Update"]},
-            #panel{ class="span12", body=["Task"]},
-            #panel{ class="span12", body=["Expense"]},
-            #panel{ class="span12", body=["Assert"]}
+            #link{ class="span12", text="Message", postback=add_update},
+            #link{ class="span12", text="Task", postback=add_task}%,
+            %#link{ class="span12", text="Message", postback=add_expense},
+            %#link{ class="span12", text="Message", postback=add_update}
             
             
             ]}.
@@ -40,6 +41,22 @@ body() ->
                             common:render_files()
                     ]}]}.
     
+event(add_task) ->
+    {ok, Id} = db:next_id(db_task),
+    wf:session(current_task_id, Id),
+    wf:session(current_task, #db_task{id=Id}),
+    wf:redirect("/edit_task");
+event(add_expense) ->
+    {ok, Id} = db:next_id(db_expense),
+    wf:session(current_expense_id, Id),
+    wf:session(current_expense, #db_expense{id=Id}),
+    wf:redirect("/edit_expense");
+event(add_update) ->
+    {ok, Id} = db:next_id(db_update),
+    wf:session(current_subject, undefined),
+    wf:session(current_update_id, Id),
+    wf:session(current_update, #db_update{id=Id}),
+    wf:redirect("/edit_update");
 event(click) ->
     wf:replace(button, #panel { 
         body="You clicked the button!", 
