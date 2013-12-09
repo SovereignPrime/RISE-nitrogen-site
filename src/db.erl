@@ -295,7 +295,7 @@ save_attachments(Record, Files) ->
     Id = element(2, Record),
      transaction(fun() ->
                 {ok, NId} = db:next_id(db_attachment),
-                save_attachment(Type, Id, Files, NId)
+                save_attachment(Type, Id, sets:to_list(Files), NId)
             end).
 
 get_files(FIDs) ->

@@ -110,7 +110,7 @@ event(save) ->
                                to=Involved,
                                date=date(), status=new},
     db:save(NUpdate),
-    db:save_attachments(NUpdate, wf:session_default(attached_files, [])),
+    db:save_attachments(NUpdate, wf:session_default(attached_files, sets:new())),
     common:send_messages(NUpdate),
     wf:redirect("/");
 event(Ev) ->

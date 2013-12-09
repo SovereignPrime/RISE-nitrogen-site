@@ -143,7 +143,7 @@ event(save) ->
     NTask = Task#db_task{name= TaskName , id=UID, due=Due, text=Text},
     db:save(NTask),
     wf:session(current_task, NTask),
-    db:save_attachments(wf:session(current_task), sets:to_list(wf:session_default(attached_files, sets:new()))),
+    db:save_attachments(wf:session(current_task), wf:session_default(attached_files, sets:new())),
     save_payments(TaskName),
     common:save_involved(db_task, UID),
     common:send_messages(NTask),
