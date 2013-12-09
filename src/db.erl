@@ -8,7 +8,7 @@ install()->
     mnesia:start(),
     {atomic, ok} = mnesia:create_table(db_group, [{disc_copies, [node()]}, {attributes, record_info(fields, db_group)}, {type, ordered_set}]),
     {atomic, ok} = mnesia:create_table(db_contact, [{disc_copies, [node()]}, {attributes, record_info(fields, db_contact)}, {type, ordered_set}, {index, [address]}]),
-    {atomic, ok} = mnesia:create_table(db_task, [{disc_copies, [node()]}, {attributes, record_info(fields, db_task)}, {type, ordered_set}, {index, [uid]}]),
+    {atomic, ok} = mnesia:create_table(db_task, [{disc_copies, [node()]}, {attributes, record_info(fields, db_task)}, {type, ordered_set}]),
     {atomic, ok} = mnesia:create_table(db_file, [{disc_copies, [node()]}, {attributes, record_info(fields, db_file)}, {type, ordered_set}]),
     {atomic, ok} = mnesia:create_table(db_expense, [{disc_copies, [node()]}, {attributes, record_info(fields, db_expense)}, {type, ordered_set}]),
     {atomic, ok} = mnesia:create_table(db_update, [{disc_copies, [node()]}, {attributes, record_info(fields, db_update)}, {type, ordered_set}]),
@@ -74,16 +74,6 @@ get_task(Id) ->
                 mnesia:read(db_task, Id)
             end).
 
-get_task_by_uid(UID) ->
-    transaction(fun() ->
-                case mnesia:index_read(db_task, UID, #db_task.uid) of
-                    [] ->
-                        {ok, Id} = next_id(db_task),
-                        Id;
-                    [#db_task{id=Id}] ->
-                        Id
-                end
-        end).
 
 get_tasks_by_user(UID) ->
     transaction(fun() ->

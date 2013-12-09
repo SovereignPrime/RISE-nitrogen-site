@@ -23,7 +23,8 @@ buttons() ->
             ]}.
 
 left() ->
-    #db_task{id=CId, parent=PId} = wf:session(current_task),
+    #db_task{id=CId, parent=PId} = Task = wf:session_default(current_task, #db_task{}),
+    wf:session(current_task, Task),
     PName = case db:get_task(PId) of
         {ok, [ #db_task{name=P} ]} ->
             P;
@@ -132,15 +133,19 @@ event(save) ->
     TaskName = wf:to_binary(wf:q(name)),
     Due = wf:q(due),
     Text = wf:to_binary(wf:q(text)),
-    Id = wf:session(current_task_id),
-    Task = wf:session(current_task),
-    UID = crypto:hash(sha512, <<TaskName/bytes, Text/bytes>>),
-    NTask = Task#db_task{name= TaskName , uid=UID, due=Due, text=Text},
+    #db_task{id=Id} = Task = wf:session(current_task),
+    UID = case Id of
+        undefined ->
+            crypto:hash(sha512, <<TaskName/bytes, Text/bytes>>);
+        I ->
+            I
+    end,
+    NTask = Task#db_task{name= TaskName , id=UID, due=Due, text=Text},
     db:save(NTask),
     wf:session(current_task, NTask),
-    db:save_attachments(wf:session(current_task), wf:session_default(attached_files, [])),
+    db:save_attachments(wf:session(current_task), sets:to_list(wf:session_default(attached_files, sets:new()))),
     save_payments(TaskName),
-    common:save_involved(db_task, Id),
+    common:save_involved(db_task, UID),
     common:send_messages(NTask),
     wf:session(task_attached_files, undefined),
     wf:redirect("/tasks");

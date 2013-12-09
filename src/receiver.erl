@@ -3,6 +3,7 @@
 -behaviour(gen_server).
 -include_lib("bitmessage/include/bm.hrl").
 -include("db.hrl").
+-include("protokol.hrl").
 
 %% API
 -export([
@@ -208,34 +209,36 @@ apply_message(#message{from=BMF, to=BMT, subject=Subject, text=Data, enc=3}, FID
     Files = decode_attachments(A, BMF, BMT),
     db:save_attachments(Message, Files);
 apply_message(#message{from=BMF, to=BMT, subject=Subject, text=Data, enc=4}, FID, ToID)  ->
-    {match, [_, <<Name/bytes>>, <<InvolvedB/bytes>>, <<Due/bytes>>, <<Status/bytes>>, UID]} = re:run(Data, "^(.*)\nInvolved:(.*)\nDue:(.*)\nStatus:(.*)\nUID:(.*)$", 
-                                                                                                [{capture, all, binary}, ungreedy, dotall, firstline, {newline, any}]),
-    Involved = binary:split(InvolvedB, <<";">>, [global, trim]),
-    {ok, Id} = db:get_task_by_uid(UID),
-    db:save(#db_task{id=Id, uid=UID, due=Due,  name=wf:to_list(Subject), text=Name, status=Status}),
-    db:clear_roles(db_task, Id),
-    lists:foreach(fun(I) ->
-                [BM, Role] = binary:split(I, <<":">>),
-                {ok, NPId} = db:next_id(db_contact_roles),
-                C = get_or_request_contact(BM, BMF, BMT),
-                db:save(#db_contact_roles{id=NPId, type=db_task, role=wf:to_list(Role), tid=Id, contact=C})
+    #task_packet{id=UID, 
+                 due=Due, 
+                 %name=wf:to_list(Subject), 
+                 text=Text, 
+                 parent=Parent, 
+                 status=Status, 
+                 attachments=Attachments, 
+                 involved=Involved} = binary_to_term(Data),
+    db:save(#db_task{id=UID, due=Due,  name=wf:to_list(Subject), text=Text, status=Status}),
+    db:clear_roles(db_task, UID),
+    lists:foreach(fun(#role_packet{address=A, role=R}) ->
+                {ok, NPUID} = db:next_id(db_contact_roles),
+                C = get_or_request_contact(A, BMF, BMT),
+                db:save(#db_contact_roles{id=NPUID, type=db_task, role=wf:to_list(R), tid=UID, contact=C})
         end, Involved);
-apply_message(#message{from=BMF, to=BMT, subject=Subject, text=Data, enc=5}, FID, ToID)  ->
-    {match, [_, <<Name/bytes>>, <<InvolvedB/bytes>>, <<Due/bytes>>, <<Status/bytes>>, UID, <<A/bytes>>]} = re:run(Data, "^(.*)\nInvolved:(.*)\nDue:(.*)\nStatus:(.*)\nUID:(.*)\nAttachments:(.*)\n$", 
-                                                                                                [{capture, all, binary}, ungreedy, dotall, firstline, {newline, any}]),
-    Involved = binary:split(InvolvedB, <<";">>, [global, trim]),
-    {ok, Id} = db:get_task_by_uid(UID),
-    Message = #db_task{id=Id, uid=UID, due=Due,  name=wf:to_list(Subject), text=Name, status=Status},
-    db:save(Message),
-    Files = decode_attachments(A, BMF, BMT),
-    db:save_attachments(Message, Files),
-    db:clear_roles(db_task, Id),
-    lists:foreach(fun(I) ->
-                [BM, Role] = binary:split(I, <<":">>),
-                {ok, NPId} = db:next_id(db_contact_roles),
-                C = get_or_request_contact(BM, BMF, BMT),
-                db:save(#db_contact_roles{id=NPId, type=db_task, role=Role, tid=Id, contact=C})
-        end, Involved);
+%apply_message(#message{from=BMF, to=BMT, subject=Subject, text=Data, enc=5}, FID, ToID)  ->
+%    {match, [_, <<Name/bytes>>, <<InvolvedB/bytes>>, <<Due/bytes>>, <<Status/bytes>>, UID, <<A/bytes>>]} = re:run(Data, "^(.*)\nInvolved:(.*)\nDue:(.*)\nStatus:(.*)\nUID:(.*)\nAttachments:(.*)\n$", 
+%                                                                                                [{capture, all, binary}, ungreedy, dotall, firstline, {newline, any}]),
+%    Involved = binary:split(InvolvedB, <<";">>, [global, trim]),
+%    Message = #db_task{id=UID, due=Due,  name=wf:to_list(Subject), text=Name, status=Status},
+%    db:save(Message),
+%    Files = decode_attachments(A, BMF, BMT),
+%    db:save_attachments(Message, Files),
+%    db:clear_roles(db_task, UID),
+%    lists:foreach(fun(I) ->
+%                [BM, Role] = binary:split(I, <<":">>),
+%                {ok, NPUID} = db:next_id(db_contact_roles),
+%                C = get_or_request_contact(BM, BMF, BMT),
+%                db:save(#db_contact_roles{id=NPUID, type=db_task, role=Role, tid=UID, contact=C})
+%        end, Involved);
 apply_message(Message, FID, ToID) ->
     error_logger:warning_msg("Wrong incomming message: ~p from ~p~n", [Message]).
 

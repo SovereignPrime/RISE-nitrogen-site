@@ -4,6 +4,7 @@
 -include_lib("bitmessage/include/bm.hrl").
 -include("records.hrl").
 -include("db.hrl").
+-include("protokol.hrl").
 
 main() -> 
     case wf:user() of
@@ -63,9 +64,7 @@ event(add_contact) ->
             }),
     wf:redirect("/relationships");
 event(add_task) ->
-    {ok, Id} = db:next_id(db_task),
-    wf:session(current_task_id, Id),
-    wf:session(current_task, #db_task{id=Id}),
+    wf:session(current_task, undefined),
     wf:session(attached_files, sets:new()),
     wf:redirect("/edit_task");
 event(add_expense) ->
@@ -148,36 +147,20 @@ send_messages(#db_update{subject=Subject, text=Text, from=FID, to=Contacts, date
                         bitmessage:send_message(From, wf:to_binary(To), wf:to_binary(Subject), <<(wf:to_binary(Text))/bytes, 10, InvolvedB/bytes,  AttachmentsB/bytes>>, 3)
                 end, Contacts)
     end;
-send_messages(#db_task{id=Id, uid=UID, name=Subject, text=Text, due=Date, parent=Parent, status=Status} = U) ->
-    {ok, Involved} = db:get_involved(Id),
-    % {_My, InvolvedN} =  lists:partition(fun({"Me", _, _}) -> true; (_) -> false end, Involved), 
-    Contacts = [{C, R} || {_, R, C}  <- Involved],
+send_messages(#db_task{id=UID, name=Subject, text=Text, due=Date, parent=Parent, status=Status} = U) ->
+    {ok, Involved} = db:get_involved(UID),
+    Contacts = [#role_packet{address=C, role=R} || {_, R, #db_contact{bitmessage=C}}  <- Involved],
     #db_contact{address=From} = wf:user(),
-    %error_logger:info_msg("~p ~p~n", [Contacts, From]),
-    InvolvedB =  <<"Involved:", << <<A/bytes, ":", (wf:to_binary(R))/bytes, ";">> || {#db_contact{bitmessage=A}, R} <- Contacts>>/bytes, 10>>,
-    case db:get_attachments(U) of
-        {ok, []} ->
-            lists:foreach(fun({#db_contact{address=To}, _}) when To /= From ->
-                        bitmessage:send_message(From,
-                                                wf:to_binary(To), 
-                                                wf:to_binary(Subject), 
-                                                wf:to_binary(<<Text/bytes, 10,  InvolvedB/bytes, 10, "Due:", (wf:to_binary(Date))/bytes, 10, "Status:", (wf:to_binary(Status))/bytes, 10, "UID:", UID/bytes>>), 
-                                                4);
-                    (_) ->
-                        ok
-                end, Contacts);
-        {ok, Attachments} -> 
-            AttachmentsB = encode_attachments(Attachments),
-            lists:foreach(fun({#db_contact{address=To}, _}) when To /= From ->
-                        bitmessage:send_message(From,
-                                                wf:to_binary(To), 
-                                                wf:to_binary(Subject), 
-                                                wf:to_binary(<<Text/bytes, 10,  InvolvedB/bytes, 10, "Due:", (wf:to_binary(Date))/bytes, 10, "Status:", (wf:to_binary(Status))/bytes, 10, "UID:", UID/bytes, 10, AttachmentsB/bytes>>), 
-                                                5);
-                    (_) ->
-                        ok
-                end, Contacts)
-        end.
+    {ok, Attachments} = db:get_attachments(U),
+    lists:foreach(fun(#role_packet{address=To}) when To /= From ->
+                bitmessage:send_message(From,
+                                        wf:to_binary(To), 
+                                        wf:to_binary(Subject), 
+                                        term_to_binary(#task_packet{id=UID, name=Subject, due=Date, text=Text, parent=Parent, status=Status, attachments=Attachments, involved=Contacts}),
+                                        4);
+            (_) ->
+                ok
+        end, Contacts).
 
 encode_attachments(Attachments) ->
     AttachmentsL = lists:map(fun(#db_file{user=UID}=A) ->
