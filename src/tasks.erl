@@ -65,10 +65,8 @@ render_tasks(Parent) ->
     render_tasks(Parent, false).
 render_tasks(Parent, Archive) ->
     CId = wf:session(current_task_id),
-    io:format("~p ~p~n",[Parent,CId]),
     case db:get_tasks(Parent, Archive) of
         {ok, Tasks} ->
-            io:format("~p~n", [Tasks]),
             [
                 #list{numbered=false,
                       body=lists:map(fun(#db_task{name=Task, due=Due, id=Id}) when Id /= CId ->
@@ -117,6 +115,7 @@ render_task(#db_task{id=Id, name=Name, due=Due, text=Text, parent=Parent, status
                                     "<i class='icon-edit icon-large'></i><br>"      
                                     ], postback={edit, Id}, new=false}
                               },
+                        #br{},
                         #panel{class="btn-group", body=[
                                 #link{ class="btn btn-link droppdown-toggle", body=[
                                         "<i class='icon-reorder icon-large'></i>"
@@ -187,12 +186,14 @@ event({edit, Id}) ->
     wf:session(current_task, Task#db_task{status=changed}),
     wf:redirect("/edit_task");
 event(hide) ->
+    wf:wire(body, [#remove_class{class="span8"}, #add_class{class="span12"}]),
     wf:replace(hide_show, #button{id=hide_show, class="btn btn-link span2", body="Show tasks <i class='icon-angle-right'></i>", 
                                     actions=#event{type=click, actions=[
                                         #show{trigger=hide_show,target=tasks}, 
                                         #event{postback=show}
                                         ]}});
 event(show) ->
+    wf:wire(body, [#remove_class{class="span12"}, #add_class{class="span8"}]),
     wf:replace(hide_show, #button{id=hide_show, class="btn btn-link span2", body="<i class='icon-angle-left'></i> Hide tasks", 
                                     actions=#event{type=click, actions=[
                                         #hide{trigger=hide_show,target=tasks}, 
@@ -203,7 +204,6 @@ event(Click) ->
 
 drop_event({task, Id}, subtask) ->
     PId = wf:session(current_task_id),
-    io:format("Task ~p to ~p~n", [Id,PId]),
     if PId /= Id ->
             db:save_subtask(Id, PId);
         true ->
