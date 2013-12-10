@@ -15,35 +15,34 @@ icon() -> "<i class='icon-user icon-large'></i>".
 buttons() ->
     #panel{id=buttons, class='row-fluid', body=[
 
-    #panel{class='span9 offset3', body=[
-            #panel{class="row-fluid", body=[
-                    #panel{ class='span2', body="<i class='icon-user'></i> All accounts"},
-                    #panel{ class='span2', body="<i class='icon-filter'></i> Smart filter"},
-                    #panel{ class='span2', body="<i class='icon-sort'></i> Sort"},
-                    #panel{ class='span2', body="<i class='icon-list-alt'></i> Archive"}
-                    ]}
-            ]}]}.
+            #panel{class='span9 offset3', body=[
+                    #panel{class="row-fluid", body=[
+                            %#panel{ class='span2', body="<i class='icon-user'></i> All accounts"},
+                            #panel{ class='span2', body="<i class='icon-filter'></i> Smart filter"},
+                            #panel{ class='span2', body="<i class='icon-sort'></i> Sort"},
+                            #link{id=archive, class='span2', body="<i class='icon-list-alt'></i> Archive", postback={show_archive, true}}
+                            ]}
+                    ]}]}.
 
 left() ->
     wf:session(current_group_id, all),
     {ok, Users} = db:get_contacts_by_group(all),
     [
-        #panel{id=group_list, class="span2", body=[render_group_list()]},
+        #panel{id=group_list, class="span2", body=[render_group_list(false)]},
                       #panel{id=user_list, class="span2", body=render_contact_list(Users)}
                       ].
 
-render_group_list() ->
+render_group_list(Archive) ->
     {ok, Groups} = db:get_groups(),
     G = wf:session(current_group_id),
     wf:wire(wf:f("group~p", [G]), #add_class{class="active"}),
     [ #list{numbered=false,
           body=
-            #group_item{gid=my, name="My accounts", sub=[] }%[
+            #group_item{gid=my, name="My accounts", sub=[], archive=Archive }
          },
     #list{numbered=false,
           body=
-          #group_item{gid=all, name="All contacts", sub=Groups }%[
-            %#listitem{text="Most contacted"}
+          #group_item{gid=all, name="All contacts", sub=Groups, archive=Archive }
          } ].
 
 render_contact_list(Users) ->
@@ -99,22 +98,40 @@ contact_render(#db_contact{id=Id, name=Name, email=Email, phone=Phone,  address=
 %% Event handlers
 %%%
 
+event({archive, Rec}) ->
+    db:archive(#db_contact{address=Rec}),
+    Id = wf:session(current_group_id),
+    {ok, Contacts} = db:get_contacts_by_group(Id),
+    wf:update(group_list, render_group_list(false)),
+    wf:update(user_list, render_contact_list(Contacts));
+event({show_archive, true}) ->
+    wf:replace(archive, #link{id=archive, class='span2', body="<i class='icon-list-alt'></i> Actual", postback={show_archive, false}}),
+    Id = wf:session(current_group_id),
+    {ok, Contacts} = db:get_contacts_by_group(Id, true),
+    wf:update(group_list, render_group_list(true)),
+    wf:update(user_list, render_contact_list(Contacts));
+event({show_archive, false}) ->
+    wf:replace(archive, #link{id=archive, class='span2', body="<i class='icon-list-alt'></i> Archive", postback={show_archive, true}}),
+    Id = wf:session(current_group_id),
+    {ok, Contacts} = db:get_contacts_by_group(Id, false),
+    wf:update(group_list, render_group_list(false)),
+    wf:update(user_list, render_contact_list(Contacts));
 event({contact, Id}) ->
     {ok, Contact} = db:get_contact(Id),
     wf:session(current_contact, Contact),
     wf:update(contact_panel, contact_render(Contact));
-event({group, Id}) ->
-    {ok, Contacts} = db:get_contacts_by_group(Id),
+event({group, Id, Archive}) ->
+    {ok, Contacts} = db:get_contacts_by_group(Id, Archive),
     io:format("User ~p in ~p~n", [Contacts, Id]),
     wf:session(current_group_id, Id),
-    wf:update(group_list, render_group_list()),
+    wf:update(group_list, render_group_list(Archive)),
     wf:wire(wf:f("group~p", [Id]), #add_class{class="active"}),
     wf:update(user_list, render_contact_list(Contacts));
-event({group_delete, Id}) ->
+event({group_delete, Id, Archive}) ->
     db:delete_group(Id),
-    wf:update(group_list, render_group_list());
-event({group_rename, Id}) ->
-    wf:update(wf:f("group_~p", [Id]), render_group_list());
+    wf:update(group_list, render_group_list(Archive));
+event({group_rename, Id, Archive}) ->
+    wf:update(wf:f("group_~p", [Id]), render_group_list(Archive));
 event(Click) ->
     io:format("~p~n",[Click]).
 
@@ -146,13 +163,13 @@ drop_event({contact, CId}, {subgroup, SId}) ->
     db:add_user_to_group(SId, CId),
     wf:update(user_list, render_contact_list(Contacts)),
     wf:update(contact_panel, contact_render(wf:session(current_contact)));
-drop_event({group, CId}, {subgroup, all}) ->
+drop_event({group, CId, Archive}, {subgroup, all}) ->
     db:save_subgroup(CId, undefined),
-    wf:update(group_list, render_group_list());
-drop_event({group, CId}, {subgroup, SId}) when CId /= SId ->
+    wf:update(group_list, render_group_list(Archive));
+drop_event({group, CId, Archive}, {subgroup, SId}) when CId /= SId ->
     io:format("Group ~p to subgroup ~p~n", [SId, CId]),
     db:save_subgroup(CId, SId),
-    wf:update(group_list, render_group_list());
+    wf:update(group_list, render_group_list(Archive));
 drop_event(G, P) ->
     io:format("D&D ~p to ~p~n", [G, P]).
 

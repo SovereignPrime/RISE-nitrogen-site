@@ -69,9 +69,10 @@ archive(Rec) when is_record(Rec, db_update) ->
                 mnesia:write(RN),
                 RN
         end);
-archive(Rec) when is_record(Rec, db_contact) ->
+archive(#db_contact{address=Address}) ->
     transaction(fun() ->
-                mnesia:write(Rec#db_contact{status=archive})
+                [R] = mnesia:index_read(db_contact, Address, #db_contact.address),
+                mnesia:write(R#db_contact{status=archive})
         end);
 archive(Rec) when is_record(Rec, db_file) ->
     transaction(fun() ->
@@ -264,22 +265,46 @@ add_user_to_group(Group, User) ->
                 mnesia:write(#db_group_members{group=Group, contact=User})
         end).
 
-get_contacts_by_group(my) ->
+get_contacts_by_group(Group) ->
+    get_contacts_by_group(Group, false).
+get_contacts_by_group(my, false) ->
     transaction(fun() ->
                 mnesia:match_object(#db_contact{my=true, _='_'})
         end);
-get_contacts_by_group(all) ->
+get_contacts_by_group(all, false) ->
     transaction(fun() ->
-                mnesia:match_object(#db_contact{my=false, _='_'})
+                mnesia:select(db_contact, [{#db_contact{my=false,status='$1', _='_'}, [{'/=', '$1', archive}],['$_']}])
         end);
-get_contacts_by_group(Group) ->
+get_contacts_by_group(all, true) ->
+    transaction(fun() ->
+                mnesia:select(db_contact, [{#db_contact{my=false,status='$1', _='_'}, [{'==', '$1', archive}],['$_']}])
+        end);
+get_contacts_by_group(Group, false) ->
     transaction(fun() ->
                 G = mnesia:select(db_group, [{#db_group{id='$1', subgroups=Group, _='_'}, [], ['$1']}]),
                 U = iterate(db_group_members, [Group | G]),
                 io:format("~p ~p ~n", [G, U]),
                 iterate(db_contact, U, fun(Type, #db_group_members{contact=Id}) ->
-                            io:format("~p~n",[Id]),
-                            mnesia:read(Type, Id)
+                            case mnesia:read(Type, Id) of
+                            [#db_contact{status=archive} = C] -> 
+                                    [];
+                                C ->
+                                    C
+                            end
+                    end)
+        end);
+get_contacts_by_group(Group, true) ->
+    transaction(fun() ->
+                G = mnesia:select(db_group, [{#db_group{id='$1', subgroups=Group, _='_'}, [], ['$1']}]),
+                U = iterate(db_group_members, [Group | G]),
+                io:format("~p ~p ~n", [G, U]),
+                iterate(db_contact, U, fun(Type, #db_group_members{contact=Id}) ->
+                            case mnesia:read(Type, Id) of
+                            [#db_contact{status=archive} = C] -> 
+                                    [C];
+                                _->
+                                    []
+                            end
                     end)
         end).
 

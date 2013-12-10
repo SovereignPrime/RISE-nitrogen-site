@@ -90,5 +90,6 @@
 -record(group_item, {?ELEMENT_BASE(element_group_item),
                      gid,
                      name,
-                     sub
+                     sub,
+                     archive=false
     }).

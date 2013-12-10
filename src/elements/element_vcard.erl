@@ -47,7 +47,23 @@ render_element(#vcard{id=Id, photo=Photo, name=Name, email=Email, phone=Phone, a
                             ]}
 
                     ]},
-            #panel{class="span1", body="<i class='icon-envelope icon-large'></i><br><i class='icon-group icon-large'></i><br><i class='icon-reorder icon-large'></i>"}
+            #panel{class="span1", body=[
+                    #link{class="btn btn-link", body = "<i class='icon-envelope icon-large'></i>", postback={write_to, Address }},
+                    #link{class="btn btn-link", body = "<i class='icon-group icon-large'></i>"},
+                        #panel{class="btn-group", body=[
+                                #link{ class="btn btn-link droppdown-toggle", body=[
+                                        "<i class='icon-reorder icon-large'></i>"
+                                        ], new=false, data_fields=[{toggle, "dropdown"}]},
+                                #list{numbered=false, class="dropdown-menu pull-right",
+                                      body=[
+                                        #listitem{body=[
+                                                #link{body=[
+                                                        "<i class='icon-list-alt icon-large'></i> Archive"
+                                                        ], postback={archive, Address}, new=false}]}
+                                        ]}
+
+                                ]}
+                    ]}
                     
             ]}.
 

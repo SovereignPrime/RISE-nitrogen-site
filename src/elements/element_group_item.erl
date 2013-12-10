@@ -16,35 +16,35 @@
 reflect() -> record_info(fields, group_item).
 
 -spec render_element(#group_item{}) -> body().
-render_element(_Record = #group_item{gid=Id, name=Name, sub=Sub}) ->
+render_element(_Record = #group_item{gid=Id, name=Name, sub=Sub, archive=Archive}) ->
     #listitem{class="", body=[
-            #draggable{tag={group, Id}, group=groups, clone=false, body=[
+            #draggable{tag={group, Id, Archive}, group=groups, clone=false, body=[
                     case Sub of
                         [] ->
-                            render_group(Id, Name, "");
+                            render_group(Id, Name, "", Archive);
                         _ ->
                             [
-                            render_group(Id, Name," <i class='icon-caret-down'></i>"),
+                            render_group(Id, Name," <i class='icon-caret-down'></i>", Archive),
                                                                 #list{numbered=false,style='margin-left:15px;',
                                       body=[
 
                                         lists:map(fun(#db_group{id=I, name=N, subgroups=S}) ->
-                                                    #group_item{gid=I, name=N, sub=S}
+                                                    #group_item{gid=I, name=N, sub=S, archive=Archive}
                                             end, Sub)
                                         ]}
                                 ]
                     end
                     ]}]}.
 
-render_group(Id, Name, Icon) ->
+render_group(Id, Name, Icon, Archive) ->
     #span{id=wf:f("group~p", [Id]), body=[
             #droppable{ tag={subgroup, Id}, accept_groups=[groups, contacts], body=[
                     #span{id=wf:f("group_view~p", [Id]),  text=Name, actions=[
-                            #event{type=click, postback={group, Id}}
+                            #event{type=click, postback={group, Id, Archive}}
                             ]},
                     #span{id=wf:f("group_edit~p", [Id]), body=[
                             #textbox{id=wf:f("group_name~p", [Id]), text=Name, class="pull-left"}, 
-                            #link{ class="btn btn-link", text="<i class='icon-ok'></i>", html_encode=false, postback={save, Id}, delegate=?MODULE},
+                            #link{ class="btn btn-link", text="<i class='icon-ok'></i>", html_encode=false, postback={save, Id, Archive}, delegate=?MODULE},
                             #link{ class="btn btn-link", text="<i class='icon-remove'></i>", html_encode=false, actions=#event{type=click, actions=[
                                         #event{target=wf:f("group_view~p", [Id]),  actions=#show{}},
                                         #event{target=wf:f("group_edit~p", [Id]),  actions=#hide{}}
@@ -59,7 +59,7 @@ render_group(Id, Name, Icon) ->
                                     #listitem{body=[
                                             #link{body=[
                                                     "<i class='icon-trash'></i> Delete"
-                                                    ], postback={group_delete, Id}, new=false}
+                                                    ], postback={group_delete, Id, Archive}, new=false}
                                             ]},
                                     #listitem{body=[
                                             #link{body=[
@@ -74,10 +74,10 @@ render_group(Id, Name, Icon) ->
                     Icon
                     ]}]}.
 
-event({save, Id}) ->
+event({save, Id, Archive}) ->
     Name = wf:q(wf:f("group_name~p", [Id])),
     db:save(#db_group{id=Id, name=Name}),
-    wf:update(group_list, relationships:render_group_list());
+    wf:update(group_list, relationships:render_group_list(Archive));
     
 event(E) ->
     io:format("Event ~p in ~p~n", [E, ?MODULE]).
