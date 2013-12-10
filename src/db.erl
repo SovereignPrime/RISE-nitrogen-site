@@ -39,6 +39,7 @@ save(Contact) ->
                 mnesia:write(Contact)
         end).
 
+
 save_uniq(Contact) ->
     transaction(fun() ->
                 case mnesia:match_object(Contact) of
@@ -53,6 +54,49 @@ delete(Type, Id) ->
     transaction(fun() ->
                 mnesia:delete({Type, Id})
         end).
+
+archive(Rec) when is_record(Rec, db_task) ->
+    transaction(fun() ->
+                mnesia:write(Rec#db_task{status=archive})
+        end);
+archive(Rec) when is_record(Rec, db_update) ->
+    transaction(fun() ->
+                mnesia:write(Rec#db_update{status=archive})
+        end);
+archive(Rec) when is_record(Rec, db_contact) ->
+    transaction(fun() ->
+                mnesia:write(Rec#db_contact{status=archive})
+        end);
+archive(Rec) when is_record(Rec, db_file) ->
+    transaction(fun() ->
+                mnesia:write(Rec#db_file{status=archive})
+        end);
+archive(Rec) when is_record(Rec, db_expense) ->
+    transaction(fun() ->
+                mnesia:write(Rec#db_expense{status=archive})
+        end).
+
+get_archive(Type) when Type == db_task ->
+    transaction(fun() ->
+                mnesia:index_read(Type, archive, #db_task.status)
+        end);
+get_archive(Type) when Type == db_update ->
+    transaction(fun() ->
+                mnesia:index_read(Type, archive, #db_update.status)
+        end);
+get_archive(Type) when Type == db_contact ->
+    transaction(fun() ->
+                mnesia:index_read(Type, archive, #db_contact.status)
+        end);
+get_archive(Type) when Type == db_file ->
+    transaction(fun() ->
+                mnesia:index_read(Type, archive, #db_file.status)
+        end);
+get_archive(Type) when Type == db_expense ->
+    transaction(fun() ->
+                mnesia:index_read(Type, archive, #db_expense.status)
+        end).
+
 %%%
 %% Task routines
 %%%
@@ -86,7 +130,7 @@ get_tasks_by_user(UID) ->
 
 get_tasks(Parent) ->
     transaction(fun() ->
-                        mnesia:select(db_task, [{#db_task{parent=Parent, _='_'}, [], ['$_']}])
+                mnesia:select(db_task, [{#db_task{parent=Parent, status='$1', _='_'}, [{'/=', '$1', 'archive'}], ['$_']}])
             end).
 
 get_tasks(C, _N) ->

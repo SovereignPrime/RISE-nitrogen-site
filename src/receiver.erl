@@ -217,8 +217,10 @@ apply_message(#message{from=BMF, to=BMT, subject=Subject, text=Data, enc=4}, FID
                  status=Status, 
                  attachments=Attachments, 
                  involved=Involved} = binary_to_term(Data),
-    db:save(#db_task{id=UID, due=Due,  name=wf:to_list(Subject), text=Text, status=Status}),
+    Task = #db_task{id=UID, due=Due,  name=wf:to_list(Subject), text=Text, status=Status},
+    db:save(Task),
     db:clear_roles(db_task, UID),
+    db:save_attachments(Task, Attachments),
     lists:foreach(fun(#role_packet{address=A, role=R}) ->
                 {ok, NPUID} = db:next_id(db_contact_roles),
                 C = get_or_request_contact(A, BMF, BMT),
@@ -246,7 +248,7 @@ get_vcard(BM, To, From) ->
     bitmessage:send_message(From, To, <<"Get vCard">>, BM, 6).
 get_or_request_contact(BM, From, To) ->
     case db:get_contact_by_address(BM) of
-        {ok,  none } ->
+        {ok, none} ->
             {ok, CID} = db:next_id(db_contact),
             db:save(#db_contact{id=CID, bitmessage=BM, address=BM}),
             get_vcard(BM, From, To),

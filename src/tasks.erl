@@ -22,7 +22,7 @@ buttons() ->
                                         #hide{trigger=hide_show,target=tasks}, 
                                         #event{postback=hide}
                                         ]}},
-                            #panel{ class='span2', body="<i class='icon-user'></i> All accounts"},
+                            %#panel{ class='span2', body="<i class='icon-user'></i> All accounts"},
                             #panel{ class='span2', body="<i class='icon-filter'></i> Smart filter"},
                             #panel{ class='span2', body="<i class='icon-sort'></i> Sort"},
                             #panel{ class='span2', body="<i class='icon-list-alt'></i> Archive"}
@@ -115,7 +115,9 @@ render_task(#db_task{id=Id, name=Name, due=Due, text=Text, parent=Parent, status
                                     "<i class='icon-edit icon-large'></i><br>"      
                                     ], postback={edit, Id}, new=false}
                               },
-                        #panel{class="", body="<i class='icon-reorder icon-large'></i>"}
+                        #panel{class="", body=#link{ body=[
+                                    "<i class='icon-reorder icon-large'></i>"
+                                    ], postback={archive, Task}, new=false}}
                         ]}
                 ]},
         #panel{ class="row-fluid", body=[
@@ -139,6 +141,11 @@ render_task(#db_task{id=Id, name=Name, due=Due, text=Text, parent=Parent, status
         end
         ].
 
+event({archive, #db_task{id=Id, parent=Parent} = Rec}) ->
+    db:archive(Rec),
+    wf:update(groups, render_tasks(Parent)),
+    wf:update(subgroups, render_tasks(Id)),
+    wf:update(body, render_task(Rec));
 event({task_chosen, Id}) ->
     wf:session(current_task_id, Id),
     {ok, [ #db_task{parent=Parent} = Task ]} = db:get_task(Id),
@@ -184,6 +191,7 @@ drop_event({task, Id}, subtask) ->
 drop_event({task, Id}, task) ->
     #db_task{parent=PId} = wf:session(current_task),
     db:save_subtask(Id, PId).
+
 incoming() ->
     CT = wf:session(current_task_id),
     {ok, [#db_task{parent=PP}]} = db:get_task(CT),
