@@ -63,7 +63,11 @@ archive(Rec) when is_record(Rec, db_task) ->
         end);
 archive(Rec) when is_record(Rec, db_update) ->
     transaction(fun() ->
-                mnesia:write(Rec#db_update{status=archive})
+                #db_update{id=Id} = Rec,
+                [R] = mnesia:wread({db_update, Id}),
+                RN = R#db_update{status=archive},
+                mnesia:write(RN),
+                RN
         end);
 archive(Rec) when is_record(Rec, db_contact) ->
     transaction(fun() ->
@@ -163,9 +167,17 @@ get_expense_tasks(EId) ->
 %% Updates routines
 %%%
 
-get_updates() ->
+get_updates(false) ->
     transaction(fun() ->
                 Upd = mnesia:select(db_update, [{#db_update{status='$1', _='_'}, [{'/=', '$1', archive}], ['$_']}]),
+                iterate(db_contact, Upd, fun(Type, #db_update{from=F}=R) ->
+                                [#db_contact{name=U}] = mnesia:read(db_contact, F),
+                                [ R#db_update{from=U} ]
+                        end)
+        end);
+get_updates(true) ->
+    transaction(fun() ->
+                Upd = mnesia:select(db_update, [{#db_update{status='$1', _='_'}, [{'==', '$1', archive}], ['$_']}]),
                 iterate(db_contact, Upd, fun(Type, #db_update{from=F}=R) ->
                                 [#db_contact{name=U}] = mnesia:read(db_contact, F),
                                 [ R#db_update{from=U} ]
@@ -173,8 +185,19 @@ get_updates() ->
         end).
 
 get_updates_by_subject(Subject) ->
+    get_updates_by_subject(Subject, false).
+
+get_updates_by_subject(Subject, false) ->
     transaction(fun() ->
                 Upd = mnesia:select(db_update, [{#db_update{status='$1', subject=Subject, _='_'}, [{'/=', '$1', archive}], ['$_']}]),
+                iterate(db_contact, Upd, fun(Type, #db_update{from=F}=R) ->
+                                [#db_contact{name=U}] = mnesia:read(db_contact, F),
+                                [ R#db_update{from=U} ]
+                        end)
+        end);
+get_updates_by_subject(Subject, true) ->
+    transaction(fun() ->
+                Upd = mnesia:select(db_update, [{#db_update{status='$1', subject=Subject, _='_'}, [{'==', '$1', archive}], ['$_']}]),
                 iterate(db_contact, Upd, fun(Type, #db_update{from=F}=R) ->
                                 [#db_contact{name=U}] = mnesia:read(db_contact, F),
                                 [ R#db_update{from=U} ]

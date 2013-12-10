@@ -24,25 +24,30 @@ buttons() ->
                             #panel{ class='span2', body="<i class='icon-user'></i> All accounts"},
                             #panel{ class='span2', body="<i class='icon-filter'></i> Smart filter"},
                             #panel{ class='span2', body="<i class='icon-sort'></i> Sort"},
-                            #panel{ class='span2', body="<i class='icon-list-alt'></i> Archive"}
+                            #link{id=archive, class='span2', body="<i class='icon-list-alt'></i> Archive", postback={show_archive, true}}
                             ]}
                     ]}]}.
 
 left() ->
-    {ok, Updates} = db:get_updates(),
-    #panel{id=left,class="span3 scrollable", body=[ #update_preview{icon="globe", from=From, age=Age, subject=Subject, text=Text, flag=true} || 
-            #db_update{from=From, date=Age, subject=Subject, text=Text} <- lists:reverse(Updates)]}.
+    {ok, Updates} = db:get_updates(false),
+    render_left(Updates).
+render_left(Updates) ->
+    #panel{id=left,class="span3 scrollable", body=[ #update_preview{icon="globe", from=From, age=Age, subject=Subject, text=Text, flag=true, archive=(Status == archive)} || 
+            #db_update{from=From, date=Age, subject=Subject, text=Text, status=Status} <- lists:reverse(Updates)]}.
 
 body() ->
-    case db:get_updates() of
+    body(false).
+
+body(Archive) ->
+    case db:get_updates(Archive) of
         {ok, []} ->
             [];
         {ok, [ #db_update{subject=Subject} | _Updates ]} ->
-            #panel{id=body, class="span9 scrollable", body=render_body(Subject)}
+        #panel{id=body, class="span9 scrollable", body=render_body(Subject, Archive)}
     end.
 
-render_body(Subject) ->
-    {ok, Updates} = db:get_updates_by_subject(Subject),
+render_body(Subject, Archive) ->
+    {ok, Updates} = db:get_updates_by_subject(Subject, Archive),
     [
         #h1{html_encode=false, text="<i class='icon-globe'></i> " ++ Subject},
         [
@@ -53,8 +58,8 @@ render_body(Subject) ->
             ].
 	
     
-event({selected, Subject}) ->
-    wf:update(body, render_body(Subject));
+event({selected, Subject, Archive}) ->
+    wf:update(body, render_body(Subject, Archive));
 event({unfold, #update_element{id=Id, uid=Uid}=Update}) ->
     {ok,Attachments} = db:get_attachments(#db_update{id=Uid}),
     case db:set_read(Uid) of
@@ -69,6 +74,19 @@ event({unfold, #update_element{id=Id, uid=Uid}=Update}) ->
     wf:replace(Id, Update#update_element{collapse=false, attachments=[
                 #attachment{fid=FId, filename=File, size=Size, time=Time, status=Status} || #db_file{id=FId, path=File, size=Size, date=Time, status=Status} <- Attachments
                                                                ]});
+event({archive, Rec}) ->
+    {ok, #db_update{subject=Subject}} = db:archive(#db_update{id=Rec}),
+    wf:replace(left, left()),
+    wf:update(body, render_body(Subject, false));
+event({show_archive, true}) ->
+    wf:replace(archive, #link{id=archive, class='span2', body="<i class='icon-list-alt'></i> Actual", postback={show_archive, false}}),
+    {ok, Updates} = db:get_updates(true),
+    wf:replace(left, render_left(Updates)),
+    wf:replace(body, body(true));
+event({show_archive, false}) ->
+    wf:replace(archive, #link{id=archive, class='span2', body="<i class='icon-list-alt'></i> Archive", postback={show_archive, true}}),
+    wf:replace(left, left()),
+    wf:replace(body, body());
 event({fold, #update_element{id=Id}=Update}) ->
     wf:replace(Id, Update#update_element{collapse=true});
 event({reply, Subject, To}) ->

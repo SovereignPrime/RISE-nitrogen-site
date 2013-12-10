@@ -18,7 +18,7 @@ render_element(#update_element{id=Id, from=From, text=Text, age=Age, collapse=tr
             #panel{class="span8", body=io_lib:format("~100s", [Text])},
                 #panel{class="span2", body=sugar:date_format(Age)}
             ], actions=#event{type=click, postback={unfold, Record}}};
-render_element(#update_element{id=Id, from=From, to=To, text=Text, age=Age, subject=Subject, collapse=false, attachments=Attachments}=Record) ->
+render_element(#update_element{id=Id, uid=UID, from=From, to=To, text=Text, age=Age, subject=Subject, collapse=false, attachments=Attachments}=Record) ->
     #panel{id=Id, body=[
         #panel{class="row-fluid", body=[
                 #panel{class="span1", body=From},
@@ -34,7 +34,20 @@ render_element(#update_element{id=Id, from=From, to=To, text=Text, age=Age, subj
                                     ], postback={reply, Subject, To}, new=false},
                             
                         %#span{class="icon-refresh icon-large", text=" "},
-                        #span{class="icon-reorder icon-large"}
+                        %#span{class="icon-reorder icon-large"}
+                        #panel{class="btn-group", body=[
+                                #link{ class="btn btn-link droppdown-toggle", body=[
+                                        "<i class='icon-reorder icon-large'></i>"
+                                        ], new=false, data_fields=[{toggle, "dropdown"}]},
+                                #list{numbered=false, class="dropdown-menu pull-right",
+                                      body=[
+                                        #listitem{body=[
+                                                #link{body=[
+                                                        "<i class='icon-list-alt icon-large'></i> Archive"
+                                                        ], postback={archive, UID}, new=false}]}
+                                        ]}
+
+                                ]}
                         ]}]},
             case Attachments of
                 [] ->

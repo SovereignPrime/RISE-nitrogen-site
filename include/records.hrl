@@ -8,7 +8,8 @@
                          age,
                          subject,
                          flag=true,
-                         text
+                         text,
+                         archive
     }).
 -record(update_element, {?ELEMENT_BASE(element_update),
                          uid,
