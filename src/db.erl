@@ -128,15 +128,15 @@ get_tasks_by_user(UID) ->
                     end)
         end).
 
-get_tasks(Parent) ->
+get_tasks(Parent, false) ->
     transaction(fun() ->
                 mnesia:select(db_task, [{#db_task{parent=Parent, status='$1', _='_'}, [{'/=', '$1', 'archive'}], ['$_']}])
+            end);
+get_tasks(Parent, true) ->
+    transaction(fun() ->
+                mnesia:select(db_task, [{#db_task{parent=Parent, status='$1', _='_'}, [{'==', '$1', 'archive'}], ['$_']}])
             end).
 
-get_tasks(C, _N) ->
-    transaction(fun() ->
-                mnesia:select(C)
-        end).
 %%%
 %% Expense routines
 %%%

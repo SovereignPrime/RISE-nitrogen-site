@@ -25,7 +25,7 @@ buttons() ->
                             %#panel{ class='span2', body="<i class='icon-user'></i> All accounts"},
                             #panel{ class='span2', body="<i class='icon-filter'></i> Smart filter"},
                             #panel{ class='span2', body="<i class='icon-sort'></i> Sort"},
-                            #panel{ class='span2', body="<i class='icon-list-alt'></i> Archive"}
+                            #link{id=archive, class='span2', body="<i class='icon-list-alt'></i> Archive", postback={show_archive, true}}
                             ]}
                     ]}]}.
 
@@ -62,9 +62,11 @@ left() ->
         ].
 
 render_tasks(Parent) ->
+    render_tasks(Parent, false).
+render_tasks(Parent, Archive) ->
     CId = wf:session(current_task_id),
     io:format("~p ~p~n",[Parent,CId]),
-    case db:get_tasks(Parent) of
+    case db:get_tasks(Parent, Archive) of
         {ok, Tasks} ->
             io:format("~p~n", [Tasks]),
             [
@@ -146,12 +148,20 @@ event({archive, #db_task{id=Id, parent=Parent} = Rec}) ->
     wf:update(groups, render_tasks(Parent)),
     wf:update(subgroups, render_tasks(Id)),
     wf:update(body, render_task(Rec));
+event({show_archive, true}) ->
+    wf:update(groups, render_tasks(undefined, true)),
+    wf:replace(archive, #link{id=archive, class='span2', body="<i class='icon-list-alt'></i> Actual", postback={show_archive, false}}),
+    wf:update(subgroups, []);
+event({show_archive, false}) ->
+    wf:update(groups, render_tasks(undefined, false)),
+    wf:replace(archive, #link{id=archive, class='span2', body="<i class='icon-list-alt'></i> Archive", postback={show_archive, true}}),
+    wf:update(subgroups, []);
 event({task_chosen, Id}) ->
     wf:session(current_task_id, Id),
-    {ok, [ #db_task{parent=Parent} = Task ]} = db:get_task(Id),
+    {ok, [ #db_task{parent=Parent, status=S} = Task ]} = db:get_task(Id),
     wf:session(current_task, Task),
-    wf:update(groups, render_tasks(Parent)),
-    wf:update(subgroups, render_tasks(Id)),
+    wf:update(groups, render_tasks(Parent, (S == archive))),
+    wf:update(subgroups, render_tasks(Id,(S == archive))),
     wf:update(body, render_task(Task));
 event({task_list, prrev}) ->
     #db_task{id=Id, parent=Parent} = wf:session(current_task),
