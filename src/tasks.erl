@@ -117,9 +117,19 @@ render_task(#db_task{id=Id, name=Name, due=Due, text=Text, parent=Parent, status
                                     "<i class='icon-edit icon-large'></i><br>"      
                                     ], postback={edit, Id}, new=false}
                               },
-                        #panel{class="", body=#link{ body=[
-                                    "<i class='icon-reorder icon-large'></i>"
-                                    ], postback={archive, Task}, new=false}}
+                        #panel{class="btn-group", body=[
+                                #link{ class="btn btn-link droppdown-toggle", body=[
+                                        "<i class='icon-reorder icon-large'></i>"
+                                        ], new=false, data_fields=[{toggle, "dropdown"}]},
+                                #list{numbered=false, class="dropdown-menu pull-right",
+                                      body=[
+                                        #listitem{body=[
+                                                #link{body=[
+                                                        "<i class='icon-list-alt icon-large'></i> Archive"
+                                                        ], postback={archive, Task}, new=false}]}
+                                        ]}
+
+                                ]}
                         ]}
                 ]},
         #panel{ class="row-fluid", body=[
@@ -144,7 +154,8 @@ render_task(#db_task{id=Id, name=Name, due=Due, text=Text, parent=Parent, status
         ].
 
 event({archive, #db_task{id=Id, parent=Parent} = Rec}) ->
-    db:archive(Rec),
+    {ok, NTask} = db:archive(Rec),
+    common:send_messages(NTask),
     wf:update(groups, render_tasks(Parent)),
     wf:update(subgroups, render_tasks(Id)),
     wf:update(body, render_task(Rec));

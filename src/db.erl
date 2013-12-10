@@ -57,7 +57,9 @@ delete(Type, Id) ->
 
 archive(Rec) when is_record(Rec, db_task) ->
     transaction(fun() ->
-                mnesia:write(Rec#db_task{status=archive})
+                R = Rec#db_task{status=archive},
+                mnesia:write(R),
+                R
         end);
 archive(Rec) when is_record(Rec, db_update) ->
     transaction(fun() ->
@@ -128,13 +130,17 @@ get_tasks_by_user(UID) ->
                     end)
         end).
 
+get_tasks(Parent) ->
+    transaction(fun() ->
+                mnesia:select(db_task, [{#db_task{parent=Parent, status='$1', _='_'}, [], ['$_']}])
+            end).
 get_tasks(Parent, false) ->
     transaction(fun() ->
                 mnesia:select(db_task, [{#db_task{parent=Parent, status='$1', _='_'}, [{'/=', '$1', 'archive'}], ['$_']}])
             end);
 get_tasks(Parent, true) ->
     transaction(fun() ->
-                mnesia:select(db_task, [{#db_task{parent=Parent, status='$1', _='_'}, [{'==', '$1', 'archive'}], ['$_']}])
+                mnesia:select(db_task, [{#db_task{status='$1', _='_'}, [{'==', '$1', 'archive'}], ['$_']}])
             end).
 
 %%%
