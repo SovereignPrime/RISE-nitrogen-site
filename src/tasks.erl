@@ -113,7 +113,7 @@ render_task(#db_task{id=Id, name=Name, due=Due, text=Text, parent=Parent, status
                             end, InvolvedN)
                         ]},
                 #panel{ class="span1", body=[
-                        #panel{class="", body = #link{body=[
+                        #panel{class="btn btn-link", body = #link{body=[
                                     "<i class='icon-edit icon-large'></i><br>"      
                                     ], postback={edit, Id}, new=false}
                               },
