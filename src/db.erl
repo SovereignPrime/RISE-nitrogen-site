@@ -74,9 +74,13 @@ archive(#db_contact{address=Address}) ->
                 [R] = mnesia:index_read(db_contact, Address, #db_contact.address),
                 mnesia:write(R#db_contact{status=archive})
         end);
-archive(Rec) when is_record(Rec, db_file) ->
+archive(Rec) when is_list(Rec) ->
     transaction(fun() ->
-                mnesia:write(Rec#db_file{status=archive})
+                iterate(db_file, Rec, fun(_T, R) ->
+                            [R1] = mnesia:wread({db_file, R}),
+                            mnesia:write(R1#db_file{status=archive}),
+                            [R1]
+                    end)
         end);
 archive(Rec) when is_record(Rec, db_expense) ->
     transaction(fun() ->
@@ -396,9 +400,17 @@ save_attachments(Record, Files) ->
                 save_attachment(Type, Id, sets:to_list(Files), NId)
             end).
 
-get_files(FIDs) ->
+get_files(FIDs) when is_list(FIDs) ->
     transaction(fun() ->
                 iterate(db_file, FIDs)
+        end);
+get_files(true)  ->
+    transaction(fun() ->
+                mnesia:select(db_file, [{#db_file{status=archive, _='_'}, [], ['$_']}])
+        end);
+get_files(false)  ->
+    transaction(fun() ->
+                mnesia:select(db_file, [{#db_file{status='$1', _='_'}, [{'/=', '$1', archive}], ['$_']}])
         end).
 
 get_owner(FID) ->

@@ -30,15 +30,17 @@ buttons() ->
             %#panel{ class='span2', body="<i class='icon-user'></i> All accounts"},
             #panel{ class='span2', body="<i class='icon-filter'></i> Smart filter"},
             #panel{ class='span2', body="<i class='icon-sort'></i> Sort"},
-            #panel{ class='span2', body="<i class='icon-list-alt'></i> Archive"}
+            #link{id=archive, class='span2', body="<i class='icon-list-alt'></i> Archive", postback={show_archive, true}}
             ]}.
 
 left() ->
     [].
 
-body() -> 
-    {ok, Files} = db:all_files(),
-    [
+body() ->
+    body(false).
+body(Archive) -> 
+    {ok, Files} = db:get_files(Archive),
+    #panel{id=body, body=[
         #table{ rows=[
                 #tablerow{ cells=[
                         #tablecell{body=[
@@ -60,8 +62,18 @@ body() ->
                     end, Files)
                 ]}
 
-        ].    
+            ]}.    
 
+event(archive) ->
+    Files = sets:to_list(wf:session_default(attached_files, sets:new())),
+    db:archive(Files),
+    wf:replace(body, body(false));
+event({show_archive, true}) ->
+    wf:replace(archive, #link{id=archive, class='span2', body="<i class='icon-list-alt'></i> Actual", postback={show_archive, false}}),
+    wf:replace(body, body(true));
+event({show_archive, false}) ->
+    wf:replace(archive, #link{id=archive, class='span2', body="<i class='icon-list-alt'></i> Archive", postback={show_archive, true}}),
+    wf:replace(body, body(false));
 event({check, FID, true}) ->
     AF = wf:session_default(attached_files, sets:new()),
     wf:session(attached_files,  sets:del_element( FID, AF));
