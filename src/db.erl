@@ -108,6 +108,47 @@ get_archive(Type) when Type == db_expense ->
                 mnesia:index_read(Type, archive, #db_expense.status)
         end).
 
+search(Term) ->
+    transaction(fun() ->
+                Contacts = mnesia:foldr(fun(#db_contact{id=Id, name=Name, email=Email, phone=Phone} = Rec, Acc) ->
+                            Pattern = wf:to_list( Name ) ++ " " ++  wf:to_list( Email ) ++ " " ++ wf:to_list(Phone),
+                            case string:str(string:to_lower(Pattern), string:to_lower(Term)) of
+                                X when X > 0 ->
+                                    Acc ++ [Rec];
+                                _ ->
+                                    Acc
+                            end   
+                    end, [], db_contact),
+                Messages = mnesia:foldr(fun(#db_update{id=Id, subject=Name, from=From, text=Text} = Rec, Acc) ->
+                                [ #db_contact{name=F} ] = mnesia:read(db_contact, From),
+                                Pattern = wf:to_list(Name)  ++ " " ++  wf:to_list( F )++ " " ++ wf:to_list( Text ),
+                                case string:str(string:to_lower(Pattern), string:to_lower(Term)) of
+                                    X when X > 0 ->
+                                        Acc ++ [Rec];
+                                    _ ->
+                                        Acc
+                                end   
+                        end, [], db_update),
+                Tasks = mnesia:foldr(fun(#db_task{id=Id, name=Name, due=Due, text=Text} = Rec, Acc) ->
+                                Pattern = wf:to_list(Name)  ++ " " ++  wf:to_list( Due )++ " " ++ wf:to_list( Text ),
+                                case string:str(string:to_lower(Pattern), string:to_lower(Term)) of
+                                    X when X > 0 ->
+                                        Acc ++ [Rec];
+                                    _ ->
+                                        Acc
+                                end   
+                        end, [], db_task),
+                Files = mnesia:foldr(fun(#db_file{id=Id, path=Name, date=Due} = Rec, Acc) ->
+                                Pattern = wf:to_list(Name)  ++ " " ++  wf:to_list( sugar:date_format( Due ) ),
+                                case string:str(string:to_lower(Pattern), string:to_lower(Term)) of
+                                    X when X > 0 ->
+                                        Acc ++ [Rec];
+                                    _ ->
+                                        Acc
+                                end   
+                        end, [], db_file),
+                Contacts ++ Messages ++ Tasks ++ Files
+        end).
 %%%
 %% Task routines
 %%%
