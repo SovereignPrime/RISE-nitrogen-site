@@ -12,6 +12,7 @@ install()->
     {atomic, ok} = mnesia:create_table(db_file, [{disc_copies, [node()]}, {attributes, record_info(fields, db_file)}, {type, ordered_set}]),
     {atomic, ok} = mnesia:create_table(db_expense, [{disc_copies, [node()]}, {attributes, record_info(fields, db_expense)}, {type, ordered_set}]),
     {atomic, ok} = mnesia:create_table(db_update, [{disc_copies, [node()]}, {attributes, record_info(fields, db_update)}, {type, ordered_set}]),
+    {atomic, ok} = mnesia:create_table(db_search, [{disc_copies, [node()]}, {attributes, record_info(fields, db_search)}]),
     {atomic, ok} = mnesia:create_table(db_contact_roles, [{disc_copies, [node()]}, {attributes, record_info(fields, db_contact_roles)}, {type, ordered_set}]),
     {atomic, ok} = mnesia:create_table(db_group_members, [{disc_copies, [node()]}, {attributes, record_info(fields, db_group_members)}, {type, bag}]),
     {atomic, ok} = mnesia:create_table(db_expense_tasks, [{disc_copies, [node()]}, {attributes, record_info(fields, db_expense_tasks)}, {type, bag}]),
@@ -160,6 +161,10 @@ search(Term) ->
                                 end   
                         end, [], db_file),
                 { Contacts, Messages , Tasks ++ TasksU, Files }
+        end).
+get_filters() ->
+    transaction(fun() ->
+                mnesia:select(db_search, [{#db_search{text='$1', _='_'}, [], ['$1']}])
         end).
 %%%
 %% Task routines

@@ -8,4 +8,4 @@
 -record(db_attachment,{id, file, type, tid}).
 -record(db_group_members, {group, contact}).
 -record(db_expense_tasks, {expense, task}).
-%-record(db_seach, {id, 
+-record(db_search, {text, id}).

@@ -129,8 +129,23 @@ sigma_search_event(search, Term) ->
                 ]},
                     
     {length(Contacts) + length(Messages) + length(Tasks) + length(Files), #panel{class="", body=[
-                Out
+                Out,
+                #panel{body=#link{body="<i class='icon icon-filter'></i> Create filter with search", postback={save_filter, Term}, delegate=?MODULE}}
+                
                 ]}}.  
+render_filters() ->
+    {ok, Filters} = db:get_filters(),
+    #panel{ class="btn-group span2", body=[
+            #link{class="btn dropdown-toggle btn-link", body="<i class='icon-filter'></i> Smart filter", data_fields=[{toggle, "dropdown"}], url="#", new=false},
+            #list{numbered=false, class="dropdown-menu",
+                  body=
+                  lists:map(fun(Term) ->
+                            #listitem{ class="", body=[
+                                    #link{text=Term, postback={search, Term}, delegate=?MODULE}
+                                    ]}
+                    end, Filters)
+                 }
+            ]}.
 
 event(add_group) ->
     {ok, Id} = db:next_id(db_group),
@@ -186,6 +201,13 @@ event({db_task, Id}) ->
     wf:redirect("/tasks");
 event({db_file, Id}) ->
     wf:redirect("/files");
+event({search, Term}) ->
+    wf:set(".sigma_search_textbox", Term),
+    sigma_search_event(search, Term),
+    wf:wire(#script{script="$('.sigma_search_textbox').keydown()"});
+event({save_filter, Term}) ->
+    db:save(#db_search{text=Term}),
+    wf:wire(#script{script="$('.sigma_search_x_button').click()"});
 event(E) ->
     io:format("Event ~p occured in ~p~n", [E, ?MODULE]).
 
