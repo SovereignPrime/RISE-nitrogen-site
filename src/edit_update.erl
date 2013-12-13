@@ -84,7 +84,7 @@ add_existing_rows(To) when is_list(To) ->
             ok;
         _ ->
             element_addable_row:event({del, #addable_row{id=roles, num= 0}}),
-            element_addable_row:event({add, #addable_row{id=roles, num= length(Tos), body=#involved{}}})
+            element_addable_row:event({add, #addable_row{id=roles, num= length(Tos), body=#to{}}})
     end,
     [];
 add_existing_rows(_To) ->
