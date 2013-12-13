@@ -72,8 +72,7 @@ contact_render(#db_contact{id=Id, name=Name, email=Email, phone=Phone,  address=
                rows=[
                 #tablerow{cells=[
                         #tableheader{ body=[
-                                #span{class=" icon-small icon-stack", html_encode=false, text="<i class='icon-calendar-empty icon-stack-base'></i><i class='icon-ok'></i>"},
-                                "Tasks"
+                                "<i class='icon-calendar'></i> Tasks"
                                 ]},
                         #tableheader{},
                         #tableheader{body="Show all", class="cell-right"}

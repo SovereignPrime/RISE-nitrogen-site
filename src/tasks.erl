@@ -10,7 +10,7 @@ main() -> common:main().
 
 title() -> "Hello from relationships.erl!".
 
-icon() -> #span{class="icon-small icon-stack", html_encode=false, text="<i class='icon-calendar-empty icon-stack-base'></i><i class='icon-ok'></i>"}.
+icon() -> "<i class='icon-calendar icon-2x'></i>".
 
 buttons() ->
     #panel{class='row-fluid', body=[
@@ -25,7 +25,7 @@ buttons() ->
                             %#panel{ class='span2', body="<i class='icon-user'></i> All accounts"},
                             %#panel{ class='span2', body=},
                             common:render_filters(),
-                            #panel{ class='span2', body="<i class='icon-sort'></i> Sort"},
+                            %#panel{ class='span2', body="<i class='icon-sort'></i> Sort"},
                             #link{id=archive, class='span2', body="<i class='icon-list-alt'></i> Archive", postback={show_archive, true}}
                             ]}
                     ]}]}.
