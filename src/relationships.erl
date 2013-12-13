@@ -72,12 +72,12 @@ contact_render(#db_contact{id=Id, name=Name, email=Email, phone=Phone,  address=
                rows=[
                 #tablerow{cells=[
                         #tableheader{ body=[
-                                "<i class='icon-calendar'></i> Tasks"
+                                "<i class='icon-calendar-empty'></i> Tasks"
                                 ]},
                         #tableheader{},
                         #tableheader{body="Show all", class="cell-right"}
                         ]},
-                lists:map(fun(#db_task{parent=Responsible, name=TName, due=Due}) ->
+                lists:map(fun(#db_task{parent=Responsible, text=Name, due=Due}) ->
                             #taskrow{type=Responsible, name=Name, due=Due}
                     end, Tasks)
 
@@ -132,8 +132,8 @@ event({group_delete, Id, Archive}) ->
 event({group_rename, Id, Archive}) ->
     wf:update(wf:f("group_~p", [Id]), render_group_list(Archive));
 event({write_to, Addr}) ->
-    {ok, #db_contact{id=Id}} = db:get_contact_by_address(Addr),
-    wf:session(current_update, #db_update{to=[Addr]}),
+    {ok, Id} = db:next_id(db_update),
+    wf:session(current_update, #db_update{id=Id, to=[Addr]}),
     wf:redirect("/edit_update");
 event(Click) ->
     io:format("~p~n",[Click]).

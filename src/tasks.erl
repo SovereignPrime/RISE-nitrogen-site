@@ -10,7 +10,7 @@ main() -> common:main().
 
 title() -> "Hello from relationships.erl!".
 
-icon() -> "<i class='icon-calendar icon-2x'></i>".
+icon() -> "<i class='icon-calendar-empty icon-2x'></i>".
 
 buttons() ->
     #panel{class='row-fluid', body=[

@@ -75,3 +75,31 @@ a, a:hover, a:active {
     display: none;
     visibility:hidden;
 }
+.input-prepend input {
+    swidth: 100%;
+    border: 0px #000 solid;
+    background-color:transparent;
+}
+.input-prepend {
+    border: 1px #000 solid;
+
+    sborder-right: 0px #000 solid;
+}
+
+.input-prepend .add-on {
+    background-color: #fff;
+    border: 0px #000 solid;
+}
+.row_plus {
+    background-color: #fff;
+    border: #000 1px solid;
+    height: 30px;
+    width: 30px;
+}
+select.wfid_responsible {
+    border: #000 1px solid !important;
+    height: 30px;
+}
+.previous>a{
+    border: 0px #000 solid !important;
+}

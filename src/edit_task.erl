@@ -9,7 +9,7 @@ main() -> common:main().
 
 title() -> "Welcome to Nitrogen".
 
-icon() -> "<i class='icon-task icon-2x'></i>".
+icon() -> "<i class='icon-calendar-empty icon-2x'></i>".
 
 buttons() ->
     #panel{class='row-fluid', body=[
@@ -82,20 +82,20 @@ body() ->
             #panel{ class="row-fluid", body=[
                     #panel{ class="input-prepend span12", body=[
                             #span{ class="add-on", body=[
-                                    #span{ class="icon-stack",html_encode=false, text="<i class='icon-calendar-empty icon-stack-base'></i><i class='icon-small icon-ok'></i>"}
+                                    "<i class='icon-calendar-empty'></i>"
                                     ]},
                             #textbox{id=name, placeholder="Task name", text=Name,  next=due, class="span11"}
                             ]}
                     ]},
             #panel{ class="row-fluid", body=[
-                    #panel{ class="input-prepend input-append span12", body=[
+                    #panel{ class="input-prepend span12", body=[
                             #span{ class="add-on", body=[
                                     #span{html_encode=false, text="<i class='icon-calendar'></i>"}
                                     ]},
-                            #datepicker_textbox{id=due,  next=due, text=Due, class="span9"},
-                            #span{ class="add-on", body=[
-                                    #span{ text="Calendar | Make recurring"}
-                                    ]}
+                            #datepicker_textbox{id=due,  next=due, text=Due, class="span9"}
+                            %#span{ class="add-on", body=[
+                            %        #span{ text="Calendar | Make recurring"}
+                            %        ]}
                             ]}
                     ]},
             #addable_row{id=roles, body= #involved{}},
