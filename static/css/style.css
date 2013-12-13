@@ -56,3 +56,22 @@ a, a:hover, a:active {
     overflow: auto;
     height: inherit;
 }
+
+.search-results {
+    display:none;
+}
+.sigma_search_results {
+    position: absolute;
+    padding: 3px;
+    background-color: #fff;
+    width:82.7%;
+    margin-top: -10px;
+    border:#000 1px solid;
+    border-top: #000 0px solid;
+    border-radius:  1px 1px 0;
+    z-index:999;
+}
+.search-x {
+    display: none;
+    visibility:hidden;
+}

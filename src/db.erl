@@ -111,17 +111,25 @@ get_archive(Type) when Type == db_expense ->
 search(Term) ->
     transaction(fun() ->
                 Contacts = mnesia:foldr(fun(#db_contact{id=Id, name=Name, email=Email, phone=Phone} = Rec, Acc) ->
-                            Pattern = wf:to_list( Name ) ++ " " ++  wf:to_list( Email ) ++ " " ++ wf:to_list(Phone),
-                            case string:str(string:to_lower(Pattern), string:to_lower(Term)) of
-                                X when X > 0 ->
-                                    Acc ++ [Rec];
-                                _ ->
-                                    Acc
-                            end   
-                    end, [], db_contact),
+                                {ok, GIDS} = db:get_groups_for_user(Id),
+                                Groups = lists:map(fun(#db_group{name=Group}) ->
+                                                Group
+                                        end, GIDS),
+                                Pattern = wf:to_list( Name ) ++ " " ++  wf:to_list( Email ) ++ " " ++ wf:to_list(Phone) ++ lists:flatten(Groups),
+                                case string:str(string:to_lower(Pattern), string:to_lower(Term)) of
+                                    X when X > 0 ->
+                                        Acc ++ [{Rec, Groups}];
+                                    _ ->
+                                        Acc
+                                end   
+                        end, [], db_contact),
                 Messages = mnesia:foldr(fun(#db_update{id=Id, subject=Name, from=From, text=Text} = Rec, Acc) ->
-                                [ #db_contact{name=F} ] = mnesia:read(db_contact, From),
-                                Pattern = wf:to_list(Name)  ++ " " ++  wf:to_list( F )++ " " ++ wf:to_list( Text ),
+                                [ #db_contact{id=UID, name=F} ] = mnesia:read(db_contact, From),
+                                {ok, GIDS} = db:get_groups_for_user(UID),
+                                Groups = lists:map(fun(#db_group{name=Group}) ->
+                                                Group
+                                        end, GIDS),
+                                Pattern = wf:to_list(Name)  ++ " " ++  wf:to_list( F )++ " " ++ wf:to_list( Text ) ++ lists:flatten( Groups ),
                                 case string:str(string:to_lower(Pattern), string:to_lower(Term)) of
                                     X when X > 0 ->
                                         Acc ++ [Rec];
@@ -138,6 +146,10 @@ search(Term) ->
                                         Acc
                                 end   
                         end, [], db_task),
+                TasksU = lists:foldr(fun({#db_contact{id=Id}, _}, A) ->
+                               {ok, TIDS} = get_tasks_by_user(Id),
+                               A ++ iterate(db_task, TIDS)
+                        end, [], Contacts), 
                 Files = mnesia:foldr(fun(#db_file{id=Id, path=Name, date=Due} = Rec, Acc) ->
                                 Pattern = wf:to_list(Name)  ++ " " ++  wf:to_list( sugar:date_format( Due ) ),
                                 case string:str(string:to_lower(Pattern), string:to_lower(Term)) of
@@ -147,7 +159,7 @@ search(Term) ->
                                         Acc
                                 end   
                         end, [], db_file),
-                Contacts ++ Messages ++ Tasks ++ Files
+                { Contacts, Messages , Tasks ++ TasksU, Files }
         end).
 %%%
 %% Task routines

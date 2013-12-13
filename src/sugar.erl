@@ -13,5 +13,5 @@ format_file_size(S) when S >  1000 * 1000 ->
 format_file_size(S) when S > 1000 ->
     wf:f("~.2fK", [S / 1024]);
 format_file_size(S) ->
-    S. 
+    wf:f("~pb", [ S ]). 
 
