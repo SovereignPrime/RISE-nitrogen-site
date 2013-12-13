@@ -132,6 +132,10 @@ event({group_delete, Id, Archive}) ->
     wf:update(group_list, render_group_list(Archive));
 event({group_rename, Id, Archive}) ->
     wf:update(wf:f("group_~p", [Id]), render_group_list(Archive));
+event({write_to, Addr}) ->
+    {ok, #db_contact{id=Id}} = db:get_contact_by_address(Addr),
+    wf:session(current_update, #db_update{to=[Addr]}),
+    wf:redirect("/edit_update");
 event(Click) ->
     io:format("~p~n",[Click]).
 
