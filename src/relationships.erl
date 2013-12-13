@@ -18,8 +18,8 @@ buttons() ->
             #panel{class='span9 offset3', body=[
                     #panel{class="row-fluid", body=[
                             %#panel{ class='span2', body="<i class='icon-user'></i> All accounts"},
-                            #panel{ class='span2', body="<i class='icon-filter'></i> Smart filter"},
-                            #panel{ class='span2', body="<i class='icon-sort'></i> Sort"},
+                            common:render_filters(),
+                            %#panel{ class='span2', body="<i class='icon-sort'></i> Sort"},
                             #link{id=archive, class='span2', body="<i class='icon-list-alt'></i> Archive", postback={show_archive, true}}
                             ]}
                     ]}]}.
