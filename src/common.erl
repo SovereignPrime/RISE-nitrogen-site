@@ -7,6 +7,7 @@
 -include("protokol.hrl").
 
 main() -> 
+    PWD = applicatin:get_env(nitrogen, work_dir, "."),
     case wf:user() of
         'undefined' ->
             case db:get_my_accounts() of 
@@ -24,7 +25,7 @@ main() ->
         R ->
             {ok, Pid} = wf:comet_global(fun  incoming/0, incoming),
             receiver:register_receiver(Pid),
-            T = #template { file="./site/templates/bare.html" },
+            T = #template { file=PWD ++ "/site/templates/bare.html" },
             wf:wire('new_contact', #event{type=click, postback=add_contact, delegate=?MODULE}),
             wf:wire('new_group', #event{type=click, postback=add_group, delegate=?MODULE}),
             wf:wire('new_task', #event{type=click, postback=add_task, delegate=?MODULE}),
