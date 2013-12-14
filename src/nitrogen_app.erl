@@ -7,7 +7,7 @@
 %% ===================================================================
 
 start(_StartType, _StartArgs) ->
-    Timeout = appliation:get_env(nitrogen, db_timeout, 300),
+    Timeout = application:get_env(nitrogen, db_timeout, 300),
     application:start(mnesia),
     application:start(mimetypes),
     etorrent:start_app(),
@@ -21,12 +21,4 @@ start(_StartType, _StartArgs) ->
     nitrogen_sup:start_link().
 
 stop(_State) ->
-    %application:stop(cowboy),
-    %application:stop(nprocreg),
-    %application:stop(ranch),
-    %application:stop(bitmessage),
-    %application:stop(etorrent_core),
-    %application:stop(crypto),
-    %application:stop(mimetypes),
-    %application:stop(mnesia),
     ok.

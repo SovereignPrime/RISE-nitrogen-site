@@ -7,7 +7,7 @@
 -include("protokol.hrl").
 
 main() -> 
-    PWD = applicatin:get_env(nitrogen, work_dir, "."),
+    PWD = application:get_env(nitrogen, work_dir, "."),
     case wf:user() of
         'undefined' ->
             case db:get_my_accounts() of 
