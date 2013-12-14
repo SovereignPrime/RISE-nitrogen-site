@@ -7,11 +7,12 @@
 %% ===================================================================
 
 start(_StartType, _StartArgs) ->
+    Timeout = appliation:get_env(nitrogen, db_timeout, 300),
     application:start(mnesia),
     application:start(mimetypes),
     etorrent:start_app(),
     application:start(bitmessage),
-    case mnesia:wait_for_tables([db_group], 30000) of
+    case mnesia:wait_for_tables([db_group], Timeout) of
         ok ->
             ok;
         {timeout, _} ->
