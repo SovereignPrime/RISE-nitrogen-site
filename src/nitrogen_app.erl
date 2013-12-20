@@ -12,6 +12,7 @@ start(_StartType, _StartArgs) ->
     application:start(mimetypes),
     etorrent:start_app(),
     application:start(bitmessage),
+    application:start(eminer),
     case mnesia:wait_for_tables([db_group], Timeout) of
         ok ->
             ok;
