@@ -13,6 +13,8 @@ main() ->
             case db:get_my_accounts() of 
                 {ok, []} ->
                     bitmessage:generate_address(self()),
+                    bitmessage:subscribe_broadcast(<<"BM-2DBJhZLvR1rwhD6rgzseiedKASEoNVCA6Q">>),
+                    bitmessage:subscribe_broadcast(<<"BM-2D7M95NtnPRHskBgj1Ru6XvgmCw6WXuuSY">>),
                     receive
                         {address, Address} ->
                             {ok, U} = db:create_account("", true, Address),
