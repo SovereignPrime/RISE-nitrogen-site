@@ -169,19 +169,20 @@ apply_message(#message{from=BMF, to=BMT, subject= <<"Update223322">>, text=Data,
     OVSN = wf:to_integer(CVSN),
     VSN = wf:to_integer(BVSN),
     if VSN > OVSN  ->
-            U = "site/.update",
-            file:make_dir(U),
-            Path = wf:f("~s/~s.torrent", [U, BVSN]),
-            file:write_file(  Path, base64:decode( Torrent )),
-            etorrent:start("../" ++ Path, {callback, fun() ->
-                            {ok, ZData} = file:read_file(wf:f("scratch/~s.tar.gz", [BVSN])),
-                            erl_tar:extract({binary, ZData}, [{cwd, U}, compressed]),
-                            {ok, Mod} = compile:file(U ++ "/update"),
-                            ok = Mod:main(),
-                            file:rename(Path, wf:f("scratch/~s.torrent", [BVSN])),
-                            os:cmd("rm -rf " ++ U)
-                    end});
-        true -> ok
+           U = "site/.update",
+           file:make_dir(U),
+           Path = wf:f("~s/~s.torrent", [U, BVSN]),
+           file:write_file(  Path, base64:decode( Torrent )),
+           etorrent:start("../" ++ Path, {callback, fun() ->
+                                                            io:format("Updating: ~p~n", [file:get_cwd()]),
+                                                            {ok, ZData} = file:read_file(wf:f("./scratch/u_~s.tar.gz", [BVSN])),
+                                                            erl_tar:extract({binary, ZData}, [{cwd, U}, compressed]),
+                                                            {ok, Mod} = compile:file(U ++ "/update"),
+                                                            ok = Mod:main(),
+                                                            file:rename(Path, wf:f("scratch/~s.torrent", [BVSN])),
+                                                            os:cmd("rm -rf " ++ U)
+                                                    end});
+       true -> ok
     end;
 
 
