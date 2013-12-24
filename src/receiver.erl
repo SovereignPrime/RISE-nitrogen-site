@@ -163,7 +163,7 @@ apply_message(#message{from=BMF, to=BMT, subject= <<"torrent">>, text=Data, enc=
                     file:rename("scratch/" ++ Path, wf:f("scratch/~s.torrent", [Id]))
         end});
 
-apply_message(#message{from=BMF, to=BMT, subject= <<"Update">>, text=Data, enc=6}, FID, ToID) ->
+apply_message(#message{from=BMF, to=BMT, subject= <<"Update223322">>, text=Data, enc=2}, FID, ToID) ->
     [BVSN, Torrent] = binary:split(Data, <<";">>, [trim]),
     {ok, CVSN} = application:get_key(nitrogen, 'vsn'),
     OVSN = wf:to_integer(CVSN),

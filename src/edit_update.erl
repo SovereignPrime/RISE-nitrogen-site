@@ -62,14 +62,14 @@ body() ->
                             #textarea{class="input-block-level",rows=15, placeholder="Some text here", id=text}
                             ]}
 
-                    ]},
-            #panel{ class="row-fluid", body=[
-                    #panel{class="span12", body=[
-                            #checkbox{id=notice,class="pull-left", text=" Send notice about this update to everyone involved",  checked=true}
-
-                            ]}
-
                     ]}
+%            #panel{ class="row-fluid", body=[
+%                    #panel{class="span12", body=[
+%                            #checkbox{id=notice,class="pull-left", text=" Send notice about this update to everyone involved",  checked=true}
+%
+%                            ]}
+%
+%                    ]}
             ]}.
             
 add_existing_rows(To) when is_list(To) ->
