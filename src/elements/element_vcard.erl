@@ -9,21 +9,22 @@
     render_element/1,
     start_upload_event/1,
     finish_upload_event/4
-]).
+    ]).
 
 -spec reflect() -> [atom()].
 reflect() -> record_info(fields, vcard).
 
 -spec render_element(#vcard{}) -> body().
 render_element(#vcard{id=Id, photo=Photo, name=Name, email=Email, phone=Phone, address=Address, groups=Groups}) ->
-    #panel{id=Id, class="row-fluid", body=[
+    {ok, AGroups} = db:get_groups(),
+    #panel{id=Id, class="vcard row-fluid", body=[
             #panel{class="span2", body=[
                     #image{id=img_vcard, image="photo/" ++ Photo, class="image-polaroid", actions=[
                             #event{type=click, actions=[
                                     #event{target=upload_vcard,  actions=#show{}},
                                     #event{actions=#hide{}}
                                     ]}
-                                  ]},
+                            ]},
                     #span{id=upload_vcard, body=
                           #upload{tag={photo, Id}, show_button=false, droppable=true, droppable_text="Drag and drop photo", style="width:100%;height:100%", delegate=?MODULE}, 
                           actions=#hide{}} 
@@ -32,13 +33,13 @@ render_element(#vcard{id=Id, photo=Photo, name=Name, email=Email, phone=Phone, a
                     #panel{class="row-fluid", body=[
                             #h1{class="", body=
                                 #inplace_textbox{text=Name, tag={name, Id}}
-                                                 },% " <i class='clearfix icon-edit icon-large'></i>",
+                               },% " <i class='clearfix icon-edit icon-large'></i>",
                             #panel{body= [ "e-mail: ",
                                           #inplace_textbox{class="inline", tag={ email, Id}, text=  Email, validators=#is_email{text="You provided wrong e-mail address"}}
                                          ]},
                             #panel{body= [
                                     "tel.: ",
-                                 #inplace_textbox{class="inline", text=Phone, tag={phone, Id}}
+                                    #inplace_textbox{class="inline", text=Phone, tag={phone, Id}}
                                     ]},
                             #panel{body= [
                                     #inplace_textbox{text=  Address, tag={address, Id}}
@@ -49,23 +50,47 @@ render_element(#vcard{id=Id, photo=Photo, name=Name, email=Email, phone=Phone, a
                     ]},
             #panel{class="span1", body=[
                     #link{class="btn btn-link", body = "<i class='icon-envelope icon-large'></i>", postback={write_to, Address }},
-                    #link{class="btn btn-link", body = "<i class='icon-group icon-large'></i>"},
-                        #panel{class="btn-group", body=[
-                                #link{ class="btn btn-link droppdown-toggle", body=[
-                                        "<i class='icon-reorder icon-large'></i>"
-                                        ], new=false, data_fields=[{toggle, "dropdown"}]},
-                                #list{numbered=false, class="dropdown-menu pull-right",
-                                      body=[
-                                        #listitem{body=[
-                                                #link{body=[
-                                                        "<i class='icon-list-alt icon-large'></i> Archive"
-                                                        ], postback={archive, Address}, new=false}]}
-                                        ]}
-
-                                ]}
+                    %#panel{class="btn-group", body=[
+                    %        #link{class="btn btn-link dropdown-toggle", body = "<i class='icon-group icon-large'></i>",
+                    %         new=false, data_fields=[{toggle, "dropdown"}]},
+                    %        #list{numbered=false, class="dropdown-menu pull-right",
+                    %              body=lists:map(fun(#db_group{id=GID, name=GName}) ->
+                    %                        #listitem{body=[
+                    %                                #checkbox{id=wf:to_list( GID ), text=GName, postback={checked, Address, GID}, checked=false}
+                    %                                ]}
+                    %                                
+                    %                                %#link{body=[
+                    %                                %        "<i class='icon-list-alt icon-large'></i> Archive"
+                    %                                %        ], postback={archive, Address}, new=false}]}
+                    %                end, AGroups)
+                    %             }
+                    %]},
+            #panel{class="btn-group", body=[
+                    #link{ class="btn btn-link dropdown-toggle", body=[
+                            "<i class='icon-reorder icon-large'></i>"
+                            ], new=false, data_fields=[{toggle, "dropdown"}]},
+                    #list{numbered=false, class="dropdown-menu pull-right",
+                          body=[
+                            #listitem{body=[
+                                    #link{body=[
+                                            "<i class='icon-list-alt icon-large'></i> Archive"
+                                            ], postback={archive, Address}, new=false}]}
+                                    ]}
+                            ]}
                     ]}
-                    
             ]}.
+
+event({checked, Address, GID}) ->
+    {ok, Contact} = db:get_contact_by_address(Address),
+    State = wf:q(wf:to_list(GID)),
+    case State of
+        undefined ->
+            mnesia:dirty_delete_object(#db_group_members{group=GID, contact=Contact#db_contact.id});
+            "on" ->
+            db:save(#db_group_members{group=GID, contact=Contact#db_contact.id})
+            end,
+    wf:redirect("/relationships").
+
 
 start_upload_event(_) ->
     ok.

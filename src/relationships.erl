@@ -15,8 +15,9 @@ icon() -> "<i class='icon-user icon-large'></i>".
 buttons() ->
     #panel{id=buttons, class='row-fluid', body=[
 
-            #panel{class='span9 offset3', body=[
+            #panel{class='span9 offset1', body=[
                     #panel{class="row-fluid", body=[
+                            #link{id=archive, class='span2', body="<i class='icon-envelope-alt'></i> Invite via email", postback=invite},
                             %#panel{ class='span2', body="<i class='icon-user'></i> All accounts"},
                             common:render_filters(),
                             %#panel{ class='span2', body="<i class='icon-sort'></i> Sort"},
