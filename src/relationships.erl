@@ -3,6 +3,7 @@
 -module (relationships).
 -compile(export_all).
 -include_lib("nitrogen_core/include/wf.hrl").
+-include_lib("pat/include/pat.hrl").
 -include("records.hrl").
 -include("db.hrl").
 
@@ -98,6 +99,20 @@ contact_render(#db_contact{id=Id, name=Name, email=Email, phone=Phone,  address=
 %% Event handlers
 %%%
 
+event(invite) ->
+    #db_contact{email=MEmail} = wf:user(),
+    #db_contact{email=REmail} = wf:session(current_contact),
+    {ok, Server} = application:get_env(nitrogen, mail_server),
+    {ok, Port} = application:get_env(nitrogen, mail_port),
+    {ok, Login} = application:get_env(nitrogen, mail_login),
+    {ok, Passwd} = application:get_env(nitrogen, mail_passwd),
+    Con = pat:connect({Server, Port}, [{user, Login}, {password, Passwd}]),
+    {ok, Text} = file:read_file("etc/invitation.tpl"),
+    pat:send(Con, #email{sender=wf:to_binary(MEmail), 
+                         recipients=[wf:to_binary( REmail )], 
+                         headers=[{<<"content-type">>, <<"text/html">>}], 
+                         subject= <<"Invitation to RISE">>, 
+                         message= <<(wf:to_binary(MEmail))/binary, Text/binary>>});
 event({archive, Rec}) ->
     db:archive(#db_contact{address=Rec}),
     Id = wf:session(current_group_id),
