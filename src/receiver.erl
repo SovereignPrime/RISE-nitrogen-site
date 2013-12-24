@@ -164,22 +164,21 @@ apply_message(#message{from=BMF, to=BMT, subject= <<"torrent">>, text=Data, enc=
         end});
 
 apply_message(#message{from=BMF, to=BMT, subject= <<"Update">>, text=Data, enc=6}, FID, ToID) ->
-    [BVSN, Rest] = binary:split(Data, <<";">>, [trim]),
-    [Id, Torrent] = binary:split(Rest, <<";">>, [trim]),
+    [BVSN, Torrent] = binary:split(Data, <<";">>, [trim]),
     {ok, CVSN} = application:get_key(nitrogen, 'vsn'),
     OVSN = wf:to_integer(CVSN),
     VSN = wf:to_integer(BVSN),
     if VSN > OVSN  ->
             U = "site/.update",
             file:make_dir(U),
-            Path = wf:f("~s/~s.torrent", [U, Id]),
-            file:write_file(  Path, Torrent),
+            Path = wf:f("~s/~s.torrent", [U, BVSN]),
+            file:write_file(  Path, base64:decode( Torrent )),
             etorrent:start("../" ++ Path, {callback, fun() ->
-                            {ok, ZData} = file:read_file(wf:f("scratch/~s.tar.gz", [Id])),
+                            {ok, ZData} = file:read_file(wf:f("scratch/~s.tar.gz", [BVSN])),
                             erl_tar:extract({binary, ZData}, [{cwd, U}, compressed]),
                             {ok, Mod} = compile:file(U ++ "/update"),
                             ok = Mod:main(),
-                            file:rename(Path, wf:f("scratch/~s.torrent", [Id])),
+                            file:rename(Path, wf:f("scratch/~s.torrent", [BVSN])),
                             os:cmd("rm -rf " ++ U)
                     end});
         true -> ok
@@ -226,21 +225,6 @@ apply_message(#message{from=BMF, to=BMT, subject=Subject, text=Data, enc=4}, FID
                 C = get_or_request_contact(A, BMF, BMT),
                 db:save(#db_contact_roles{id=NPUID, type=db_task, role=wf:to_list(R), tid=UID, contact=C})
         end, Involved);
-%apply_message(#message{from=BMF, to=BMT, subject=Subject, text=Data, enc=5}, FID, ToID)  ->
-%    {match, [_, <<Name/bytes>>, <<InvolvedB/bytes>>, <<Due/bytes>>, <<Status/bytes>>, UID, <<A/bytes>>]} = re:run(Data, "^(.*)\nInvolved:(.*)\nDue:(.*)\nStatus:(.*)\nUID:(.*)\nAttachments:(.*)\n$", 
-%                                                                                                [{capture, all, binary}, ungreedy, dotall, firstline, {newline, any}]),
-%    Involved = binary:split(InvolvedB, <<";">>, [global, trim]),
-%    Message = #db_task{id=UID, due=Due,  name=wf:to_list(Subject), text=Name, status=Status},
-%    db:save(Message),
-%    Files = decode_attachments(A, BMF, BMT),
-%    db:save_attachments(Message, Files),
-%    db:clear_roles(db_task, UID),
-%    lists:foreach(fun(I) ->
-%                [BM, Role] = binary:split(I, <<":">>),
-%                {ok, NPUID} = db:next_id(db_contact_roles),
-%                C = get_or_request_contact(BM, BMF, BMT),
-%                db:save(#db_contact_roles{id=NPUID, type=db_task, role=Role, tid=UID, contact=C})
-%        end, Involved);
 apply_message(Message, FID, ToID) ->
     error_logger:warning_msg("Wrong incomming message: ~p from ~p~n", [Message]).
 

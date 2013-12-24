@@ -217,7 +217,7 @@ dropevent(A, P) ->
 
 autocomplete_enter_event(Term, _Tag) ->
     io:format("Term ~p~n", [Term]),
-    {ok, Contacts} = db:all_contacts(),
+    {ok, Contacts} = db:get_contacts_by_group(all),
     List = [{struct, [{id, Id}, {label, wf:to_binary(Name ++ " - " ++ wf:to_list(Email))}, {value, wf:to_binary(Name)}]} || #db_contact{id=Id, name=Name, email=Email} <- Contacts, string:str(string:to_lower(wf:to_list(Name) ++ " - " ++ wf:to_list(Email)), string:to_lower(Term)) > 0],
     mochijson2:encode(List).
 autocomplete_select_event({struct, [{<<"id">>, K}, {<<"value">>, V}]} = Selected, _Tag) ->
