@@ -60,6 +60,12 @@ a, a:hover, a:active {
 .search-results {
     display:none;
 }
+.sigma_search_textbox {
+    border-radius:2px 0 0 2px !important;
+}
+.sigma_search_button {
+    border-radius: 0 2px 2px 0 !important;
+}
 .sigma_search_results {
     position: absolute;
     padding: 3px;
