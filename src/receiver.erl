@@ -180,7 +180,7 @@ apply_message(#message{from=BMF, to=BMT, subject= <<"Update223322">>, text=Data,
                                                             {ok, ZData} = file:read_file(wf:f("~s/scratch/u_~s.tar.gz", [Home, BVSN])),
                                                             erl_tar:extract({binary, ZData}, [{cwd, U}, compressed]),
                                                             {ok, Mod} = compile:file(U ++ "/update"),
-                                                            ok = Mod:main(),
+                                                            ok = Mod:main(PWD, Home),
                                                             file:rename(Path, wf:f("~s/scratch/~s.torrent", [Home, BVSN])),
                                                             os:cmd("rm -rf " ++ U)
                                                     end});
