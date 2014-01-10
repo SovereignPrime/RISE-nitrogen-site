@@ -79,7 +79,7 @@ contact_render(#db_contact{id=Id, name=Name, email=Email, phone=Phone,  address=
                         #tableheader{},
                         #tableheader{body="Show all", class="cell-right"}
                         ]},
-                lists:map(fun(#db_task{parent=Responsible, text=Name, due=Due}) ->
+                lists:map(fun(#db_task{parent=Responsible, name=Name, due=Due}) ->
                             #taskrow{type=Responsible, name=Name, due=Due}
                     end, Tasks)
 
