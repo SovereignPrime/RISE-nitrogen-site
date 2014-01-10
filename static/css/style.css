@@ -109,3 +109,7 @@ select.wfid_responsible {
 .previous>a{
     border: 0px #000 solid !important;
 }
+.no-padding {
+    min-height: 0 !important;
+    height: 18px !important;
+}
