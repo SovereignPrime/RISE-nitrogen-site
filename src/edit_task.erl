@@ -62,11 +62,16 @@ left() ->
                                         "Subtask of: ",N, #br{}
                                     ]
                             end,
-                            lists:map(fun(#db_task{name=N}) ->
-                                    [
-                                        "Subtask: ",N, #br{}
-                                    ]
-                            end, Children),
+                            case CId of
+                                undefined ->
+                                   "";
+                                _ ->
+                                    lists:map(fun(#db_task{name=N}) ->
+                                                      [
+                                                       "Subtask: ",N, #br{}
+                                                      ]
+                                              end, Children)
+                            end,
                             #link{url="/tasks", body="<i class='icon-th-large'></i> Edit/View task tree"}, #br{}
                             ]}
                     ]},
