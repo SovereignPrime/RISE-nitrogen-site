@@ -83,6 +83,7 @@ left() ->
 
 body() ->
     #db_task{id=Id, name=Name, due=Due, text=Text} = wf:session(current_task),
+    #db_contact{name=Me} = wf:user(),
     #panel{ class="span9", body=[
             #panel{ class="row-fluid", body=[
                     #panel{ class="input-prepend span12", body=[
@@ -98,12 +99,9 @@ body() ->
                                     #span{html_encode=false, text="<i class='icon-calendar'></i>"}
                                     ]},
                             #datepicker_textbox{id=due,  next=due, text=Due, class="span9"}
-                            %#span{ class="add-on", body=[
-                            %        #span{ text="Calendar | Make recurring"}
-                            %        ]}
                             ]}
                     ]},
-            #addable_row{id=roles, body= #involved{}},
+            #addable_row{id=roles, body= #involved{person=Me, role=accountable}},
             add_existing_rows(Id),
             #panel{ class="row-fluid", body=[
                     #panel{class="span12", body=[
