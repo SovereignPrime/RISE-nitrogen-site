@@ -219,7 +219,12 @@ apply_message(#message{from=BMF, to=BMT, subject=Subject, text=Data, enc=4}, FID
                  status=Status, 
                  attachments=AttachmentsE, 
                  involved=Involved} = binary_to_term(Data),
-    Task = #db_task{id=UID, due=Due,  name=wf:to_list(Subject), text=Text, status=Status},
+    Task = case db:get_task(Parent) of
+               {ok, []} ->
+                   #db_task{id=UID, due=Due,  name=wf:to_list(Subject), text=Text, status=Status};
+               {ok, _} ->
+                   #db_task{id=UID, due=Due,  name=wf:to_list(Subject), text=Text, parent=Parent, status=Status}
+           end,
     db:save(Task),
     db:clear_roles(db_task, UID),
     Attachments = lists:map(fun(#db_file{id=I}=F) ->
