@@ -26,6 +26,7 @@ main() ->
             main();
         R ->
             {ok, Pid} = wf:comet_global(fun  incoming/0, incoming),
+            timer:send_interval(1000, Pid, status),
             receiver:register_receiver(Pid),
             T = #template { file=PWD ++ "/site/templates/bare.html" },
             wf:wire('new_contact', #event{type=click, postback=add_contact, delegate=?MODULE}),
@@ -34,6 +35,14 @@ main() ->
             wf:wire('new_expense', #event{type=click, postback=add_expense, delegate=?MODULE}),
             wf:wire('new_update', #event{type=click, postback=add_update, delegate=?MODULE}),
             T
+    end.
+
+connection_status() ->
+    case ets:info(addrs, size) of
+        0 ->
+            "<i class='wfid_connection icon icon-circle-blank icon-2x'></i>";
+        _ ->
+            "<i class='wfid_connection icon icon-circle icon-2x'></i>"
     end.
 
 search() ->
@@ -243,6 +252,10 @@ incoming() ->
     receive
         update ->
             (wf:page_module()):incoming(),
+            incoming();
+        status ->
+            wf:replace(connection, connection_status()),
+            wf:flush(),
             incoming()
     end.
 

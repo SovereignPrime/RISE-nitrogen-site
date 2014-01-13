@@ -21,20 +21,29 @@
 <body>
 <div class="container-fluid" style='padding-top:10px;'>
     <div id="top" class="row-fluid">
-        <div class="dropdown span1">
-        <a href="#" class="btn btn-link dropdown-toggle btn-block" data-toggle="dropdown">
-                [[[page:icon()]]]
-                <b class="caret"></b>
-            </a>
-            <ul class="dropdown-menu">
-                <li><a href="/"><i class="icon-globe"></i> Updates</a></li>
-                <li><a href="/tasks"><i class="icon-calendar-empty"></i> Tasks</a></li>
-                <li><a href="/relationships"><i class="icon-user"></i> Relationships</a></li>
-                <li><a href="/files"><i class="icon-file"></i> Files</a></li>
-                <!-- li><a href="/finances"><i class="icon-usd"></i> Finances</a></li -->
-            </ul>
-        </div>   
-        <div class="span10">
+        <div class="span1">
+            <div class="row-fluid">
+                <div class="span6" style="margin-top:5px;">
+                    [[[common:connection_status()]]]
+                </div>   
+    
+                <div class="span6 dropdown">
+                    <a href="#" class="btn btn-link dropdown-toggle btn-block" data-toggle="dropdown">
+                        [[[page:icon()]]]
+                        <b class="caret"></b>
+                    </a>
+                    <ul class="dropdown-menu">
+                        <li><a href="/"><i class="icon-globe"></i> Updates</a></li>
+                        <li><a href="/tasks"><i class="icon-calendar-empty"></i> Tasks</a></li>
+                        <li><a href="/relationships"><i class="icon-user"></i> Relationships</a></li>
+                        <li><a href="/files"><i class="icon-file"></i> Files</a></li>
+                        <!-- li><a href="/finances"><i class="icon-usd"></i> Finances</a></li -->
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+            <div class="span9">
             [[[common:search()]]]
         </div>
         <div class="dropdown span1  wfid_plus_menu">
