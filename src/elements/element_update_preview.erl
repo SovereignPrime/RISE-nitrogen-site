@@ -23,7 +23,7 @@ render_element(#update_preview{icon=Icon, from=From, age=Age, subject=Subject, t
             undefined -> "";
             Subject ->
                 #panel{class='row-fluid', body=[
-                        #panel{class='span11 offset1 no-padding', body=["<b>Subject: </b>", Subject]}
+                        #panel{class='span11 offset1 no-padding', style="overflow: hidden;", body=["<b>Subject: </b>", Subject]}
                         ]}
         end,
         #panel{class='row-fluid', body=[
