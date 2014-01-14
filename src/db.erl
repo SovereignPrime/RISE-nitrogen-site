@@ -1,6 +1,7 @@
 -module(db).
 -compile([export_all]).
 -include("db.hrl").
+-include_lib("bitmessage/include/bm.hrl").
 
 install()->
     mnesia:stop(),
@@ -262,20 +263,16 @@ get_expense_tasks(EId) ->
 
 get_updates(false) ->
     transaction(fun() ->
-                Upd = mnesia:select(db_update, [{#db_update{status='$1', _='_'}, [{'/=', '$1', archive}], ['$_']}]),
-                iterate(db_contact, Upd, fun(Type, #db_update{from=F}=R) ->
-                                [#db_contact{name=U}] = mnesia:read(db_contact, F),
-                                [ R#db_update{from=U} ]
-                        end)
-        end);
-get_updates(true) ->
-    transaction(fun() ->
-                Upd = mnesia:select(db_update, [{#db_update{status='$1', _='_'}, [{'==', '$1', archive}], ['$_']}]),
-                iterate(db_contact, Upd, fun(Type, #db_update{from=F}=R) ->
-                                [#db_contact{name=U}] = mnesia:read(db_contact, F),
-                                [ R#db_update{from=U} ]
-                        end)
-        end).
+                        mnesia:select(incoming, [{#message{status='$1', enc='$2', subject='$3', _='_'}, [{'and', {'/=', '$1', archive}, {'/=', '$2', 6}}, {'/=', '$3', <<"Update223322">>}], ['$_']}])
+                end).
+%get_updates(true) ->
+%    transaction(fun() ->
+%                Upd = mnesia:select(db_update, [{#db_update{status='$1', _='_'}, [{'==', '$1', archive}], ['$_']}]),
+%                iterate(db_contact, Upd, fun(Type, #db_update{from=F}=R) ->
+%                                [#db_contact{name=U}] = mnesia:read(db_contact, F),
+%                                [ R#db_update{from=U} ]
+%                        end)
+%        end).
 
 get_updates_by_subject(Subject) ->
     get_updates_by_subject(Subject, false).

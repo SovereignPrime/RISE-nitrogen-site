@@ -31,14 +31,12 @@ buttons() ->
 
 left() ->
     {ok, Updates} = db:get_updates(false),
-    {ok, Tasks} = db:get_tasks(false),
-    render_left(Updates, Tasks).
+    %{ok, Tasks} = db:get_tasks(false),
+    render_left(Updates).
 
-render_left(Updates, Tasks) ->
-    Render = [ #update_preview{icon="globe", from=From, age=Age, subject=Subject, text=Text, flag=true, archive=(Status == archive)} || 
-      #db_update{from=From, date=Age, subject=Subject, text=Text, status=Status} <- lists:reverse(Updates)] ++ 
-    [ #update_preview{icon="calendar-empty", age=Age, subject=Name, text=Text, flag=true, archive=(Status == archive)} || 
-      #db_task{due=Age, name=Name, text=Text, status=Status} <- lists:reverse(Tasks)],
+render_left(Updates) ->
+    Render = [ #update_preview{icon=Enc, from=From, age="Age", subject=Subject, text=Text, flag=true, archive=(Status == archive)} || 
+      #message{from=From, subject=Subject, text=Text, enc=Enc, status=Status} <- lists:reverse(Updates)],
     #panel{id=left,class="span3 scrollable", body=Render}.
 
 body() ->
@@ -48,7 +46,7 @@ body(Archive) ->
     case db:get_updates(Archive) of
         {ok, []} ->
             [];
-        {ok, [ #db_update{subject=Subject} | _Updates ]} ->
+        {ok, [ #message{subject=Subject} | _Updates ]} ->
         #panel{id=body, class="span9 scrollable", body=render_body(Subject, Archive)}
     end.
 
@@ -93,7 +91,7 @@ event({show_archive, true}) ->
     {ok, Updates} = db:get_updates(true),
     #db_contact{id=My} = wf:user(),
     {ok, Tasks} = db:get_tasks(true),
-    wf:replace(left, render_left(Updates, Tasks)),
+    wf:replace(left, render_left(Updates)),
     wf:replace(body, body(true));
 event({show_archive, false}) ->
     wf:replace(archive, #link{id=archive, class='span2', body="<i class='icon-list-alt'></i> Archive", postback={show_archive, true}}),
