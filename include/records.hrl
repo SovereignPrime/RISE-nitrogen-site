@@ -19,7 +19,8 @@
                          age,
                          attachments,
                          subject,
-                         collapse=true
+                         collapse=true,
+                         enc=2
                         }).
 -record(attachment, {?ELEMENT_BASE(element_attachment),
                      fid,

@@ -2,7 +2,9 @@
 %% vim: ts=4 sw=4 et
 -module (element_update).
 -include_lib("nitrogen_core/include/wf.hrl").
+-include("protokol.hrl").
 -include("records.hrl").
+-include("db.hrl").
 -export([
     reflect/0,
     render_element/1
@@ -12,16 +14,44 @@
 reflect() -> record_info(fields, update_element).
 
 -spec render_element(#update_element{}) -> body().
-render_element(#update_element{id=Id, from=From, text=Text, age=Age, collapse=true}=Record) ->
+render_element(#update_element{id=Id, from=From, text=Data, age=Age, collapse=true, enc=Enc}=Record) ->
+    {ok, #db_contact{name=FromName}} = db:get_contact_by_address(From),
+    Text = case Enc of
+               E when E==2; E==3 ->
+                   case re:run(Data, "^(.*)\nInvolved:(.*)$", 
+                       [{capture, all, binary}, ungreedy, dotall, firstline, {newline, any}]) of
+               {match, [_, <<T/bytes>>, <<_InvolvedB/bytes>>]} ->
+                   T;
+               nomatch ->
+                   Data
+           end;
+               4 ->
+                   #task_packet{text=T} = binary_to_term(Data),
+                    T
+           end,
         #panel{id=Id, class="row-fluid", body=[
-                #panel{class="span2", body="<i class='icon-chevron-down'></i> " ++ From},
+                #panel{class="span2", body="<i class='icon-chevron-down'></i> " ++ FromName},
             #panel{class="span8", body=io_lib:format("~100s", [Text])},
                 #panel{class="span2", body=sugar:date_format(Age)}
             ], actions=#event{type=click, postback={unfold, Record}}};
-render_element(#update_element{id=Id, uid=UID, from=From, to=To, text=Text, age=Age, subject=Subject, collapse=false, attachments=Attachments}=Record) ->
+render_element(#update_element{id=Id, uid=UID, from=From, to=To, text=Data, age=Age, subject=Subject, collapse=false, attachments=Attachments, enc=Enc}=Record) ->
+    {ok, #db_contact{name=FromName}} = db:get_contact_by_address(From),
+    Text = case Enc of
+               E when E==2; E==3 ->
+                   case re:run(Data, "^(.*)\nInvolved:(.*)$", 
+                       [{capture, all, binary}, ungreedy, dotall, firstline, {newline, any}]) of
+               {match, [_, <<T/bytes>>, <<_InvolvedB/bytes>>]} ->
+                   T;
+               nomatch ->
+                   Data
+           end;
+               4 ->
+                   #task_packet{text=T} = binary_to_term(Data),
+                    T
+           end,
     #panel{id=Id, body=[
         #panel{class="row-fluid", body=[
-                #panel{class="span1", body=From},
+                #panel{class="span1", body=FromName},
                 #panel{class="span2 offset9", body=sugar:date_format(Age)}
                 ], actions=#event{type=click, postback={fold, Record}}},
         #panel{class="row-fluid", body=[
