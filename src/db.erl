@@ -266,15 +266,13 @@ get_updates(false) ->
                         mnesia:select(incoming, [{#message{status='$1', enc='$2', subject='$3', _='_'}, [{'and', {'/=', '$1', archive}, {'/=', '$2', 6}}, {'/=', '$3', <<"Update223322">>}], ['$_']}])
                         ++
                         mnesia:select(sent, [{#message{status='$1', enc='$2', subject='$3', _='_'}, [{'and', {'/=', '$1', archive}, {'/=', '$2', 6}}, {'/=', '$3', <<"Update223322">>}], ['$_']}])
+                end);
+get_updates(false) ->
+    transaction(fun() ->
+                        mnesia:select(incoming, [{#message{status='$1', enc='$2', subject='$3', _='_'}, [{'and', {'==', '$1', archive}, {'/=', '$2', 6}}, {'/=', '$3', <<"Update223322">>}], ['$_']}])
+                        ++
+                        mnesia:select(sent, [{#message{status='$1', enc='$2', subject='$3', _='_'}, [{'and', {'==', '$1', archive}, {'/=', '$2', 6}}, {'/=', '$3', <<"Update223322">>}], ['$_']}])
                 end).
-%get_updates(true) ->
-%    transaction(fun() ->
-%                Upd = mnesia:select(db_update, [{#db_update{status='$1', _='_'}, [{'==', '$1', archive}], ['$_']}]),
-%                iterate(db_contact, Upd, fun(Type, #db_update{from=F}=R) ->
-%                                [#db_contact{name=U}] = mnesia:read(db_contact, F),
-%                                [ R#db_update{from=U} ]
-%                        end)
-%        end).
 
 get_updates_by_subject(Subject) ->
     get_updates_by_subject(Subject, false).
@@ -303,7 +301,7 @@ get_updates_by_user(UID) ->
 
 get_unread_updates() ->
     transaction(fun() ->
-                mnesia:match_object(#db_update{status=unread, _='_'})
+                mnesia:match_object(incoming, #message{status=new, _='_'}, read)
         end).
 
 set_read(Id) ->
