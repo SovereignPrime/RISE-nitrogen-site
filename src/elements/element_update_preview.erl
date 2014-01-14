@@ -14,7 +14,7 @@
 reflect() -> record_info(fields, update_preview).
 
 -spec render_element(#update_preview{}) -> body().
-render_element(#update_preview{icon=Icon, from=From, age=Age, subject=Subject, text=Data, flag=Flag, archive=Archive}) when Icon==1; Icon==3 ->
+render_element(#update_preview{icon=Icon, from=From, age=Age, subject=Subject, text=Data, flag=Flag, archive=Archive}) when Icon==2; Icon==3 ->
     {ok, #db_contact{name=FromName}} = db:get_contact_by_address(From),
     Text = case re:run(Data, "^(.*)\nInvolved:(.*)$", 
                        [{capture, all, binary}, ungreedy, dotall, firstline, {newline, any}]) of

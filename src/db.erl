@@ -264,6 +264,8 @@ get_expense_tasks(EId) ->
 get_updates(false) ->
     transaction(fun() ->
                         mnesia:select(incoming, [{#message{status='$1', enc='$2', subject='$3', _='_'}, [{'and', {'/=', '$1', archive}, {'/=', '$2', 6}}, {'/=', '$3', <<"Update223322">>}], ['$_']}])
+                        ++
+                        mnesia:select(sent, [{#message{status='$1', enc='$2', subject='$3', _='_'}, [{'and', {'/=', '$1', archive}, {'/=', '$2', 6}}, {'/=', '$3', <<"Update223322">>}], ['$_']}])
                 end).
 %get_updates(true) ->
 %    transaction(fun() ->
