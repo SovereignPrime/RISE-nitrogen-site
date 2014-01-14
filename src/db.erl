@@ -195,6 +195,11 @@ get_task(Id) ->
                 mnesia:read(db_task, Id)
             end).
 
+%get_task_last(Hash) ->
+%    transaction(fun() ->
+%                mnesia:select(db_task, Id)
+%            end).
+
 
 get_tasks_by_user(UID) ->
     transaction(fun() ->
@@ -205,9 +210,17 @@ get_tasks_by_user(UID) ->
                     end)
         end).
 
-get_tasks(Parent) ->
+get_tasks(Parent) when not is_boolean(Parent) ->
     transaction(fun() ->
                 mnesia:select(db_task, [{#db_task{parent=Parent, status='$1', _='_'}, [], ['$_']}])
+            end);
+get_tasks(false) ->
+    transaction(fun() ->
+                mnesia:select(db_task, [{#db_task{status='$1', _='_'}, [{'/=', '$1', 'archive'}], ['$_']}])
+            end);
+get_tasks(true) ->
+    transaction(fun() ->
+                mnesia:select(db_task, [{#db_task{status='$1', _='_'}, [{'==', '$1', 'archive'}], ['$_']}])
             end).
 get_tasks(Parent, false) ->
     transaction(fun() ->
@@ -215,8 +228,17 @@ get_tasks(Parent, false) ->
             end);
 get_tasks(Parent, true) ->
     transaction(fun() ->
-                mnesia:select(db_task, [{#db_task{status='$1', _='_'}, [{'==', '$1', 'archive'}], ['$_']}])
+                mnesia:select(db_task, [{#db_task{status='$2', _='_'}, [{'==', '$1', 'archive'}], ['$_']}])
             end).
+get_tasks_by_subject(Subject, false) ->
+    transaction(fun() ->
+                mnesia:select(db_task, [{#db_task{name=Subject, status='$1', _='_'}, [{'/=', '$1', 'archive'}], ['$_']}])
+            end);
+get_tasks_by_subject(Subject, true) ->
+    transaction(fun() ->
+                mnesia:select(db_task, [{#db_task{name=Subject, status='$2', _='_'}, [{'==', '$1', 'archive'}], ['$_']}])
+            end).
+
 
 %%%
 %% Expense routines

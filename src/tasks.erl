@@ -98,6 +98,7 @@ render_task(#db_task{id=Id, name=Name, due=Due, text=Text, parent=Parent, status
         {[], I} ->
             {no, I}
     end,
+    TextF = re:replace(Text, "\r*\n", "<br>", [{return, list}, noteol, global]), 
 
     [
         #panel{ class="row-fluid", body=[
@@ -133,7 +134,7 @@ render_task(#db_task{id=Id, name=Name, due=Due, text=Text, parent=Parent, status
                         ]}
                 ]},
         #panel{ class="row-fluid", body=[
-                #panel{ class="span12", body=Text}
+                #panel{ class="span12", body=TextF}
                 ]},
         case db:get_attachments(Task) of
             {ok, []} ->
