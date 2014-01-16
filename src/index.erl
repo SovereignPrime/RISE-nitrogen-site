@@ -52,26 +52,25 @@ body(Archive) ->
 
 render_body(Subject, Archive) ->
     {ok, Updates} = db:get_updates_by_subject(Subject, Archive),
-    {ok, Tasks} = db:get_tasks_by_subject(Subject, Archive),
     [
         #h1{html_encode=false, text="<i class='icon-globe'></i> " ++ Subject},
         [
-        #update_element{collapse=true, from=From, to=To, text=re:replace(Text, "\r*\n", "<br>", [{return, list}, noteol, global]), age= Age, uid=Id, subject=Subject} || #db_update{id=Id, to=To, subject=Subject, from=From, text=Text, date=Age} <- lists:reverse(Updates)
-            ] ++
-
-        [
-        #update_element{collapse=true, from="", to=undefined, text=re:replace(Text, "\r*\n", "<br>", [{return, list}, noteol, global]), age= Age, uid=Id, subject=Subject} || #db_task{id=Id, name=Subject, text=Text, due=Age} <- lists:reverse(Tasks)
-            ]
-
+        #update_element{collapse=true, from=From, to=To, text=Text, age= "Age", uid=Id, subject=Subject, enc=Enc} || #message{hash=Id, enc=Enc, to=To, subject=Subject, from=From, text=Text} <- lists:reverse(Updates)
+            ] 
             ].
 	
     
 event({selected, Subject, Archive}) ->
     wf:update(body, render_body(Subject, Archive));
-event({unfold, #update_element{id=Id, uid=Uid}=Update}) ->
-    {ok,Attachments} = db:get_attachments(#db_update{id=Uid}),
+event({unfold, #update_element{id=Id, uid=Uid, enc=Enc}=Update}) ->
+    case Enc of
+        3 ->
+            {ok,Attachments} = db:get_attachments(#db_update{id=Uid});
+        4 ->
+            {ok,Attachments} = db:get_attachments(#db_{id=Uid});
+
     case db:set_read(Uid) of
-        {ok, unread} ->
+        {ok, new} ->
                 New = wf:session(unread) - 1,
                 wf:session(unread, New),
                 wf:replace(count, #span{id=count, class='label label-inverse',text=wf:f("~p new", [New])});

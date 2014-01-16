@@ -85,7 +85,7 @@ render_tasks(Parent, Archive) ->
     end.
 
 body() ->
-    #db_task{id=Id, name=Name, due=Due, text=Text, parent=Parent, status=Status}=Task = wf:session_default(current_task, #db_task{}),
+    #db_task{id=Id, name=Name, due=Due, text=Text, parent=Parent, status=Status}=Task = wf:session_default(current_task, #db_task{text=""}),
     #panel{id=body, class="span8", body=
            [
             render_task(Task)

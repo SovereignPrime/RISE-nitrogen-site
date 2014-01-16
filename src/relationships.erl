@@ -4,6 +4,7 @@
 -compile(export_all).
 -include_lib("nitrogen_core/include/wf.hrl").
 -include_lib("pat/include/pat.hrl").
+-include_lib("bitmessage/include/bm.hrl").
 -include("records.hrl").
 -include("db.hrl").
 
@@ -66,7 +67,7 @@ body() ->
 
 contact_render(#db_contact{id=Id, name=Name, email=Email, phone=Phone,  address=Address, photo=Photo}) ->
     {ok, Tasks} = db:get_tasks_by_user(Id),
-    {ok, Updates} = db:get_updates_by_user(Id),
+    {ok, Updates} = db:get_updates_by_user(Address),
     {ok, Groups} = db:get_groups_for_user(Id),
     [
         #vcard{id=vcard,name=Name, address=Address, email=Email, phone=Phone, photo=Photo, groups=[ N|| #db_group{name=N} <- Groups]},
@@ -92,7 +93,7 @@ contact_render(#db_contact{id=Id, name=Name, email=Email, phone=Phone,  address=
                        #tableheader{body="Show all", class="cell-right"}
                              ]},
             #panel{class="span12", body=
-                   [#update_element{collapse=paragraph, from=From, age=Age, text=Text} || #db_update{text=Text, subject=From, date=Age} <- Updates
+                   [#update_element{collapse=paragraph, from=From, age="Age", text=Text} || #message{text=Text, from=From} <- Updates
                         ]}].
 
 %%%

@@ -1,3 +1,3 @@
 -record(task_packet, {id, name, due, text, parent, status, involved, attachments}).
 -record(role_packet, {address, role}).
-
+-record(message_packet, {subject, text, involved, attachments}).

@@ -291,9 +291,11 @@ get_updates_by_subject(Subject, true) ->
                         ++
                         mnesia:select(sent, [{#message{status='$1', enc='$2', subject=Subject, _='_'}, [{'and', {'==', '$1', archive}, {'/=', '$2', 6}}], ['$_']}])
                 end).
-get_updates_by_user(UID) -> % TODO
+get_updates_by_user(UID) when is_list(UID) -> 
+    get_updates_by_user(list_to_binary(UID)); 
+get_updates_by_user(UID) -> 
     transaction(fun() ->
-                mnesia:match_object(#db_update{from=UID, _='_'})
+                        mnesia:select(incoming, [{#message{status='$1', enc=4, from=UID, _='_'}, [{'/=', '$1', archive}], ['$_']}])
         end).
 
 get_unread_updates() ->

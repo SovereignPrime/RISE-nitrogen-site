@@ -272,18 +272,23 @@ save_involved(Type, TId) ->
 
 send_messages(#db_update{subject=Subject, text=Text, from=FID, to=Contacts, date=Date}=U) ->
     #db_contact{address=From} = wf:user(),
-    InvolvedB =  <<"Involved:", << <<A/bytes, ";">> || A <- [From | Contacts]>>/bytes, 10>>,
-    case db:get_attachments(U) of
-        {ok, []} ->
-            lists:foreach(fun(To) ->
-                        bitmessage:send_message(From, wf:to_binary(To), wf:to_binary(Subject), <<(wf:to_binary(Text))/bytes, 10, InvolvedB/bytes>>, 2)
-                end, Contacts);
-        {ok, Attachments} -> 
-            AttachmentsB = encode_attachments(Attachments),
-            lists:foreach(fun(To) ->
-                        bitmessage:send_message(From, wf:to_binary(To), wf:to_binary(Subject), <<(wf:to_binary(Text))/bytes, 10, InvolvedB/bytes,  AttachmentsB/bytes>>, 3)
-                end, Contacts)
-    end;
+    {ok, Attachments} = db:get_attachments(U),
+    MSG = term_to_binary(#message_packet{subject=Subject, text=Text, involved=[From | Contacts], attachments=Attachments}),
+    lists:foreach(fun(To) ->
+                      bitmessage:send_message(From, wf:to_binary(To), wf:to_binary(Subject), MSG, 3)
+                  end, Contacts);
+    %    InvolvedB =  <<"Involved:", << <<A/bytes, ";">> || A <- [From | Contacts]>>/bytes, 10>>,
+%    case db:get_attachments(U) of
+%        {ok, []} ->
+%            lists:foreach(fun(To) ->
+%                        bitmessage:send_message(From, wf:to_binary(To), wf:to_binary(Subject), <<(wf:to_binary(Text))/bytes, 10, InvolvedB/bytes>>, 2)
+%                end, Contacts);
+
+%            AttachmentsB = encode_attachments(Attachments),
+%            lists:foreach(fun(To) -
+%                        bitmessage:send_message(From, wf:to_binary(To), wf:to_binary(Subject), <<(wf:to_binary(Text))/bytes, 10, InvolvedB/bytes,  AttachmentsB/bytes>>, 3)
+%                end, Contacts)
+%    end;
 send_messages(#db_task{id=UID, name=Subject, text=Text, due=Date, parent=Parent, status=Status} = U) ->
     {ok, Involved} = db:get_involved(UID),
     Contacts = [#role_packet{address=C, role=R} || {_, R, #db_contact{bitmessage=C}}  <- Involved],

@@ -16,12 +16,13 @@ reflect() -> record_info(fields, update_preview).
 -spec render_element(#update_preview{}) -> body().
 render_element(#update_preview{icon=Icon, from=From, age=Age, subject=Subject, text=Data, flag=Flag, archive=Archive}) when Icon==2; Icon==3 ->
     {ok, #db_contact{name=FromName}} = db:get_contact_by_address(From),
-    Text = case re:run(Data, "^(.*)\nInvolved:(.*)$", 
-                       [{capture, all, binary}, ungreedy, dotall, firstline, {newline, any}]) of
-               {match, [_, <<T/bytes>>, <<_InvolvedB/bytes>>]} ->
-                   T;
-               nomatch ->
-                   Data
+    {Text, Attachments} = case Icon of
+               3 ->
+                   #message_packet{text=T, attachments=A} = binary_to_term(Data),
+                   {T, A};
+               4 ->
+                   #task_packet{text=T, attachments=A} = binary_to_term(Data),
+                   {T, A}
            end,
     #panel{style="line-height:18px;margin-top:18px;", body=[
                                                             #panel{class="row-fluid no-padding", body=[
