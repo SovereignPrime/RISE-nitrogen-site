@@ -93,7 +93,7 @@ contact_render(#db_contact{id=Id, name=Name, email=Email, phone=Phone,  address=
                        #tableheader{body="Show all", class="cell-right"}
                              ]},
             #panel{class="span12", body=
-                   [#update_element{collapse=paragraph, from=From, age="Age", text=Text} || #message{text=Text, from=From} <- Updates
+                   [#update_element{collapse=paragraph, from=From, age="Age", text=Text, enc=Enc} || #message{text=Text, from=From, enc=Enc} <- Updates
                         ]}].
 
 %%%

@@ -295,7 +295,7 @@ get_updates_by_user(UID) when is_list(UID) ->
     get_updates_by_user(list_to_binary(UID)); 
 get_updates_by_user(UID) -> 
     transaction(fun() ->
-                        mnesia:select(incoming, [{#message{status='$1', enc=4, from=UID, _='_'}, [{'/=', '$1', archive}], ['$_']}])
+                        mnesia:select(incoming, [{#message{status='$1', enc=3, from=UID, _='_'}, [{'/=', '$1', archive}], ['$_']}])
         end).
 
 get_unread_updates() ->
