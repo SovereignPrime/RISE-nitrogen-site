@@ -81,7 +81,8 @@ render_element(#update_element{id=Id, uid=UID, from=From, to=To, text=Data, age=
                             #panel{class="span2 offset4", body="<i class='icon-download-alt'></i> Download all"}
                             ]},
                     lists:map(fun(#db_file{id=FID, path=Path, size=Size, date=Date}) ->
-                                #attachment{fid=FID, filename=Path, size=Size, time=Date, status=received}
+                                      {ok, [ #db_file{status=Status} ]} =  db:get_files([ FID ]),
+                                      #attachment{fid=FID, filename=Path, size=Size, time=Date, status=Status}
                               end,
                         Attachments)
                         ]
