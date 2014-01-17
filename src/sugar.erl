@@ -1,5 +1,7 @@
 -module(sugar).
 -compile([export_all]).
+-include_lib("bitmessage/include/bm.hrl").
+-include("protokol.hrl").
 
 date_format(Str) when is_list(Str)->
     Str;
@@ -15,3 +17,22 @@ format_file_size(S) when S > 1000 ->
 format_file_size(S) ->
     wf:f("~pb", [ S ]). 
 
+format_timedelta(TD) when TD <  3600 ->
+    wf:f("~p mins ago", [wf:to_integer(TD/60)]);
+format_timedelta(TD) when TD < 24 * 3600 ->
+    wf:f("~p hrs ago", [wf:to_integer(TD/3600)]);
+format_timedelta(TD) ->
+    wf:f("~p days ago", [wf:to_integer(TD/(24 * 3600))]).
+
+sort_by_timestamp(Updates) ->
+    lists:sort(fun(#message{text=A}, #message{text=B}) ->
+                       F = fun(E) -> 
+                                   case binary_to_term(E) of
+                                       #message_packet{time=Z} ->
+                                           Z;
+                                       #task_packet{time=Z} ->
+                                           Z
+                                   end
+                           end,
+                       F(A) > F( B )
+               end, Updates).

@@ -16,18 +16,19 @@ reflect() -> record_info(fields, update_element).
 -spec render_element(#update_element{}) -> body().
 render_element(#update_element{id=Id, from=From, text=Data, age=Age, collapse=true, enc=Enc}=Record) ->
     {ok, #db_contact{name=FromName}} = db:get_contact_by_address(From),
-    {Text, Attachments} = case Enc of
+    {Text, Attachments, Timestamp} = case Enc of
                3 ->
-                   #message_packet{text=T, attachments=A} = binary_to_term(Data),
-                   {T, A};
+                   #message_packet{text=T, attachments=A, time=TS} = binary_to_term(Data),
+                   {T, A, TS};
                4 ->
-                   #task_packet{text=T, attachments=A} = binary_to_term(Data),
-                   {T, A}
+                   #task_packet{text=T, attachments=A, time=TS} = binary_to_term(Data),
+                  {T, A, TS}
            end,
+    TD = bm_types:timestamp() - Timestamp,
         #panel{id=Id, class="row-fluid", body=[
                 #panel{class="span2", body="<i class='icon-chevron-down'></i> " ++ FromName},
             #panel{class="span8", body=io_lib:format("~100s", [Text])},
-                #panel{class="span2", body=sugar:date_format(Age)}
+                #panel{class="span2", body=sugar:format_timedelta(TD)}
             ], actions=#event{type=click, postback={unfold, Record}}};
 render_element(#update_element{id=Id, uid=UID, from=From, to=To, text=Data, age=Age, subject=Subject, collapse=false, enc=Enc}=Record) ->
     {ok, #db_contact{name=FromName}} = db:get_contact_by_address(From),

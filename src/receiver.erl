@@ -193,23 +193,17 @@ apply_message(#message{from=BMF, to=BMT, subject= <<"Update223322">>, text=Data,
 %% Informational messages
 %%%
 
-apply_message(#message{from=BMF, to=BMT, subject=Subject, text=Data, enc=2}, FID, ToID)  ->
-    {ok, Id} = db:next_id(db_update),
-    {match, [_, <<Text/bytes>>, <<InvolvedB/bytes>>]} = re:run(Data, "^(.*)\nInvolved:(.*)$", 
-                                                               [{capture, all, binary}, ungreedy, dotall, firstline, {newline, any}]),
-    Involved = binary:split(InvolvedB, <<";">>, [global, trim]),
-    Message = #db_update{id=Id, date=date(), from=FID, to=Involved -- [BMT], subject=wf:to_list(Subject), text=Text, status=unread},
-    db:save(Message);
 apply_message(#message{from=BMF, to=BMT, subject=Subject, text=Data, enc=3}, FID, ToID)  ->
     {ok, Id} = db:next_id(db_update),
-    {match, [_, <<Text/bytes>>, <<InvolvedB/bytes>>, <<A/bytes>>]} = re:run(Data, "^(.*)\nInvolved:(.*)Attachments:(.*)$", 
-                                                                 [{capture, all, binary}, ungreedy, dotall, firstline, {newline, any}]),
-    Involved = binary:split(InvolvedB, <<";">>, [global, trim]),
+
+    #message_packet{text=Text, attachments=Attachments, involved=Involved} = binary_to_term(Data),
     Message = #db_update{id=Id, date=date(), from=FID, to=Involved -- [BMT], subject=wf:to_list(Subject), text=Text, status=unread},
     db:save(Message),
-    AT = binary:split(A, <<";">>, [global, trim]),
-    Files = decode_attachments(A, BMF, BMT),
-    db:save_attachments(Message, Files);
+    Files = lists:map(fun(#db_file{id=I}=F) ->
+                                    db:save(F#db_file{user=FID, status=received}),
+                                    I
+                    end, Attachments),
+    db:save_attachments(Message, sets:from_list(Files));
 apply_message(#message{from=BMF, to=BMT, subject=Subject, text=Data, enc=4}, FID, ToID)  ->
     #task_packet{id=UID, 
                  due=Due, 

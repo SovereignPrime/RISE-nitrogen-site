@@ -5,6 +5,7 @@
 -include_lib("bitmessage/include/bm.hrl").
 -include("records.hrl").
 -include("db.hrl").
+-include("protokol.hrl").
 
 main() -> common:main().
 
@@ -36,7 +37,7 @@ left() ->
 
 render_left(Updates) ->
     Render = [ #update_preview{icon=Enc, from=From, age="Age", subject=Subject, text=Text, flag=true, archive=(Status == archive)} || 
-      #message{from=From, subject=Subject, text=Text, enc=Enc, status=Status} <- lists:reverse(Updates)],
+      #message{from=From, subject=Subject, text=Text, enc=Enc, status=Status} <- sugar:sort_by_timestamp(Updates)],
     #panel{id=left,class="span3 scrollable", body=Render}.
 
 body() ->
@@ -67,7 +68,8 @@ event({unfold, #update_element{id=Id, uid=Uid, enc=Enc}=Update}) ->
         3 ->
             {ok,Attachments} = db:get_attachments(#db_update{id=Uid});
         4 ->
-            {ok,Attachments} = db:get_attachments(#db_{id=Uid});
+            {ok,Attachments} = db:get_attachments(#db_task{id=Uid})
+    end,
 
     case db:set_read(Uid) of
         {ok, new} ->

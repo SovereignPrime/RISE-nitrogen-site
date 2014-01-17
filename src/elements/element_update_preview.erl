@@ -14,21 +14,23 @@
 reflect() -> record_info(fields, update_preview).
 
 -spec render_element(#update_preview{}) -> body().
-render_element(#update_preview{icon=Icon, from=From, age=Age, subject=Subject, text=Data, flag=Flag, archive=Archive}) when Icon==2; Icon==3 ->
+render_element(#update_preview{icon=Icon, from=From, age=Age, subject=Subject, text=Data, flag=Flag, archive=Archive}) when Icon==3->
     {ok, #db_contact{name=FromName}} = db:get_contact_by_address(From),
-    {Text, Attachments} = case Icon of
+    {Text, Attachments, Timestamp} = case Icon of
                3 ->
-                   #message_packet{text=T, attachments=A} = binary_to_term(Data),
-                   {T, A};
+                   #message_packet{text=T, attachments=A, time=TS} = binary_to_term(Data),
+                   {T, A, TS};
                4 ->
-                   #task_packet{text=T, attachments=A} = binary_to_term(Data),
-                   {T, A}
+                   #task_packet{text=T, attachments=A, time=TS} = binary_to_term(Data),
+                   {T, A, TS}
            end,
+    TD = bm_types:timestamp() - Timestamp,
+
     #panel{style="line-height:18px;margin-top:18px;", body=[
                                                             #panel{class="row-fluid no-padding", body=[
                                                                                                        #panel{class='span1 no-padding', body=["<i class='icon-globe'></i>"]},
                                                                                                        #panel{class='span7 no-padding', body=["<b>From: </b>", FromName]},
-                                                                                                       #panel{class='span4 cell-right no-padding', body=[sugar:date_format(Age)]}
+                                                                                                       #panel{class='span4 cell-right no-padding', body=[sugar:format_timedelta(TD)]}
                                                                                                       ]},
                                                             case Subject of 
                                                                 undefined -> "";
@@ -50,12 +52,13 @@ render_element(#update_preview{icon=Icon, from=From, age=Age, subject=Subject, t
                                                            ], actions=#event{type=click, postback={selected, Subject, Archive}}};
 render_element(#update_preview{icon=Icon, from=From, age=Age, subject=Subject, text=Data, flag=Flag, archive=Archive}) when Icon==4 ->
     {ok, #db_contact{name=FromName}} = db:get_contact_by_address(From),
-    #task_packet{text=Text} = binary_to_term(Data),
+    #task_packet{text=Text, time=Timestamp} = binary_to_term(Data),
+    TD = bm_types:timestamp() - Timestamp,
     #panel{style="line-height:18px;margin-top:18px;", body=[
                                                             #panel{class="row-fluid no-padding", body=[
                                                                                                        #panel{class='span1 no-padding', body=["<i class='icon-calendar-empty'></i>"]},
                                                                                                        #panel{class='span7 no-padding', body=["<b>From: </b>", FromName]},
-                                                                                                       #panel{class='span4 cell-right no-padding', body=[sugar:date_format(Age)]}
+                                                                                                       #panel{class='span4 cell-right no-padding', body=[sugar:format_timedelta(TD)]}
                                                                                                       ]},
                                                             case Subject of 
                                                                 undefined -> "";
