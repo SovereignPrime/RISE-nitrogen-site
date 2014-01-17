@@ -63,14 +63,21 @@ archive(Rec) when is_record(Rec, db_task) ->
                 mnesia:write(R),
                 R
         end);
-archive(Rec) when is_record(Rec, db_update) ->
+archive(Rec) when is_record(Rec, message) ->
     transaction(fun() ->
-                #db_update{id=Id} = Rec,
-                [R] = mnesia:wread({db_update, Id}),
-                RN = R#db_update{status=archive},
-                mnesia:write(RN),
-                RN
-        end);
+                        #message{hash=Id} = Rec,
+                        case mnesia:wread({incoming, Id}) of
+                            [] ->
+                                [R] = mnesia:wread({sent, Id}),
+                                RN = R#message{status=archive},
+                                mnesia:write(sent, RN, write),
+                                RN;
+                            [R] ->
+                                RN = R#message{status=archive},
+                                mnesia:write(incoming, RN, write),
+                                RN
+                        end
+                end);
 archive(#db_contact{address=Address}) ->
     transaction(fun() ->
                 [R] = mnesia:index_read(db_contact, Address, #db_contact.address),
@@ -267,7 +274,7 @@ get_updates(false) ->
                         ++
                         mnesia:select(sent, [{#message{status='$1', enc='$2', subject='$3', _='_'}, [{'and', {'/=', '$1', archive}, {'/=', '$2', 6}}, {'/=', '$3', <<"Update223322">>}], ['$_']}])
                 end);
-get_updates(false) ->
+get_updates(true) ->
     transaction(fun() ->
                         mnesia:select(incoming, [{#message{status='$1', enc='$2', subject='$3', _='_'}, [{'and', {'==', '$1', archive}, {'/=', '$2', 6}}, {'/=', '$3', <<"Update223322">>}], ['$_']}])
                         ++

@@ -66,7 +66,7 @@ render_element(#update_element{id=Id, uid=UID, from=From, to=To, text=Data, age=
                                         #listitem{body=[
                                                 #link{body=[
                                                         "<i class='icon-list-alt icon-large'></i> Archive"
-                                                        ], postback={archive, UID}, new=false}]}
+                                                        ], postback={archive, Enc, UID}, new=false}]}
                                         ]}
 
                                 ]}

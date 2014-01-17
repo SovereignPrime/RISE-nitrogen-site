@@ -83,8 +83,8 @@ event({unfold, #update_element{id=Id, uid=Uid, enc=Enc}=Update}) ->
     wf:replace(Id, Update#update_element{collapse=false, attachments=[
                 #attachment{fid=FId, filename=File, size=Size, time=Time, status=Status} || #db_file{id=FId, path=File, size=Size, date=Time, status=Status} <- Attachments
                                                                ]});
-event({archive, Rec}) ->
-    {ok, #db_update{subject=Subject}} = db:archive(#db_update{id=Rec}),
+event({archive, E, Rec}) ->
+    {ok, #message{subject=Subject}} = db:archive(#message{hash=Rec}),
     wf:replace(left, left()),
     wf:update(body, render_body(Subject, false));
 event({show_archive, true}) ->
