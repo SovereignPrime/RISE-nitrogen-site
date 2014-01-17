@@ -56,7 +56,7 @@ render_body(Subject, Archive) ->
     [
         #h1{html_encode=false, text="<i class='icon-globe'></i> " ++ Subject},
         [
-        #update_element{collapse=true, from=From, to=To, text=Text, age= "Age", uid=Id, subject=Subject, enc=Enc} || #message{hash=Id, enc=Enc, to=To, subject=Subject, from=From, text=Text} <- lists:reverse(Updates)
+        #update_element{collapse=true, from=From, to=To, text=Text, uid=Id, subject=Subject, enc=Enc} || #message{hash=Id, enc=Enc, to=To, subject=Subject, from=From, text=Text} <- sugar:sort_by_timestamp(Updates)
             ] 
             ].
 	
