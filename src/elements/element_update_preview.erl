@@ -25,6 +25,7 @@ render_element(#update_preview{icon=Icon, from=From, age=Age, subject=Subject, t
                    {T, A, TS}
            end,
     TD = bm_types:timestamp() - Timestamp,
+    CurrentSession = wf:session(current_subject),
 
     #panel{style="line-height:18px;margin-top:18px;", body=[
                                                             #panel{class="row-fluid no-padding", body=[
@@ -42,7 +43,11 @@ render_element(#update_preview{icon=Icon, from=From, age=Age, subject=Subject, t
                                                             #panel{class='row-fluid', body=[
                                                                                             if Flag == true ->
                                                                                                    [
-                                                                                                    #panel{class='span1', body=["<input type='checkbox'>"]},
+                                                                                                    if  CurrentSession == Subject ->
+                                                                                                           #panel{class='span1', body=["<input type='checkbox' checked>"]};
+                                                                                                       true ->
+                                                                                                           #panel{class='span1', body=["<input type='checkbox'>"]}
+                                                                                                    end,
                                                                                                     #panel{class='span11', body=[io_lib:format("~200s...", [Text])]}
                                                                                                    ];
                                                                                                true ->
@@ -54,6 +59,7 @@ render_element(#update_preview{icon=Icon, from=From, age=Age, subject=Subject, t
     {ok, #db_contact{name=FromName}} = db:get_contact_by_address(From),
     #task_packet{text=Text, time=Timestamp} = binary_to_term(Data),
     TD = bm_types:timestamp() - Timestamp,
+    CurrentSession = wf:session(current_subject),
     #panel{style="line-height:18px;margin-top:18px;", body=[
                                                             #panel{class="row-fluid no-padding", body=[
                                                                                                        #panel{class='span1 no-padding', body=["<i class='icon-calendar-empty'></i>"]},
@@ -70,7 +76,11 @@ render_element(#update_preview{icon=Icon, from=From, age=Age, subject=Subject, t
                                                             #panel{class='row-fluid', body=[
                                                                                             if Flag == true ->
                                                                                                    [
-                                                                                                    #panel{class='span1', body=["<input type='checkbox'>"]},
+                                                                                                    if  CurrentSession == Subject ->
+                                                                                                           #panel{class='span1', body=["<input type='checkbox' checked>"]};
+                                                                                                       true ->
+                                                                                                           #panel{class='span1', body=["<input type='checkbox'>"]}
+                                                                                                    end,
                                                                                                     #panel{class='span11', body=[io_lib:format("~200s...", [Text])]}
                                                                                                    ];
                                                                                                true ->

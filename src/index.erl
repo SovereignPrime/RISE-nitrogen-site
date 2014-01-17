@@ -31,8 +31,9 @@ buttons() ->
                     ]}]}.
 
 left() ->
-    {ok, Updates} = db:get_updates(false),
-    %{ok, Tasks} = db:get_tasks(false),
+    left(false).
+left(Archive) ->
+    {ok, Updates} = db:get_updates(Archive),
     render_left(Updates).
 
 render_left(Updates) ->
@@ -52,6 +53,7 @@ body(Archive) ->
     end.
 
 render_body(Subject, Archive) ->
+    wf:session(current_subject, Subject),
     {ok, Updates} = db:get_updates_by_subject(Subject, Archive),
     [
         #h1{html_encode=false, text="<i class='icon-globe'></i> " ++ Subject},
@@ -62,6 +64,8 @@ render_body(Subject, Archive) ->
 	
     
 event({selected, Subject, Archive}) ->
+    wf:session(current_subject, Subject),
+    wf:replace(left, left(Archive)),
     wf:update(body, render_body(Subject, Archive));
 event({unfold, #update_element{id=Id, uid=Uid, enc=Enc}=Update}) ->
     case Enc of
