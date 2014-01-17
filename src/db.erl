@@ -300,7 +300,7 @@ get_updates_by_user(UID) ->
 
 get_unread_updates() ->
     transaction(fun() ->
-                mnesia:match_object(incoming, #message{status=new, _='_'}, read)
+                mnesia:select(incoming, [{#message{status=new, enc='$1', subject='$2', _='_'}, [{'/=', '$1', 6}, {'/=', '$2', <<"Update223322">>}], ['$_']}])
         end).
 
 set_read(Id) ->
