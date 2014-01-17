@@ -48,7 +48,7 @@ body(Archive) ->
         {ok, []} ->
             [];
         {ok, [ #message{subject=Subject} | _Updates ]} ->
-        #panel{id=body, class="span9 scrollable", body=render_body(Subject, Archive)}
+            #panel{id=body, class="span9 scrollable", body=render_body(wf:session_default(current_subject, Subject), Archive)}
     end.
 
 render_body(Subject, Archive) ->

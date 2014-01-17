@@ -102,7 +102,7 @@ sigma_search_event(search, Term) ->
                                     Pos = string:str(string:to_lower(TextL), string:to_lower(Term)),
                                     TextS = string:sub_string(TextL, Pos + 1),
                                     #panel{body=[
-                                            #link{text=wf:f("~s (~s) - ~40s", [Subject, Name, TextS]), postback={db_update, Id}, delegate=?MODULE}
+                                            #link{text=wf:f("~s (~s) - ~40s", [Subject, Name, TextS]), postback={db_update, Subject}, delegate=?MODULE}
                                             ]}
                             end, Messages),
                          "</dd>"]
@@ -204,7 +204,7 @@ event({db_contact, Id}) ->
     wf:session(current_contact_id, Id),
     wf:redirect("/relationships");
 event({db_update, Id}) ->
-    wf:session(current_update_id, Id),
+    wf:session(current_subject, Id),
     wf:redirect("/");
 event({db_task, Id}) ->
     wf:session(current_task_id, Id),
