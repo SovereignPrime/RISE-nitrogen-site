@@ -1,6 +1,7 @@
 -module(db).
 -compile([export_all]).
 -include("db.hrl").
+-include("protokol.hrl").
 -include_lib("bitmessage/include/bm.hrl").
 
 install()->
@@ -134,12 +135,13 @@ search(Term) ->
                                                    (_, A) ->
                                                         A
                                                 end, [], db_contact),
-                        Messages = mnesia:foldr(fun(#db_update{id=Id, subject=Name, from=From, text=Text, status=Status} = Rec, Acc)  when Status /= archive ->
-                                                        [ #db_contact{id=UID, name=F} ] = mnesia:read(db_contact, From),
+                        Messages = mnesia:foldr(fun(#message{hash=Id, subject=Name, from=From, text=Data, status=Status, enc=3} = Rec, Acc)  when Status /= archive ->
+                                                        [ #db_contact{id=UID, name=F} ] = mnesia:index_read(db_contact, From, #db_contact.address),
                                                         {ok, GIDS} = db:get_groups_for_user(UID),
                                                         Groups = lists:map(fun(#db_group{name=Group}) ->
                                                                                    Group
                                                                            end, GIDS),
+                                                        #message_packet{text=Text} = binary_to_term(Data),
                                                         Pattern = wf:to_list(Name)  ++ " " ++  wf:to_list( F )++ " " ++ wf:to_list( Text ) ++ lists:flatten( Groups ),
                                                         case string:str(string:to_lower(Pattern), string:to_lower(Term)) of
                                                             X when X > 0 ->
@@ -149,7 +151,24 @@ search(Term) ->
                                                         end;
                                                    (_, A) ->
                                                         A
-                                                end, [], db_update),
+                                                end, [], incoming) ++ 
+                        mnesia:foldr(fun(#message{hash=Id, subject=Name, from=From, text=Data, status=Status, enc=3} = Rec, Acc)  when Status /= archive ->
+                                             [ #db_contact{id=UID, name=F} ] = mnesia:index_read(db_contact, From, #db_contact.address),
+                                             {ok, GIDS} = db:get_groups_for_user(UID),
+                                             Groups = lists:map(fun(#db_group{name=Group}) ->
+                                                                        Group
+                                                                end, GIDS),
+                                             #message_packet{text=Text} = binary_to_term(Data),
+                                             Pattern = wf:to_list(Name)  ++ " " ++  wf:to_list( F )++ " " ++ wf:to_list( Text ) ++ lists:flatten( Groups ),
+                                             case string:str(string:to_lower(Pattern), string:to_lower(Term)) of
+                                                 X when X > 0 ->
+                                                     Acc ++ [Rec];
+                                                 _ ->
+                                                     Acc
+                                             end;
+                                        (_, A) ->
+                                             A
+                                     end, [], sent),
                         Tasks = mnesia:foldr(fun(#db_task{id=Id, name=Name, due=Due, text=Text, status=Status} = Rec, Acc)  when Status /= archive ->
                                                      Pattern = wf:to_list(Name)  ++ " " ++  wf:to_list( Due )++ " " ++ wf:to_list( Text ),
                                                      case string:str(string:to_lower(Pattern), string:to_lower(Term)) of
@@ -425,6 +444,12 @@ clear_roles(Type, Id) ->
                             end)
                 end
         end).
+
+get_contacts_by_name(Name) ->
+    transaction(fun() ->
+                        [C] = mnesia:select(db_contact, [{#db_contact{name=Name, status='$1', _='_'}, [{'/=', '$1', archive}], ['$_']}]),
+                        C
+                end).
 
 %%%
 %% Group routines

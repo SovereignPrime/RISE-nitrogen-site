@@ -83,7 +83,8 @@ left() ->
 
 body() ->
     #db_task{id=Id, name=Name, due=Due, text=Text} = wf:session(current_task),
-    #db_contact{name=Me} = wf:user(),
+    #db_contact{id=MID, name=Me} = wf:user(),
+    wf:session(<<"Me">>, MID),
     #panel{ class="span9", body=[
             #panel{ class="row-fluid", body=[
                     #panel{ class="input-prepend span12", body=[
@@ -125,7 +126,7 @@ add_existing_rows(Id) ->
         end, Tos),
     case length(Tos) of
         0 ->
-            ok;
+            element_addable_row:event({add, #addable_row{id=roles, num= length(Tos), body=#involved{}}});
         _ ->
             element_addable_row:event({del, #addable_row{id=roles, num= 0}}),
             element_addable_row:event({add, #addable_row{id=roles, num= length(Tos), body=#involved{}}})

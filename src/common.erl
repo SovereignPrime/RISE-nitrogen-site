@@ -96,16 +96,17 @@ sigma_search_event(search, Term) ->
                         [];
                     _ ->
                         ["<dt>Messages:</dt><dd>",
-                        lists:map(fun(#db_update{id=Id, subject=Subject, from=FID, text=Text}) ->
-                                    {ok, #db_contact{name=Name}} = db:get_contact(FID),
-                                    TextL = wf:to_list(Text),
-                                    Pos = string:str(string:to_lower(TextL), string:to_lower(Term)),
-                                    TextS = string:sub_string(TextL, Pos + 1),
-                                    #panel{body=[
-                                            #link{text=wf:f("~s (~s) - ~40s", [Subject, Name, TextS]), postback={db_update, Subject}, delegate=?MODULE}
-                                            ]}
-                            end, Messages),
-                         "</dd>"]
+                        lists:map(fun(#message{hash=Id, subject=Subject, from=FID, text=Data}) ->
+                                          {ok, #db_contact{name=Name}} = db:get_contact_by_address(FID),
+                                          #message_packet{text=Text} = binary_to_term(Data),
+                                          TextL = wf:to_list(Text),
+                                          Pos = string:str(string:to_lower(TextL), string:to_lower(Term)),
+                                          TextS = string:sub_string(TextL, Pos + 1),
+                                          #panel{body=[
+                                                       #link{text=wf:f("~s (~s) - ~40s", [Subject, Name, TextS]), postback={db_update, Subject}, delegate=?MODULE}
+                                                      ]}
+                                  end, Messages),
+                        "</dd>"]
                 end,
                 case Tasks of
                     [] ->
@@ -263,11 +264,12 @@ save_involved(Type, TId) ->
     Involved = wf:qs(person),
     Role = wf:qs(responsible),
     io:format("~p ~p~n", [Involved, Role]),
-    List = [ #db_contact_roles{type=Type, tid=TId, role=Role, contact=wf:session(wf:to_binary(Contact))} || {Contact, Role} <- lists:zip(Involved, Role), Involved /= [[]], Contact /= ""],
+    List = [ #db_contact_roles{type=Type, tid=TId, role=Role, contact=Contact} || {Contact, Role} <- lists:zip(Involved, Role), Involved /= [[]], Contact /= ""],
     db:clear_roles(Type, TId),
-    lists:foreach(fun(P) -> 
+    lists:foreach(fun(#db_contact_roles{contact=C}=P) -> 
                 {ok, NPId} = db:next_id(db_contact_roles),
-                db:save(P#db_contact_roles{id=NPId})
+                {ok, #db_contact{id=CID}}  = db:get_contacts_by_name(C),
+                db:save(P#db_contact_roles{id=NPId, contact=CID})
         end, List).
 
 send_messages(#db_update{subject=Subject, text=Text, from=FID, to=Contacts, date=Date}=U) ->
