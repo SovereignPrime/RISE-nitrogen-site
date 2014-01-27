@@ -9,7 +9,7 @@ main() -> common:main().
 
 title() -> "Welcome to Nitrogen".
 
-icon() -> "<i class='icon-calendar-empty icon-2x'></i>".
+icon() -> #image{image="/img/tasks.svg", class="icon", style="height: 32px;margin-top:-5px;"}.
 
 buttons() ->
     #panel{class='row-fluid', body=[
@@ -87,13 +87,13 @@ body() ->
     wf:session(<<"Me">>, MID),
     #panel{ class="span9", body=[
             #panel{ class="row-fluid", body=[
-                    #panel{ class="input-prepend span12", body=[
-                            #span{ class="add-on", body=[
-                                    "<i class='icon-calendar-empty'></i>"
-                                    ]},
-                            #textbox{id=name, placeholder="Task name", text=Name,  next=due, class="span11"}
-                            ]}
-                    ]},
+                                             #panel{ class="input-prepend span12", body=[
+                                                                                         #span{ class="add-on", body=[
+                                                                                                                      #image{image="/img/tasks.svg", class="icon", style="height: 20px;"}
+                                                                                                                     ]},
+                                                                                         #textbox{id=name, placeholder="Task name", text=Name,  next=due, class="span11"}
+                                                                                        ]}
+                                            ]},
             #panel{ class="row-fluid", body=[
                     #panel{ class="input-prepend span12", body=[
                             #span{ class="add-on", body=[

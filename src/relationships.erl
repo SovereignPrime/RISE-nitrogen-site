@@ -74,8 +74,9 @@ contact_render(#db_contact{id=Id, name=Name, email=Email, phone=Phone,  address=
         #table{class="table table-condensed", 
                rows=[
                 #tablerow{cells=[
-                        #tableheader{ body=[
-                                "<i class='icon-calendar-empty'></i> Tasks"
+                                 #tableheader{ body=[
+                                                     #image{image="/img/tasks.svg", class="icon", style="height: 20px;"},
+                                " Tasks"
                                 ]},
                         #tableheader{},
                         #tableheader{body="Show all", class="cell-right"}
