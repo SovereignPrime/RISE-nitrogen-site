@@ -24,7 +24,6 @@
         <div class="span1">
             <div class="row-fluid">
                 <div class="span6" style="margin-top:5px;">
-                    [[[common:connection_status()]]]
                 </div>   
     
                 <div class="span6 dropdown">
@@ -42,13 +41,12 @@
                 </div>
             </div>
         </div>
-
-            <div class="span9">
+        <div class="span10">
             [[[common:search()]]]
         </div>
         <div class="dropdown span1  wfid_plus_menu">
             <a href="#" class="dropdown-toggle btn-block btn btn-link" data-toggle="dropdown">
-                <i class="icon-plus icon-large"></i>
+                <i class="icon-plus icon-2x"></i>
             </a>
             <ul class="dropdown-menu pull-right wfid_plus_dropdown" role="menu">
                 <li><a href="#" tabindex="-1" class="wfid_new_update">Message</a></li>
@@ -65,7 +63,12 @@
             </ul>
         </div>
     </div>
-    [[[page:buttons()]]]
+    <div class="row-fluid">
+        <div class='span10'>
+            [[[page:buttons()]]]
+        </div>
+            [[[common:connection_status()]]]
+    </div>
     <div class="row-fluid wfid_main">
             [[[page:left()]]]           
             [[[page:body()]]]
@@ -73,6 +76,9 @@
 </div>
 <script>
 $(".wfid_main").css('height', $(window).innerHeight() - $("#top").outerHeight() - $(".wfid_buttons").outerHeight() - 10 + 'px');
+//$(function() {
+//        $(".wfid_connection").tooltip({placement: 'right'});
+//        });
 $(window).resize(function() {
         $(".wfid_main").css('height', $(window).innerHeight() - $("#top").outerHeight() - $(".wfid_buttons").outerHeight() - 10 + 'px');
         });

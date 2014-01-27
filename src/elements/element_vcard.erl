@@ -42,7 +42,8 @@ render_element(#vcard{id=Id, photo=Photo, name=Name, email=Email, phone=Phone, a
                                     #inplace_textbox{class="inline", text=Phone, tag={phone, Id}}
                                     ]},
                             #panel{body= [
-                                    #inplace_textbox{text=  Address, tag={address, Id}}
+                                          "RISE Id: ",
+                                    #inplace_textbox{class="inline", text=Address, tag={address, Id}}
                                     ]},
                             #panel{body= [ [#span{class="label", text=G}, " "] || G <- Groups]}
                             ]}

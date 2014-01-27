@@ -17,7 +17,7 @@ buttons() ->
     {ok, New} = db:get_unread_updates(),
     wf:session(unread, length(New)),
     #panel{id=buttons, class='row-fluid', body=[
-            #panel{class='span1 offset1', body=[
+            #panel{class='span1 offset1', style="text-align:right;", body=[
                     #span{id=count, class='label label-inverse',text=wf:f("~p new", [length(New)])}
                     ]},
             #panel{class='span9 offset1', body=[

@@ -40,9 +40,25 @@ main() ->
 connection_status() ->
     case ets:info(addrs, size) of
         0 ->
-            "<i class='wfid_connection icon icon-circle-blank icon-2x'></i>";
+            "<script type='text/javascript'>" ++
+                "$('.tooltip').remove();" ++
+            "</script>" ++
+            "<div class='wfid_connection span1' data-toggle='tooltip' title='not connected' style='text-align:right;margin-left:4.5%;'>" ++
+                "<i class='icon icon-circle-blank'></i> net"++
+            "</div>" ++
+            "<script type='text/javascript'>" ++
+                "$('.wfid_connection').tooltip({placement: 'right'});" ++
+            "</script>";
         _ ->
-            "<i class='wfid_connection icon icon-circle icon-2x'></i>"
+            "<script type='text/javascript'>" ++
+                "$('.tooltip').remove();" ++
+            "</script>" ++
+            "<div class='wfid_connection span1' data-toggle='tooltip' title='connected' style='text-align:right;margin-left:4.5%;'>" ++
+                "<i class='icon icon-circle'></i> net" ++
+            "</div>" ++
+            "<script type='text/javascript'>" ++
+                "$('.wfid_connection').tooltip({placement: 'right'});" ++
+            "</script>"
     end.
 
 search() ->
@@ -148,7 +164,7 @@ sigma_search_event(search, Term) ->
                 ]}}.  
 render_filters() ->
     {ok, Filters} = db:get_filters(),
-    #panel{ class="btn-group span2", body=[
+    #panel{ class="btn-group span2 offset2", body=[
             #link{class="btn dropdown-toggle btn-link", body="<i class='icon-filter'></i> Smart filter", data_fields=[{toggle, "dropdown"}], url="#", new=false},
             #list{numbered=false, class="dropdown-menu",
                   body=
