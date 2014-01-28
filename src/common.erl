@@ -43,9 +43,9 @@ connection_status() ->
             "<script type='text/javascript'>" ++
                 "$('.tooltip').remove();" ++
             "</script>" ++
-            "<div class='wfid_connection span1' data-toggle='tooltip' title='not connected' style='text-align:right;margin-left:4.5%;'>" ++
+            %"<div class='wfid_connection span1' data-toggle='tooltip' title='not connected' style='text-align:right;margin-left:4.5%;'>" ++
                 "<i class='icon icon-circle-blank'></i> net"++
-            "</div>" ++
+            %"</div>" ++
             "<script type='text/javascript'>" ++
                 "$('.wfid_connection').tooltip({placement: 'right'});" ++
             "</script>";
@@ -53,9 +53,9 @@ connection_status() ->
             "<script type='text/javascript'>" ++
                 "$('.tooltip').remove();" ++
             "</script>" ++
-            "<div class='wfid_connection span1' data-toggle='tooltip' title='connected' style='text-align:right;margin-left:4.5%;'>" ++
+            %"<div class='wfid_connection span1' data-toggle='tooltip' title='connected' style='text-align:right;margin-left:4.5%;'>" ++
                 "<i class='icon icon-circle'></i> net" ++
-            "</div>" ++
+            %"</div>" ++
             "<script type='text/javascript'>" ++
                 "$('.wfid_connection').tooltip({placement: 'right'});" ++
             "</script>"
@@ -164,7 +164,7 @@ sigma_search_event(search, Term) ->
                 ]}}.  
 render_filters() ->
     {ok, Filters} = db:get_filters(),
-    #panel{ class="btn-group span2 offset2", body=[
+    #panel{ class="btn-group", body=[
             #link{class="btn dropdown-toggle btn-link", body="<i class='icon-filter'></i> Smart filter", data_fields=[{toggle, "dropdown"}], url="#", new=false},
             #list{numbered=false, class="dropdown-menu",
                   body=

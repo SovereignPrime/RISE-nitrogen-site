@@ -11,7 +11,9 @@ title() -> "Welcome to Nitrogen".
 
 icon() -> "<i class='icon-file-text-alt icon-2x'></i>".
 
-buttons() ->
+buttons(left) ->
+    "";
+buttons(main) ->
     #panel{class='row-fluid', body=[
             #panel{class='span9 offset3', body=[
                     #panel{class="row-fluid", body=[

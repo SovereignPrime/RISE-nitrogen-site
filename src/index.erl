@@ -11,24 +11,31 @@ main() -> common:main().
 
 title() -> "Welcome to Nitrogen".
 
-icon() -> "<i class='icon-globe icon-2x'></i>".
+icon() -> "<i class='icon-globe icon-2x' style='margin-top:-5px;'></i>".
 
-buttons() ->
+buttons(left) ->
     {ok, New} = db:get_unread_updates(),
     wf:session(unread, length(New)),
-    #panel{id=buttons, class='row-fluid', body=[
-            #panel{class='span1 offset1', style="text-align:right;", body=[
-                    #span{id=count, class='label label-inverse',text=wf:f("~p new", [length(New)])}
-                    ]},
-            #panel{class='span9 offset1', body=[
-                    #panel{class="row-fluid", body=[
-                            %#panel{ class='span2', body="<i class='icon-user'></i> All accounts"},
-                            %#panel{ class='span2', body="<i class='icon-filter'></i> Smart filter"},
-                            common:render_filters(),
-                            %#panel{ class='span2', body="<i class='icon-sort'></i> Sort"},
-                            #link{id=archive, class='span2', body="<i class='icon-list-alt'></i> Archive", postback={show_archive, true}}
-                            ]}
-                    ]}]}.
+    #span{id=count, class='label label-inverse',text=wf:f("~p new", [length(New)])};
+buttons(main) ->
+    #list{class="nav nav-pills", style="display:inline-block;", numbered=false,
+          body=[
+%                #listitem{body=[
+%                                %#panel{ class='span2', body="<i class='icon-user'></i> All accounts"},
+%                               ]},
+%                #listitem{body=[
+%                                %#panel{ class='span2', body="<i class='icon-filter'></i> Smart filter"},
+%                               ]},
+                #listitem{body=[
+                                common:render_filters()
+                               ]},
+%                #listitem{body=[
+%                                %#panel{ class='span2', body="<i class='icon-sort'></i> Sort"},
+%                               ]},
+                #listitem{body=[
+                                #link{id=archive, body="<i class='icon-list-alt'></i> Archive", postback={show_archive, true}}
+                               ]}
+               ]}.
 
 left() ->
     left(false).
@@ -92,14 +99,14 @@ event({archive, E, Rec}) ->
     wf:replace(left, left()),
     wf:update(body, render_body(Subject, false));
 event({show_archive, true}) ->
-    wf:replace(archive, #link{id=archive, class='span2', body="<i class='icon-list-alt'></i> Actual", postback={show_archive, false}}),
+    wf:replace(archive, #link{id=archive, body="<i class='icon-list-alt'></i> Actual", postback={show_archive, false}}),
     {ok, Updates} = db:get_updates(true),
     #db_contact{id=My} = wf:user(),
     {ok, Tasks} = db:get_tasks(true),
     wf:replace(left, render_left(Updates)),
     wf:replace(body, body(true));
 event({show_archive, false}) ->
-    wf:replace(archive, #link{id=archive, class='span2', body="<i class='icon-list-alt'></i> Archive", postback={show_archive, true}}),
+    wf:replace(archive, #link{id=archive, body="<i class='icon-list-alt'></i> Archive", postback={show_archive, true}}),
     wf:replace(left, left()),
     wf:replace(body, body());
 event({fold, #update_element{id=Id}=Update}) ->

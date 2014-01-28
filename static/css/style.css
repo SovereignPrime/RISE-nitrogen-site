@@ -17,7 +17,6 @@ a, a:hover, a:active {
 .dropdown {
     background-color: #fff;
     border: 0px #fff solid;
-    width: 40px;
 }
 .btn-link, .btn-link:hover, .btn-link:visited, .btn-link:active, .btn-link:focus {
     color: #000;
@@ -119,10 +118,23 @@ select.wfid_responsible {
     text-decoration:none;
     font-weight:normal;
     text-shadow: none;
+    margin-top: -10px;
+}
+.vcard h1 {
+
+    line-height: 1em;
 }
 h1 .inplace_textbox .label {
     font-weight:bold;
 }
 img.wfid_img_vcard {
-    height: 200px;
+    height: 150px;
 }
+.shorten-text {
+    display:inline-block;
+    overflow:hidden;
+    width:90%;
+    text-overflow:ellipsis;
+    white-space: nowrap;
+}
+

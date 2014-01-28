@@ -11,7 +11,9 @@ title() -> "Welcome to Nitrogen".
 
 icon() -> #image{image="/img/tasks.svg", class="icon", style="height: 32px;margin-top:-5px;"}.
 
-buttons() ->
+buttons(left) ->
+    "";
+buttons(main) ->
     #panel{class='row-fluid', body=[
             #panel{class='span9 offset3', body=[
                     #panel{class="row-fluid", body=[

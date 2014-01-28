@@ -10,26 +10,35 @@ main() -> common:main().
 
 title() -> "Hello from relationships.erl!".
 
-icon() -> #image{image="/img/tasks.svg", class="icon", style="height: 32px;margin-top:-5px;"}.
+icon() -> #image{image="/img/tasks.svg", class="icon", style="height: 32px;"}.
 
 
-buttons() ->
-    #panel{class='row-fluid', body=[
-
-    #panel{class='span9 offset2', body=[
-            #panel{class="row-fluid", body=[
-                            #button{id=hide_show, class="btn btn-link span2", body="<i class='icon-angle-left'></i> Hide tasks", 
-                                    actions=#event{type=click, actions=[
-                                        #hide{trigger=hide_show,target=tasks}, 
-                                        #event{postback=hide}
-                                        ]}},
-                            %#panel{ class='span2', body="<i class='icon-user'></i> All accounts"},
-                            %#panel{ class='span2', body=},
-                            common:render_filters(),
-                            %#panel{ class='span2', body="<i class='icon-sort'></i> Sort"},
-                            #link{id=archive, class='span2', body="<i class='icon-list-alt'></i> Archive", postback={show_archive, true}}
+buttons(left) ->
+    #button{id=hide_show, class="btn btn-link", body="<i class='icon-angle-left'></i> Hide tasks", 
+            actions=#event{type=click, actions=[
+                                                #hide{trigger=hide_show,target=tasks}, 
+                                                #event{postback=hide}
+                                               ]}};
+buttons(main) ->
+    #list{numbered=false, class="nav nav-pills", style="display:inline-block",
+          body=[
+%                #listitem{body=[
+%
+%                                %#panel{ class='span2', body="<i class='icon-user'></i> All accounts"},
+%                               ]},
+%                #listitem{body=[
+%                                %#panel{ class='span2', body=},
+%                               ]},
+                #listitem{body=[
+                                common:render_filters()
+                               ]},
+%                #listitem{body=[
+%                                %#panel{ class='span2', body="<i class='icon-sort'></i> Sort"},
+%                               ]},
+                #listitem{body=[
+                                #link{id=archive, body="<i class='icon-list-alt'></i> Archive", postback={show_archive, true}}
                             ]}
-                    ]}]}.
+                    ]}.
 
 left() ->
     CId = wf:session(current_task_id),
@@ -190,14 +199,14 @@ event({edit, Id}) ->
     wf:redirect("/edit_task");
 event(hide) ->
     wf:wire(body, [#remove_class{class="span8"}, #add_class{class="span12"}]),
-    wf:replace(hide_show, #button{id=hide_show, class="btn btn-link span2", body="Show tasks <i class='icon-angle-right'></i>", 
+    wf:replace(hide_show, #button{id=hide_show, class="btn btn-link", body="Show tasks <i class='icon-angle-right'></i>", 
                                     actions=#event{type=click, actions=[
                                         #show{trigger=hide_show,target=tasks}, 
                                         #event{postback=show}
                                         ]}});
 event(show) ->
     wf:wire(body, [#remove_class{class="span12"}, #add_class{class="span8"}]),
-    wf:replace(hide_show, #button{id=hide_show, class="btn btn-link span2", body="<i class='icon-angle-left'></i> Hide tasks", 
+    wf:replace(hide_show, #button{id=hide_show, class="btn btn-link", body="<i class='icon-angle-left'></i> Hide tasks", 
                                     actions=#event{type=click, actions=[
                                         #hide{trigger=hide_show,target=tasks}, 
                                         #event{postback=hide}

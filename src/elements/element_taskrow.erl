@@ -14,7 +14,7 @@ reflect() -> record_info(fields, taskrow).
 -spec render_element(#taskrow{}) -> body().
 render_element(_Record = #taskrow{type=Type, name=Name, due=Due}) ->
     #tablerow{ cells=[
-            #tablecell{text=Type},
+            #tablecell{style="width:200px;", text=Type},
             #tablecell{text=Name},
             #tablecell{text=Due, class="cell-right"}
             ]}.

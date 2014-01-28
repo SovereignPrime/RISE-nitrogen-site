@@ -12,20 +12,26 @@ main() -> common:main().
 
 title() -> "Hello from relationships.erl!".
 
-icon() -> "<i class='icon-user icon-large'></i>".
+icon() -> "<i class='icon-user icon-2x'></i>".
 
-buttons() ->
-    #panel{id=buttons, class='row-fluid', body=[
-
-            #panel{class='span9 offset1', body=[
-                    #panel{class="row-fluid", body=[
-                            #link{id=archive, class='span2', body="<i class='icon-envelope-alt'></i> Email connect", postback=invite},
-                            %#panel{ class='span2', body="<i class='icon-user'></i> All accounts"},
-                            common:render_filters(),
-                            %#panel{ class='span2', body="<i class='icon-sort'></i> Sort"},
-                            #link{id=archive, class='span2', body="<i class='icon-list-alt'></i> Archive", postback={show_archive, true}}
+buttons(left) ->
+    #link{style="display:inline-block;text-align:right;",  body="<i class='icon-envelope-alt'></i> Email connect", postback=invite};
+buttons(main) ->
+    #list{numbered=false, class="nav nav-pills", style="display:inline-block;",
+        body=[
+%            #listitem{body=[
+%                            %#panel{ class='span2', body="<i class='icon-user'></i> All accounts"},
+%                           ]},
+            #listitem{body=[
+                            common:render_filters()
+                           ]},
+%            #listitem{body=[
+%                            %#panel{ class='span2', body="<i class='icon-sort'></i> Sort"},
+%                           ]},
+            #listitem{body=[
+                            #link{id=archive, body="<i class='icon-list-alt'></i> Archive", postback={show_archive, true}}
                             ]}
-                    ]}]}.
+                    ]}.
 
 left() ->
     wf:session(current_group_id, all),
@@ -122,13 +128,13 @@ event({archive, Rec}) ->
     wf:update(group_list, render_group_list(false)),
     wf:update(user_list, render_contact_list(Contacts));
 event({show_archive, true}) ->
-    wf:replace(archive, #link{id=archive, class='span2', body="<i class='icon-list-alt'></i> Actual", postback={show_archive, false}}),
+    wf:replace(archive, #link{id=archive, body="<i class='icon-list-alt'></i> Actual", postback={show_archive, false}}),
     Id = wf:session(current_group_id),
     {ok, Contacts} = db:get_contacts_by_group(Id, true),
     wf:update(group_list, render_group_list(true)),
     wf:update(user_list, render_contact_list(Contacts));
 event({show_archive, false}) ->
-    wf:replace(archive, #link{id=archive, class='span2', body="<i class='icon-list-alt'></i> Archive", postback={show_archive, true}}),
+    wf:replace(archive, #link{id=archive, body="<i class='icon-list-alt'></i> Archive", postback={show_archive, true}}),
     Id = wf:session(current_group_id),
     {ok, Contacts} = db:get_contacts_by_group(Id, false),
     wf:update(group_list, render_group_list(false)),

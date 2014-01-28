@@ -12,25 +12,37 @@ title() -> "Hello from relationships.erl!".
 
 icon() -> "<i class='icon-file-text-alt icon-2x'></i>".
 
-buttons() ->
-    #panel{class="row-fluid", body=[
-            #panel{ class='span2 offset2 btn-group', body=[
-                    #link{class="btn btn-link dropdown-toggle",data_fields=[{toggle, "dropdown"}], 
-                          body=["<i class='icon-reorder'></i> More options"], url="#", new=false},
-                    #list{class="dropdown-menu", numbered=false,
-                          body=[
-                            #listitem{body=#link{body=["<i class='icon icon-list-alt'></i> Archive selected"], postback=archive, new=false}},
-                            #listitem{body=#link{body="Add to message", url = "/edit_update", new=false}},
-                            #listitem{body=#link{body="Add to task", url = "/edit_task", new=false}}%,
-                            %#listitem{body=#link{body="Add to expense", postback=edit, new=false}},
-                            %#listitem{body=#link{body="Add to assert", postback=edit, new=false}}
-                            ]}
+buttons(left) ->
+    "";
+buttons(main) ->
+    #list{numbered=false, class="nav nav-pills", style="display:inline-block;",
+          body=[
+                #listitem{class="dropdown", body=[
+                                
+                                #link{class="btn btn-link dropdown-toggle",data_fields=[{toggle, "dropdown"}], 
+                                      body=["<i class='icon-reorder'></i> More options"], url="#", new=false},
+                                #list{class="dropdown-menu", numbered=false,
+                                      body=[
+                                            #listitem{body=#link{body=["<i class='icon icon-list-alt'></i> Archive selected"], postback=archive, new=false}},
+                                            #listitem{body=#link{body="Add to message", url = "/edit_update", new=false}},
+                                            #listitem{body=#link{body="Add to task", url = "/edit_task", new=false}}%,
+                                            %#listitem{body=#link{body="Add to expense", postback=edit, new=false}},
+                                            %#listitem{body=#link{body="Add to assert", postback=edit, new=false}}
+                                           ]}
 
-                    ]},
-            %#panel{ class='span2', body="<i class='icon-user'></i> All accounts"},
-            common:render_filters(),
-            %#panel{ class='span2', body="<i class='icon-sort'></i> Sort"},
-            #link{id=archive, class='span2', body="<i class='icon-list-alt'></i> Archive", postback={show_archive, true}}
+               ]},
+    #listitem{body=[
+                    %#panel{ class='span2', body="<i class='icon-user'></i> All accounts"},
+                   ]},
+    #listitem{body=[
+                    common:render_filters()
+                   ]},
+    #listitem{body=[
+                    %#panel{ class='span2', body="<i class='icon-sort'></i> Sort"},
+                   ]},
+    #listitem{body=[
+                    #link{id=archive, body="<i class='icon-list-alt'></i> Archive", postback={show_archive, true}}
+                   ]}
             ]}.
 
 left() ->
@@ -69,10 +81,10 @@ event(archive) ->
     db:archive(Files),
     wf:replace(body, body(false));
 event({show_archive, true}) ->
-    wf:replace(archive, #link{id=archive, class='span2', body="<i class='icon-list-alt'></i> Actual", postback={show_archive, false}}),
+    wf:replace(archive, #link{id=archive, body="<i class='icon-list-alt'></i> Actual", postback={show_archive, false}}),
     wf:replace(body, body(true));
 event({show_archive, false}) ->
-    wf:replace(archive, #link{id=archive, class='span2', body="<i class='icon-list-alt'></i> Archive", postback={show_archive, true}}),
+    wf:replace(archive, #link{id=archive, body="<i class='icon-list-alt'></i> Archive", postback={show_archive, true}}),
     wf:replace(body, body(false));
 event({check, FID, true}) ->
     AF = wf:session_default(attached_files, sets:new()),
