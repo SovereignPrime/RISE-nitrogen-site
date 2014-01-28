@@ -44,8 +44,8 @@ left(Archive) ->
     render_left(Updates).
 
 render_left(Updates) ->
-    Render = [ #update_preview{icon=Enc, from=From, age="Age", subject=Subject, text=Text, flag=true, archive=(Status == archive)} || 
-      #message{from=From, subject=Subject, text=Text, enc=Enc, status=Status} <- sugar:sort_by_timestamp(Updates)],
+    Render = [ #update_preview{id=Id, icon=Enc, from=From, age="Age", subject=Subject, text=Text, flag=true, archive=(Status == archive)} || 
+      #message{hash=Id, from=From, subject=Subject, text=Text, enc=Enc, status=Status} <- sugar:sort_by_timestamp(Updates)],
     #panel{id=left,class="span3 scrollable", body=Render}.
 
 body() ->
@@ -70,8 +70,9 @@ render_body(Subject, Archive) ->
             ].
 	
     
-event({selected, Subject, Archive}) ->
+event({selected, Id, Subject, Archive}) ->
     wf:session(current_subject, Subject),
+    wf:session(current_update_id, Id),
     wf:replace(left, left(Archive)),
     wf:update(body, render_body(Subject, Archive));
 event({unfold, #update_element{id=Id, uid=Uid, enc=Enc}=Update}) ->

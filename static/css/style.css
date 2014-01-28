@@ -34,6 +34,8 @@ a, a:hover, a:active {
 }
 .current {
     border: #000 1px solid;
+    padding: 4px;
+    box-sizing:content-box;
 }
 .upload_drop {
     background-color: #fff;
@@ -41,6 +43,9 @@ a, a:hover, a:active {
     border: 1px #000 dotted;
     font-size: 100%;
     width: auto;
+}
+.upload-button {
+    display:none;
 }
 .inline {
     display:inline-block;
@@ -131,10 +136,11 @@ img.wfid_img_vcard {
     height: 150px;
 }
 .shorten-text {
-    display:inline-block;
+    display:-webkit-box !important;
     overflow:hidden;
-    width:90%;
+    iwidth:90%;
     text-overflow:ellipsis;
-    white-space: nowrap;
+    iwhite-space: nowrap;
+    -webkit-box-orient:vertical;
 }
 

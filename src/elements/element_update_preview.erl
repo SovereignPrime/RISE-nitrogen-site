@@ -14,7 +14,7 @@
 reflect() -> record_info(fields, update_preview).
 
 -spec render_element(#update_preview{}) -> body().
-render_element(#update_preview{icon=Icon, from=From, age=Age, subject=Subject, text=Data, flag=Flag, archive=Archive}) when Icon==3->
+render_element(#update_preview{id=Id, icon=Icon, from=From, age=Age, subject=Subject, text=Data, flag=Flag, archive=Archive}) when Icon==3->
     {ok, #db_contact{name=FromName}} = db:get_contact_by_address(From),
     {Text, Attachments, Timestamp} = case Icon of
                3 ->
@@ -26,8 +26,14 @@ render_element(#update_preview{icon=Icon, from=From, age=Age, subject=Subject, t
            end,
     TD = bm_types:timestamp() - Timestamp,
     CurrentSession = wf:session(current_subject),
+    CurrentId = wf:session(current_update_id),
+    Class = if Id == CurrentId ->
+           "current";
+       true ->
+           ""
+    end,
 
-    #panel{style="line-height:18px;margin-top:18px;", body=[
+    #panel{class=Class, style="line-height:18px;margin-top:18px;", body=[
                                                             #panel{class="row-fluid no-padding", body=[
                                                                                                        #panel{class='span1 no-padding', body=["<i class='icon-globe'></i>"]},
                                                                                                        #panel{class='span7 no-padding', body=["<b>From: </b>", FromName]},
@@ -48,21 +54,30 @@ render_element(#update_preview{icon=Icon, from=From, age=Age, subject=Subject, t
                                                                                                        true ->
                                                                                                            #panel{class='span1', body=["<input type='checkbox'>"]}
                                                                                                     end,
-                                                                                                    #panel{class='span11', body=[io_lib:format("~200s...", [Text])]}
+                                                                                                    #panel{class='span11 shorten-text', style="-webkit-line-clamp:2;", body=[Text]}
                                                                                                    ];
                                                                                                true ->
-                                                                                                   #panel{class='span12', body=[io_lib:format("~200s...", [Text])]}
+                                                                                                   #panel{class='span12 shorten-text', style="-webkit-line-clamp:2;", body=[Text]}
                                                                                             end
                                                                                            ]}
-                                                           ], actions=#event{type=click, postback={selected, Subject, Archive}}};
-render_element(#update_preview{icon=Icon, from=From, age=Age, subject=Subject, text=Data, flag=Flag, archive=Archive}) when Icon==4 ->
+                                                           ], actions=#event{type=click, postback={selected, Id, Subject, Archive}}};
+render_element(#update_preview{id=Id, icon=Icon, from=From, age=Age, subject=Subject, text=Data, flag=Flag, archive=Archive}) when Icon==4 ->
     {ok, #db_contact{name=FromName}} = db:get_contact_by_address(From),
     #task_packet{text=Text, time=Timestamp} = binary_to_term(Data),
     TD = bm_types:timestamp() - Timestamp,
     CurrentSession = wf:session(current_subject),
-    #panel{style="line-height:18px;margin-top:18px;", body=[
+    CurrentId = wf:session(current_update_id),
+    Class = if Id == CurrentId ->
+           "current";
+       true ->
+           ""
+    end,
+    #panel{class=Class, style="line-height:18px;margin-top:18px;", body=[
                                                             #panel{class="row-fluid no-padding", body=[
-                                                                                                       #panel{class='span1 no-padding', body=["<i class='icon-calendar-empty'></i>"]},
+                                                                                                       #panel{class='span1 no-padding', body=[
+                                                                                                                                              #image{image="/img/tasks.svg", class="icon", style="height:16px;vertical-align:middle;"}
+                                                                                                                                              
+                                                                                                                                             ]},
                                                                                                        #panel{class='span7 no-padding', body=["<b>From: </b>", FromName]},
                                                                                                        #panel{class='span4 cell-right no-padding', body=[sugar:format_timedelta(TD)]}
                                                                                                       ]},
@@ -81,10 +96,10 @@ render_element(#update_preview{icon=Icon, from=From, age=Age, subject=Subject, t
                                                                                                        true ->
                                                                                                            #panel{class='span1', body=["<input type='checkbox'>"]}
                                                                                                     end,
-                                                                                                    #panel{class='span11', body=[io_lib:format("~200s...", [Text])]}
+                                                                                                    #panel{class='span11 shorten-text', style="-webkit-line-clamp:2; height:2.7em;", body=[Text]}
                                                                                                    ];
                                                                                                true ->
-                                                                                                   #panel{class='span12', body=[io_lib:format("~200s...", [Text])]}
+                                                                                                   #panel{class='span12 shorten-text', style="height:2.7em; -webkit-line-clamp:2;", body=[Text]}
                                                                                             end
                                                                                            ]}
-                                                           ], actions=#event{type=click, postback={selected, Subject, Archive}}}.
+                                                           ], actions=#event{type=click,  postback={selected, Id, Subject, Archive}}}.
