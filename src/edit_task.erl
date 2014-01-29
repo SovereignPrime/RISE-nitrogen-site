@@ -135,6 +135,14 @@ add_existing_rows(Id) ->
     end,
     [].
     
+event(add_file) ->
+    TaskName = wf:to_binary(wf:q(name)),
+    Due = wf:q(due),
+    Text = wf:to_binary(wf:q(text)),
+    Task = wf:session(current_task),
+    NTask = Task#db_task{name= TaskName , due=Due, text=Text},
+    wf:session(current_task, NTask);
+
 event(save) ->
     TaskName = wf:to_binary(wf:q(name)),
     Due = wf:q(due),

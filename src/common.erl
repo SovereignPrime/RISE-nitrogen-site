@@ -77,10 +77,11 @@ search() ->
 render_files() ->
     {ok, Attachments} = db:get_files(sets:to_list(wf:session_default(attached_files, sets:new()))),
     #panel{id=files, class="span12", body=[
-            #panel{ class="row-fluid", body=[
-                    "<i class='icon-file-alt'></i> Attachments", #br{},
-                    #upload{id=attachments, tag=filename, delegate=common, droppable=true, show_button=false, droppable_text="Drag and drop files here",  multiple=false}
-                    ]},
+                                           #panel{ class="row-fluid", body=[
+                                                                            "<i class='icon-file-alt'></i> Attachments", #br{},
+                                                                            #upload{id=attachments, tag=filename, delegate=common, droppable=true, show_button=false, droppable_text="Drag and drop files here",  multiple=false},
+                                                                            #link{body="<i class='icon-th-large'></i> Select from my files", postback=add_file, new=false}
+                                                                           ]},
             #br{},
             lists:map(fun(#db_file{path=Path, size=Size, date=Date, id=Id, status=Status}) ->
                         #attachment{filename=Path, size=Size, time=Date, status=Status}

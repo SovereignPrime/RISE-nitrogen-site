@@ -15,8 +15,8 @@ reflect() -> record_info(fields, addable_row).
 -spec render_element(#addable_row{}) -> body().
 render_element(Record = #addable_row{id=Id, num=N, body=Body}) ->
     #panel{id= wf:to_atom(wf:f("~s_addable~p", [Id, N])), class="row-fluid", body=[
-            #panel{ class="span11", body=[Body]},
-            #panel{class="span1", body=[
+            #panel{ class="span11", style="width:97%;", body=[Body]},
+            #panel{class="span1", style="text-align:right;width:1%;margin-left:1%;",  body=[
                     #button{id=wf:to_atom(wf:f("~s_addable_plus~p", [Id, N])), 
                             class="row_plus",
                             body=["<i class='icon-plus'></i>"], html_encode=false, postback={add,  Record}, delegate=?MODULE}

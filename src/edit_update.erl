@@ -49,7 +49,7 @@ body() ->
     #db_update{subject=Subject, to=To}  = wf:session(current_update),
     #panel{ class="span9", body=[
             #panel{ class="row-fluid", body=[
-                    #panel{ class="input-prepend span11", body=[
+                    #panel{ class="input-prepend span12", body=[
                             #span{ class="add-on", body=[
                                     #span{html_encode=false, text="<i class='icon-globe'></i>"}
                                     ]},
