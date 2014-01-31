@@ -140,7 +140,6 @@ img.wfid_img_vcard {
     overflow:hidden;
     iwidth:90%;
     text-overflow:ellipsis;
-    iwhite-space: nowrap;
     -webkit-box-orient:vertical;
 }
 

@@ -4,7 +4,7 @@
 -include("protokol.hrl").
 -include_lib("bitmessage/include/bm.hrl").
 
-install()->
+install(Pid)->
     mnesia:stop(),
     mnesia:create_schema([node()]),
     mnesia:start(),
@@ -18,7 +18,8 @@ install()->
     {atomic, ok} = mnesia:create_table(db_contact_roles, [{disc_copies, [node()]}, {attributes, record_info(fields, db_contact_roles)}, {type, ordered_set}]),
     {atomic, ok} = mnesia:create_table(db_group_members, [{disc_copies, [node()]}, {attributes, record_info(fields, db_group_members)}, {type, bag}]),
     {atomic, ok} = mnesia:create_table(db_expense_tasks, [{disc_copies, [node()]}, {attributes, record_info(fields, db_expense_tasks)}, {type, bag}]),
-    {atomic, ok} = mnesia:create_table(db_attachment, [{disc_copies, [node()]}, {attributes, record_info(fields, db_attachment)}, {type, ordered_set}, {index, [file]}]).
+    {atomic, ok} = mnesia:create_table(db_attachment, [{disc_copies, [node()]}, {attributes, record_info(fields, db_attachment)}, {type, ordered_set}, {index, [file]}]),
+    Pid ! accept.
 
 
 %%%
@@ -255,7 +256,7 @@ get_tasks(Parent, false) ->
             end);
 get_tasks(Parent, true) ->
     transaction(fun() ->
-                mnesia:select(db_task, [{#db_task{status='$2', _='_'}, [{'==', '$1', 'archive'}], ['$_']}])
+                mnesia:select(db_task, [{#db_task{status='$1', _='_'}, [{'==', '$1', 'archive'}], ['$_']}])
             end).
 get_tasks_by_subject(Subject, false) ->
     transaction(fun() ->
@@ -263,7 +264,7 @@ get_tasks_by_subject(Subject, false) ->
             end);
 get_tasks_by_subject(Subject, true) ->
     transaction(fun() ->
-                mnesia:select(db_task, [{#db_task{name=Subject, status='$2', _='_'}, [{'==', '$1', 'archive'}], ['$_']}])
+                mnesia:select(db_task, [{#db_task{name=Subject, status='$1', _='_'}, [{'==', '$1', 'archive'}], ['$_']}])
             end).
 
 

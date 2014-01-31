@@ -182,4 +182,3 @@ save_payments(TaskName) ->
                 db:save(P#db_expense{id=NPId}),
                 db:save(#db_expense_tasks{task=wf:session(current_task_id), expense=NPId})
         end, Payments).
-

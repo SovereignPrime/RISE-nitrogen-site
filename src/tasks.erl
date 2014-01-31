@@ -172,11 +172,11 @@ event({archive, #db_task{id=Id, parent=Parent} = Rec}) ->
     wf:update(body, render_task(Rec));
 event({show_archive, true}) ->
     wf:update(groups, render_tasks(undefined, true)),
-    wf:replace(archive, #link{id=archive, class='span2', body="<i class='icon-list-alt'></i> Actual", postback={show_archive, false}}),
+    wf:replace(archive, #link{id=archive, body="<i class='icon-list-alt'></i> Actual", postback={show_archive, false}}),
     wf:update(subgroups, []);
 event({show_archive, false}) ->
     wf:update(groups, render_tasks(undefined, false)),
-    wf:replace(archive, #link{id=archive, class='span2', body="<i class='icon-list-alt'></i> Archive", postback={show_archive, true}}),
+    wf:replace(archive, #link{id=archive, body="<i class='icon-list-alt'></i> Archive", postback={show_archive, true}}),
     wf:update(subgroups, []);
 event({task_chosen, Id}) ->
     wf:session(current_task_id, Id),

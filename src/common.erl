@@ -8,6 +8,13 @@
 
 main() -> 
     PWD = application:get_env(nitrogen, work_dir, "."),
+    Timeout = application:get_env(nitrogen, db_timeout, 300),
+    case mnesia:wait_for_tables([db_group], Timeout) of
+        ok ->
+            ok;
+        {timeout, _} ->
+            legal:main()
+    end,
     case wf:user() of
         'undefined' ->
             case db:get_my_accounts() of 
