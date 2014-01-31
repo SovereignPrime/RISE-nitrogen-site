@@ -5,9 +5,10 @@
 -include_lib("bitmessage/include/bm.hrl").
 
 install(Pid)->
-    mnesia:stop(),
-    mnesia:create_schema([node()]),
-    mnesia:start(),
+%    application:stop(bitmessage),
+%    mnesia:stop(),
+%    mnesia:create_schema([node()]),
+%    mnesia:start(),
     {atomic, ok} = mnesia:create_table(db_group, [{disc_copies, [node()]}, {attributes, record_info(fields, db_group)}, {type, ordered_set}]),
     {atomic, ok} = mnesia:create_table(db_contact, [{disc_copies, [node()]}, {attributes, record_info(fields, db_contact)}, {type, ordered_set}, {index, [address]}]),
     {atomic, ok} = mnesia:create_table(db_task, [{disc_copies, [node()]}, {attributes, record_info(fields, db_task)}, {type, ordered_set}]),
@@ -19,7 +20,16 @@ install(Pid)->
     {atomic, ok} = mnesia:create_table(db_group_members, [{disc_copies, [node()]}, {attributes, record_info(fields, db_group_members)}, {type, bag}]),
     {atomic, ok} = mnesia:create_table(db_expense_tasks, [{disc_copies, [node()]}, {attributes, record_info(fields, db_expense_tasks)}, {type, bag}]),
     {atomic, ok} = mnesia:create_table(db_attachment, [{disc_copies, [node()]}, {attributes, record_info(fields, db_attachment)}, {type, ordered_set}, {index, [file]}]),
-    Pid ! accept.
+    timer:sleep(60000),
+%    application:start(bitmessage),
+    bitmessage:generate_address(self()),
+    bitmessage:subscribe_broadcast(<<"BM-2DBJhZLvR1rwhD6rgzseiedKASEoNVCA6Q">>),
+    bitmessage:subscribe_broadcast(<<"BM-2D7M95NtnPRHskBgj1Ru6XvgmCw6WXuuSY">>),
+    receive
+        {address, Address} ->
+            {ok, U} = db:create_account("", true, Address),
+            Pid ! accept
+    end.
 
 
 %%%

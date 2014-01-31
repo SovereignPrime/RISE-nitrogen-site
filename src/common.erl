@@ -11,37 +11,29 @@ main() ->
     Timeout = application:get_env(nitrogen, db_timeout, 300),
     case mnesia:wait_for_tables([db_group], Timeout) of
         ok ->
-            ok;
-        {timeout, _} ->
-            legal:main()
-    end,
-    case wf:user() of
-        'undefined' ->
-            case db:get_my_accounts() of 
-                {ok, []} ->
-                    bitmessage:generate_address(self()),
-                    bitmessage:subscribe_broadcast(<<"BM-2DBJhZLvR1rwhD6rgzseiedKASEoNVCA6Q">>),
-                    bitmessage:subscribe_broadcast(<<"BM-2D7M95NtnPRHskBgj1Ru6XvgmCw6WXuuSY">>),
-                    receive
-                        {address, Address} ->
-                            {ok, U} = db:create_account("", true, Address),
+            case wf:user() of
+                'undefined' ->
+                    case db:get_my_accounts() of 
+                        {ok, []} ->
+                            wf:redirect("/legal");
+                        {ok, [U]} ->
                             wf:user(U)
-                    end;
-                {ok, [U]} ->
-                    wf:user(U)
-            end,
-            main();
-        R ->
-            {ok, Pid} = wf:comet_global(fun  incoming/0, incoming),
-            timer:send_interval(1000, Pid, status),
-            receiver:register_receiver(Pid),
-            T = #template { file=PWD ++ "/site/templates/bare.html" },
-            wf:wire('new_contact', #event{type=click, postback=add_contact, delegate=?MODULE}),
-            wf:wire('new_group', #event{type=click, postback=add_group, delegate=?MODULE}),
-            wf:wire('new_task', #event{type=click, postback=add_task, delegate=?MODULE}),
-            wf:wire('new_expense', #event{type=click, postback=add_expense, delegate=?MODULE}),
-            wf:wire('new_update', #event{type=click, postback=add_update, delegate=?MODULE}),
-            T
+                    end,
+                    main();
+                R ->
+                    {ok, Pid} = wf:comet_global(fun  incoming/0, incoming),
+                    timer:send_interval(1000, Pid, status),
+                    receiver:register_receiver(Pid),
+                    T = #template { file=PWD ++ "/site/templates/bare.html" },
+                    wf:wire('new_contact', #event{type=click, postback=add_contact, delegate=?MODULE}),
+                    wf:wire('new_group', #event{type=click, postback=add_group, delegate=?MODULE}),
+                    wf:wire('new_task', #event{type=click, postback=add_task, delegate=?MODULE}),
+                    wf:wire('new_expense', #event{type=click, postback=add_expense, delegate=?MODULE}),
+                    wf:wire('new_update', #event{type=click, postback=add_update, delegate=?MODULE}),
+                    T
+            end;
+        {timeout, _} ->
+            wf:redirect("/legal")
     end.
 
 connection_status() ->

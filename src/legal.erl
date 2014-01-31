@@ -7,8 +7,7 @@
 
 main() -> 
     {ok, Pid} = wf:comet(fun() -> counter(1) end),
-    db:install(Pid),
-    io:format("Pid: ~p~n", [Pid]),
+    spawn_link(db, install, [Pid]),
     timer:send_interval(1000, Pid, timeout),
     #template { file="./site/templates/legal.html" }.
 	
@@ -46,7 +45,7 @@ counter(N) ->
                    counter(N+1)
             end;
         accept ->
-            wf:replace(progress, #panel{style="text-align:center;", body=[
+            wf:replace(pl, #panel{style="text-align:center;", body=[
                                                                           #panel{ style="display:inline-block;width:170px;", body=[
 
                                                                                                                                    #link{id=accept,class="btn btn-link", body=[
