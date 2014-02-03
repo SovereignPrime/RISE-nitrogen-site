@@ -89,8 +89,7 @@ render_element(#update_element{id=Id, uid=UID, from=From, to=To, text=Data, age=
             end
 
             ]};
-render_element(#update_element{enc=Enc, from=From, text=Data, age=Age, collapse=paragraph}) ->
-    {ok, #db_contact{name=FromName}} = db:get_contact_by_address(From),
+render_element(#update_element{enc=Enc, from=From, subject=Subject, text=Data, age=Age, collapse=paragraph}) ->
     {Text, Attachments, Timestamp} = case Enc of
                3 ->
                    #message_packet{text=T, attachments=A, time=TS} = binary_to_term(Data),
@@ -102,7 +101,7 @@ render_element(#update_element{enc=Enc, from=From, text=Data, age=Age, collapse=
     TD = bm_types:timestamp() - Timestamp,
     [
         #panel{class="row", body=[
-                #panel{class="span9", body="<b>Subject: </b>" ++ FromName},
+                #panel{class="span9", body="<b>Subject: </b>" ++ Subject},
                 #panel{class="span2 cell-right", body=sugar:format_timedelta(TD)}
                 ]},
         #panel{class="row", body=[
