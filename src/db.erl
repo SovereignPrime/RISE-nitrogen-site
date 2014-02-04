@@ -367,9 +367,9 @@ get_contact(Id) ->
 get_contact_by_address(Address) ->
     transaction(fun() ->
                 case mnesia:index_read(db_contact, Address, #db_contact.address) of
-                    [U] ->
+                    [U] when U#db_contact.status /= archive ->
                         U;
-                    [] ->
+                     _ ->
                         none
                 end
         end).
