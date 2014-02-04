@@ -57,7 +57,7 @@ body() ->
                             ]}
                     ]},
             #addable_row{id=roles, num=0, body= #to{}},
-            add_existing_rows(To),
+            add_existing_rows([ To ]),
 
             #panel{ class="row-fluid", body=[
                     #panel{class="span12", body=[

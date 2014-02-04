@@ -53,7 +53,7 @@ render_element(#update_element{id=Id, uid=UID, from=From, to=To, text=Data, age=
                 #panel{class="span3 offset4", body=[
                             #link{class="btn btn-link", body=[
                                     #span{class="icon-reply icon-large", text=" "}
-                                    ], postback={reply, Subject, To}, new=false},
+                                    ], postback={reply, Subject, From}, new=false},
                             
                         %#span{class="icon-refresh icon-large", text=" "},
                         %#span{class="icon-reorder icon-large"}
