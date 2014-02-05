@@ -107,17 +107,51 @@ contact_render(#db_contact{id=Id, name=Name, email=Email, phone=Phone,  address=
 %% Event handlers
 %%%
 
-%event(invite) ->
-%    #db_contact{email=MEmail} = wf:user(),
-%    #db_contact{email=REmail} = wf:session(current_contact),
-%    
-%    Con = pat:connect({Server, Port}, [{user, Login}, {password, Passwd}]),
-%    {ok, Text} = file:read_file("etc/invitation.tpl"),
-%    pat:send(Con, #email{sender=wf:to_binary(MEmail), 
-%                         recipients=[wf:to_binary( REmail )], 
-%                         headers=[{<<"content-type">>, <<"text/html">>}], 
-%                         subject= <<"Invitation to RISE">>, 
-%                         message= <<(wf:to_binary(MEmail))/binary, Text/binary>>});
+event(invite) ->
+    #db_contact{email=MEmail} = wf:user(),
+    #db_contact{email=REmail} = wf:session(current_contact),
+    [_,  BaseServer ] = string:tokens(wf:to_list(MEmail), "@"),
+    MailPrefixes = application:get_env(nitrogen, mail_prefixes,["smtp", "mail", "m"]),
+    [Server | _] = lists:filter(fun(P) ->
+                         case inet:getaddr(P ++ "." ++ BaseServer, inet) of
+                             {ok, _} ->
+                                 true;
+                             _ ->
+                                 false
+                         end
+                 end, MailPrefixes),
+    wf:insert_bottom("body", #panel{ class="modal fade", body=[
+                                             #panel{ class="modal-header", body=[
+                                                                                 #button{class="btn-link pull-right", text="x", postback=cancel},
+                                                                                 #h3{text="Email settings"}
+                                                                                ]},
+                                             #panel{ class="modal-body", body=[
+                                                                               #label{text="Your email address"}, #textbox{id=mail, text=MEmail},#br{},
+                                                                               #label{text="Email password"}, #password{id=passwd}
+                                                                                ]},
+                                             #panel{ class="modal-footer", body=[
+                                                                                 #button{class="btn btn-link", text="Send", postback={invite, Server ++ "." ++ BaseServer, REmail}},
+                                                                                 #button{class="btn btn-link", text="Cancel", postback=cancel}
+                                                                              ]}
+                                            ]}),
+    wf:wire(#script{script="$('.modal').modal('show')"});
+event({invite, Server, REmail}) ->    
+    Login = wf:q(mail),
+    Passwd = wf:q(passwd),
+    Con = pat:connect({wf:to_binary( Server ), 25}, [{user, wf:to_binary( Login )}, {password, wf:to_binary(Passwd)}, {timeout, 60000}]),
+    {ok, Text} = file:read_file("etc/invitation.tpl"),
+    wf:wire(#script{script="$('.modal').modal('hide')"}),
+    error_logger:info_msg("Rec: ~p~n", [ Server]),
+    Err = pat:send(Con, #email{sender=wf:to_binary(Login), 
+                         recipients=[wf:to_binary( "<" ++ wf:to_list( REmail ) ++ ">" )], 
+                         headers=[{<<"content-type">>, <<"text/html">>}], 
+                         subject= <<"Invitation to RISE">>, 
+                         message= <<(wf:to_binary(Login))/binary, Text/binary>>}),
+    error_logger:info_msg("Email sending result: ~p~n", [Err]),
+    wf:remove(".modal");
+event(cancel) ->
+    wf:wire(#script{script="$('.modal').modal('hide')"}),
+    wf:remove(".modal");
 event({archive, Rec}) ->
     db:archive(#db_contact{address=Rec}),
     Id = wf:session(current_group_id),
@@ -166,8 +200,14 @@ inplace_textbox_event({name, Id}, Name) ->
     wf:update(user_list, render_contact_list(Contacts)),
     Name;
 inplace_textbox_event({email, Id}, Name) ->
-    Contact = wf:session(current_contact),
-    db:save(Contact#db_contact{email=Name}),
+    #db_contact{my=My} = Contact = wf:session(current_contact),
+    ContactN = Contact#db_contact{email=Name},
+    if My ->
+           wf:user(ContactN);
+       true ->
+           ok
+    end,
+    db:save(ContactN),
     Name;
 inplace_textbox_event({phone, Id}, Name) ->
     Contact = wf:session(current_contact),
