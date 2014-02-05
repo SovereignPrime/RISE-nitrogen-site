@@ -310,6 +310,18 @@ send_messages(#db_task{id=UID, name=Subject, text=Text, due=Date, parent=Parent,
                 ok
         end, Contacts).
 
+send_task_tree(Id, Parent) ->
+    {ok, Involved } = db:get_involved(Id),
+    #db_contact{id=From} = wf:user(),
+    lists:foreach(fun({_, _, #db_contact{bitmessage=To, my=false}}) ->
+                          MSG = term_to_binary(#task_tree_packet{task=Id, parent=Parent}),
+                          bitmessage:send_message(From, wf:to_binary(To), <<"Task tree">>, MSG, 6);
+                     (_) ->
+                          ok
+                  end, Involved).
+
+
+
 encode_attachments(Attachments) ->
     AttachmentsL = lists:map(fun(#db_file{user=UID}=A) ->
                     {ok, #db_contact{bitmessage=Addr}} = db:get_contact(UID),

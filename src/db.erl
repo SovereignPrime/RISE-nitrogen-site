@@ -20,6 +20,7 @@ install(Pid)->
     {atomic, ok} = mnesia:create_table(db_group_members, [{disc_copies, [node()]}, {attributes, record_info(fields, db_group_members)}, {type, bag}]),
     {atomic, ok} = mnesia:create_table(db_expense_tasks, [{disc_copies, [node()]}, {attributes, record_info(fields, db_expense_tasks)}, {type, bag}]),
     {atomic, ok} = mnesia:create_table(db_attachment, [{disc_copies, [node()]}, {attributes, record_info(fields, db_attachment)}, {type, ordered_set}, {index, [file]}]),
+    {atomic, ok} = mnesia:create_table(db_task_tree, [{disc_copies, [node()]}, {attributes, record_info(fields, db_task_tree)}, {type, bag}, {index, [parent, visible]}]),
     timer:sleep(60000),
 %    application:start(bitmessage),
     bitmessage:generate_address(self()),
@@ -248,9 +249,11 @@ get_tasks_by_user(UID) ->
                     end)
         end).
 
+
 get_tasks(Parent) when not is_boolean(Parent) ->
     transaction(fun() ->
-                mnesia:select(db_task, [{#db_task{parent=Parent, status='$1', _='_'}, [], ['$_']}])
+                        %Parents = mnesia:index_read(db_task_tree, Parent, #db_task_tree.parent),
+                mnesia:select(db_task, [{#db_task{parent=Parent, status='$1', _='_'}, [{'/=', '$1', archive}], ['$_']}])
             end);
 get_tasks(false) ->
     transaction(fun() ->
@@ -268,6 +271,7 @@ get_tasks(Parent, true) ->
     transaction(fun() ->
                 mnesia:select(db_task, [{#db_task{status='$1', _='_'}, [{'==', '$1', 'archive'}], ['$_']}])
             end).
+
 get_tasks_by_subject(Subject, false) ->
     transaction(fun() ->
                 mnesia:select(db_task, [{#db_task{name=Subject, status='$1', _='_'}, [{'/=', '$1', 'archive'}], ['$_']}])
@@ -276,6 +280,16 @@ get_tasks_by_subject(Subject, true) ->
     transaction(fun() ->
                 mnesia:select(db_task, [{#db_task{name=Subject, status='$1', _='_'}, [{'==', '$1', 'archive'}], ['$_']}])
             end).
+save_task_tree(Id, Parent) ->
+    transaction(fun() ->
+                        TT = #db_task_tree{task=Id, parent=Parent},
+                        case mnesia:read(db_task, Id) of
+                            [] ->
+                                mnesia:write(TT#db_task_tree{visible=false});
+                            [_] ->
+                                mnesia:write(TT#db_task_tree{visible=true})
+                        end
+                end).
 
 
 %%%

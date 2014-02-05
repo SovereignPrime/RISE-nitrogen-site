@@ -8,4 +8,5 @@
 -record(db_attachment,{id, file, type, tid}).
 -record(db_group_members, {group, contact}).
 -record(db_expense_tasks, {expense, task}).
+-record(db_task_tree, {task, parent, visible=false}).
 -record(db_search, {text, id}).

@@ -217,13 +217,22 @@ event(Click) ->
 drop_event({task, Id}, subtask) ->
     PId = wf:session(current_task_id),
     if PId /= Id ->
-            db:save_subtask(Id, PId);
+            db:save_subtask(Id, PId),
+            %db:save_task_tree(Id, PId),
+            error_logger:info_msg("SubTask ~p ~p~n", [Id, PId]),
+            common:send_task_tree(Id, PId);
         true ->
             ok
     end;
 drop_event({task, Id}, task) ->
-    #db_task{parent=PId} = wf:session(current_task),
-    db:save_subtask(Id, PId).
+    PId = wf:session(current_task_id),
+    {ok, [#db_task{parent=Parent}]} = db:get_task(PId),
+
+    common:send_task_tree(Id, Parent),
+    error_logger:info_msg("Task ~p ~p~n", [Id, Parent]),
+
+    %db:delete_task_tree(Id, PId),
+    db:save_subtask(Id, Parent).
 
 incoming() ->
     CT = wf:session(current_task_id),

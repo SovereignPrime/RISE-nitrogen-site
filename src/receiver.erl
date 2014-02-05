@@ -163,6 +163,15 @@ apply_message(#message{from=BMF, to=BMT, subject= <<"torrent">>, text=Data, enc=
                     file:rename("scratch/" ++ Path, wf:f("scratch/~s.torrent", [Id]))
         end});
 
+apply_message(#message{from=BMF, to=BMT, subject= <<"Task tree">>, text=Data, enc=6}, FID, ToID) ->
+    #task_tree_packet{task=Task, parent=Parent} = binary_to_term(Data),
+    case db:get_task(Parent) of
+        [] ->
+            ok;
+        _ ->
+            db:save_subtask(Task, Parent)
+    end;
+
 apply_message(#message{from=BMF, to=BMT, subject= <<"Update223322">>, text=Data, enc=2}, FID, ToID) ->
     [BVSN, Torrent] = binary:split(Data, <<";">>, [trim]),
     {ok, CVSN} = application:get_key(nitrogen, 'vsn'),
