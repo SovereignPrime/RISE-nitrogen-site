@@ -142,4 +142,12 @@ img.wfid_img_vcard {
     text-overflow:ellipsis;
     -webkit-box-orient:vertical;
 }
+.wfid_buttons  ul {
+    margin-bottom: 2px;
+    line-height: 1 !important;
+}
+.wfid_connection {
+    text-align:left;
+    margin-left: -3px !important;
+}
 

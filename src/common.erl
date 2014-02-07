@@ -271,7 +271,7 @@ incoming() ->
             (wf:page_module()):incoming(),
             incoming();
         status ->
-            wf:replace(connection, connection_status()),
+            wf:update(connection, connection_status()),
             wf:flush(),
             incoming()
     end.

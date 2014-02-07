@@ -8,7 +8,7 @@
 main() -> 
     PWD = application:get_env(nitrogen, work_dir, "."),
     {ok, Pid} = wf:comet(fun() -> counter(1) end),
-    spawn_link(db, install, [Pid]),
+    %spawn_link(db, install, [Pid]),
     timer:send_interval(1000, Pid, timeout),
     #template { file= PWD ++ "/site/templates/legal.html" }.
 	
@@ -21,7 +21,7 @@ decline() ->
     #link{class="btn btn-link", body="<i class='icon-remove'></i> Decline", postback=decline, new=false}.
 
 progress() ->
-    #panel{id=progress,  style="width:400px;height:3px;display:inline-block;", body=[
+    #panel{id=progress,  style="width:600px;height:3px;display:inline-block;", body=[
                                                                           #panel{text=" ", style="width:3px;height:3px;background-color:#000;display:inline-block;"}
                                                                          ]}.
 
@@ -35,8 +35,7 @@ event(click) ->
 counter(N) ->
     receive
         timeout ->
-            %wf:update(counter, wf:to_list(N)),
-            if N > 120 ->
+            if N > 200 ->
                    wf:remove(pr),
                    wf:flush(),
                    counter(0);
