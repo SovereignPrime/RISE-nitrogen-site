@@ -141,8 +141,8 @@ event(add_file) ->
     Text = wf:to_binary(wf:q(text)),
     Task = wf:session(current_task),
     NTask = Task#db_task{name= TaskName , due=Due, text=Text},
-    wf:session(current_task, NTask);
-
+    wf:session(current_task, NTask),
+    wf:redirect("/files");
 event(save) ->
     TaskName = wf:to_binary(wf:q(name)),
     Due = wf:q(due),

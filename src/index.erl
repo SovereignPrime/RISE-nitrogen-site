@@ -115,7 +115,7 @@ event({fold, #update_element{id=Id}=Update}) ->
 event({reply, Subject, To}) ->
     {ok, Id} = db:next_id(db_update),
     wf:session(current_subject, Subject),
-    wf:session(current_update, #db_update{id=Id, to=To, subject=Subject}),
+    wf:session(current_update, #db_update{id=Id, to=[ To ], subject=Subject}),
     wf:session(attached_files, undefined),
     wf:redirect("/edit_update");
 event(Click) ->

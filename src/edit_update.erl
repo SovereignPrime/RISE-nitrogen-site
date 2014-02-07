@@ -46,7 +46,7 @@ left() ->
                     ]}
                 ]}].
 body() ->
-    #db_update{subject=Subject, to=To}  = wf:session(current_update),
+    #db_update{subject=Subject, text=Text, to=To}  = wf:session(current_update),
     #panel{ class="span9", body=[
             #panel{ class="row-fluid", body=[
                     #panel{ class="input-prepend span12", body=[
@@ -57,11 +57,11 @@ body() ->
                             ]}
                     ]},
             #addable_row{id=roles, num=0, body= #to{}},
-            add_existing_rows([ To ]),
+            add_existing_rows(To),
 
             #panel{ class="row-fluid", body=[
                     #panel{class="span12", body=[
-                            #textarea{class="input-block-level",rows=15, placeholder="Some text here", id=text}
+                            #textarea{class="input-block-level",rows=15, text=Text, placeholder="Some text here", id=text}
                             ]}
 
                     ]}
@@ -97,6 +97,27 @@ add_existing_rows(To) when is_list(To) ->
 add_existing_rows(_To) ->
     [].
     
+event(add_file) ->
+    Subject = wf:q(name),
+    InvolvedS = wf:qs(person),
+    Text = wf:q(text),
+    Update = wf:session(current_update),
+    #db_contact{id=UID} = wf:user(),
+    Involved = lists:map(fun([]) ->
+                    <<"">>;
+                (N) ->
+                    io:format("~p~n", [N]),
+                    I = wf:session(wf:to_binary(N)),
+                    io:format("~p~n", [I]),
+                    {ok,  #db_contact{bitmessage=BM} } = db:get_contact(I),
+                    BM
+            end, InvolvedS) -- [<<"">>],
+    io:format("~p~n", [Involved]),
+    NUpdate = Update#db_update{subject=Subject, text=Text, from=UID, 
+                               to=Involved,
+                               date=date(), status=new},
+    wf:session(current_update, NUpdate),
+    wf:redirect("/files");
 event(save) ->
     Subject = wf:q(name),
     InvolvedS = wf:qs(person),
