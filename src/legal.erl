@@ -8,7 +8,7 @@
 main() -> 
     PWD = application:get_env(nitrogen, work_dir, "."),
     {ok, Pid} = wf:comet(fun() -> counter(1) end),
-    %spawn_link(db, install, [Pid]),
+    spawn_link(db, install, [Pid]),
     timer:send_interval(1000, Pid, timeout),
     #template { file= PWD ++ "/site/templates/legal.html" }.
 	
