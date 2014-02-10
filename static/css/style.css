@@ -134,6 +134,7 @@ h1 .inplace_textbox .label {
 }
 img.wfid_img_vcard {
     height: 150px;
+    width: 150px;
 }
 .shorten-text {
     display:-webkit-box !important;
