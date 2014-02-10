@@ -15,7 +15,13 @@ reflect() -> record_info(fields, update_preview).
 
 -spec render_element(#update_preview{}) -> body().
 render_element(#update_preview{id=Id, icon=Icon, from=From, age=Age, subject=Subject, text=Data, flag=Flag, archive=Archive}) when Icon==3->
-    {ok, #db_contact{name=FromName}} = db:get_contact_by_address(From),
+    FromName = case db:get_contact_by_address(From) of
+                   {ok, #db_contact{name=FN}} ->
+                       FN;
+                   {ok, none} ->
+                       wf:to_list(From)
+               end,
+
     {Text, Attachments, Timestamp} = case Icon of
                3 ->
                    #message_packet{text=T, attachments=A, time=TS} = binary_to_term(Data),

@@ -40,9 +40,12 @@ buttons(main) ->
 left() ->
     left(false).
 left(Archive) ->
-    {ok, Updates} = db:get_updates(Archive),
-    render_left(Updates).
-
+    case db:get_updates(Archive) of
+        {ok, none} ->
+            render_left([]);
+        {ok, Updates} ->
+            render_left(Updates)
+    end.
 render_left(Updates) ->
     Render = [ #update_preview{id=Id, icon=Enc, from=From, age="Age", subject=Subject, text=Text, flag=true, archive=(Status == archive)} || 
       #message{hash=Id, from=From, subject=Subject, text=Text, enc=Enc, status=Status} <- sugar:sort_by_timestamp(Updates)],

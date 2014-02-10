@@ -15,7 +15,12 @@ reflect() -> record_info(fields, update_element).
 
 -spec render_element(#update_element{}) -> body().
 render_element(#update_element{id=Id, from=From, text=Data, age=Age, collapse=true, enc=Enc}=Record) ->
-    {ok, #db_contact{name=FromName}} = db:get_contact_by_address(From),
+    FromName = case db:get_contact_by_address(From) of
+                   {ok, #db_contact{name=FN}} ->
+                       FN;
+                   {ok, none} ->
+                       wf:to_list(From)
+               end,
     {Text, Attachments, Timestamp} = case Enc of
                3 ->
                    #message_packet{text=T, attachments=A, time=TS} = binary_to_term(Data),
@@ -31,7 +36,12 @@ render_element(#update_element{id=Id, from=From, text=Data, age=Age, collapse=tr
                 #panel{class="span2", body=sugar:format_timedelta(TD)}
             ], actions=#event{type=click, postback={unfold, Record}}};
 render_element(#update_element{id=Id, uid=UID, from=From, to=To, text=Data, age=Age, subject=Subject, collapse=false, enc=Enc}=Record) ->
-    {ok, #db_contact{name=FromName}} = db:get_contact_by_address(From),
+    FromName = case db:get_contact_by_address(From) of
+                   {ok, #db_contact{name=FN}} ->
+                       FN;
+                   {ok, none} ->
+                       wf:to_list(From)
+               end,
     {Text, Attachments, Timestamp} = case Enc of
                3 ->
                    #message_packet{text=T, attachments=A, time=TS} = binary_to_term(Data),
