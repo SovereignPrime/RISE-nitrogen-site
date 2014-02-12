@@ -214,12 +214,12 @@ event(show) ->
 event(Click) ->
     io:format("~p~n",[Click]).
 
-drop_event({task, Id}, subtask) ->
-    PId = wf:session(current_task_id),
+drop_event({task, Id}, { subtask, PId }) ->
     if PId /= Id ->
             db:save_subtask(Id, PId),
             %db:save_task_tree(Id, PId),
-            common:send_task_tree(Id, PId);
+            common:send_task_tree(Id, PId),
+            wf:wire(#event{postback={task_chosen, PId}});
         true ->
             ok
     end;
