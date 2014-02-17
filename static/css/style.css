@@ -32,10 +32,13 @@ a, a:hover, a:active {
     text-align: center;
     border: 1px #000 dotted;
 }
-.current {
-    border: #000 1px solid;
+.leaf {
     padding: 4px;
     box-sizing:content-box;
+    margin-bottom: 4px;
+}
+.current {
+    border: #000 1px solid;
 }
 .upload_drop {
     background-color: #fff;
@@ -110,7 +113,7 @@ select.wfid_responsible {
     border: #000 1px solid !important;
     height: 30px;
 }
-.previous>a{
+.previous>a, .next>a{
     border: 0px #000 solid !important;
 }
 .no-padding {
@@ -138,7 +141,6 @@ img.wfid_img_vcard {
 .shorten-text {
     display:-webkit-box !important;
     overflow:hidden;
-    iwidth:90%;
     text-overflow:ellipsis;
     -webkit-box-orient:vertical;
 }

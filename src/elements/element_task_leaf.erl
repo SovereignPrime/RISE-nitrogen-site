@@ -13,9 +13,10 @@ reflect() -> record_info(fields, task_leaf).
 
 -spec render_element(#task_leaf{}) -> body().
 render_element(_Record = #task_leaf{tid=Id, due=Due, name=Task, delegate=Delegate, checked=Checked, current=false}) ->
+    EID = wf:to_atom(binary:decode_unsigned(Id)),
     #draggable{tag={task, Id}, group=tasks, clone=false, body=[
             #droppable{id=task, tag={subtask, Id}, accept_groups=tasks, body=[
-                                           #listitem{class="clearfix", style="margin-bottom: 10px;", body=[
+                                           #listitem{id=EID, class="leaf clearfix", body=[
                                                                      #panel{ class="row-fluid", body=[
                                                                                                       #panel{ class="span1", body=[
 
@@ -29,9 +30,10 @@ render_element(_Record = #task_leaf{tid=Id, due=Due, name=Task, delegate=Delegat
                                                                                                      ]}
                                                                             ], actions=#event{type=click, postback={task_chosen, Id}, delegate=Delegate}}]}]};
 render_element(_Record = #task_leaf{tid=Id, due=Due, name=Task, delegate=Delegate, checked=Checked, current=true}) ->
+    EID = wf:to_atom(binary:decode_unsigned(Id)),
     #draggable{tag={task, Id}, group=tasks, clone=false, body=[
             #droppable{id=task, tag={ subtask, Id }, accept_groups=tasks, body=[
-                    #listitem{class="clearfix current", style="margin-bottom: 10px;", body=[
+                    #listitem{id=EID, class="leaf clearfix current", body=[
                                                                      #panel{ class="row-fluid", body=[
                                                                                                       #panel{ class="span1", body=[
 
@@ -43,11 +45,12 @@ render_element(_Record = #task_leaf{tid=Id, due=Due, name=Task, delegate=Delegat
                                                                                                                                    ]}
                                                                                                      ]}
                             ]}
-                    ]}]};
+                    ], actions=#event{type=click, postback={task_chosen, Id}, delegate=Delegate}}]};
 render_element(_Record = #task_leaf{tid=Id, due=Due, name=Task, delegate=Delegate, checked=Checked, current=parent}) ->
+    EID = wf:to_atom(binary:decode_unsigned(Id)),
     #draggable{tag={task, Id}, group=tasks, clone=false, body=[
             #droppable{id=task, tag={subtask, Id}, accept_groups=tasks, body=[
-                    #listitem{class="clearfix current", style="margin-bottom: 10px;", body=[
+                    #listitem{id=EID, class="leaf clearfix current", body=[
                                                                      #panel{ class="row-fluid", body=[
                                                                                                       #panel{ class="span1", body=[
 

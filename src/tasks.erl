@@ -42,6 +42,15 @@ buttons(main) ->
 
 left() ->
     CId = wf:session(current_task_id),
+    Par = case wf:session(current_task) of
+              #db_task{id=CId, parent=Parent} ->
+                  %{ok, [#db_task{parent=PParent} ]} = db:get_task(Parent),
+                  wf:session(left_parent_id, Parent),
+                  wf:session(right_parent_id, CId),
+                  Parent;
+              _->
+                  undefined
+          end,
     [
         #panel{id=tasks, class="span4", body=[
                 #panel{ class="row-fluid", body=[
@@ -49,18 +58,21 @@ left() ->
                               body=[
                                 #listitem{class="previous", body=[
                                         #link{html_encode=false, text="<i class='icon-arrow-left'></i>", postback={task_list, prrev}}
+                                        ]},
+                                #listitem{class="next", body=[
+                                        #link{html_encode=false, text="<i class='icon-arrow-right'></i>", postback={task_list, next}}
                                         ]}
                                 ]},
                         #panel{ class="row-fluid", body=[
                                 #panel{class="span6", body=[
                                         #droppable{id=groups, tag=task, accept_groups=tasks, body=[
-                                                render_tasks(undefined)
+                                                render_tasks(Par)
                                                 ]}
                                         ]},
                                 #panel{class="span6", body=[
                                         #droppable{id=subgroups, style="height:100%;", tag=subtask, accept_groups=tasks, body=[
                                                 if 
-                                                    CId /= undefined ->
+                                                    CId /= Par->
                                                         render_tasks(CId);
                                                     true ->
                                                         []
@@ -72,19 +84,26 @@ left() ->
                         ]}]}
         ].
 
+
+render_tasks() ->
+    Left = wf:session(left_parent_id),
+    Right = wf:session(right_parent_id),
+    wf:update(groups, render_tasks(Left)),
+    wf:update(subgroups, render_tasks(Right)).
 render_tasks(Parent) ->
     render_tasks(Parent, false).
 render_tasks(Parent, Archive) ->
     CId = wf:session(current_task_id),
+    Par = wf:session(right_parent_id),
     case db:get_tasks(Parent, Archive) of
         {ok, Tasks} ->
             [
                 #list{numbered=false,
-                      body=lists:map(fun(#db_task{name=Task, due=Due, id=Id}) when Id /= CId ->
-                                #task_leaf{tid=Id, name=Task, due=Due, delegate=?MODULE};
-                            (#db_task{name=Task, due=Due, id=Id}) when Id == CId ->
-                                #task_leaf{tid=Id, name=Task, due=Due, delegate=?MODULE, current=true}
-                        end, Tasks)
+                      body=lists:map(fun(#db_task{name=Task, due=Due, id=Id}) when Id == CId; Id == Par ->
+                                             #task_leaf{tid=Id, name=Task, due=Due, delegate=?MODULE, current=true};
+                                        (#db_task{name=Task, due=Due, id=Id})  ->
+                                             #task_leaf{tid=Id, name=Task, due=Due, delegate=?MODULE}
+                                     end, Tasks)
                      },
                 "&nbsp;", #br{},#br{},#br{}
                 ];
@@ -180,19 +199,34 @@ event({show_archive, false}) ->
     wf:update(subgroups, []);
 event({task_chosen, Id}) ->
     wf:session(current_task_id, Id),
-    {ok, [ #db_task{parent=Parent, status=S} = Task ]} = db:get_task(Id),
+    EID = wf:to_atom(binary:decode_unsigned(Id)),
+    Right = wf:session(right_parent_id),
+    {ok, [ #db_task{parent=Par, status=S} = Task ]} = db:get_task(Id),
     wf:session(current_task, Task),
-    wf:update(groups, render_tasks(Parent, (S == archive))),
-    wf:update(subgroups, render_tasks(Id,(S == archive))),
+    wf:session(current_task_id, Id),
+    if Id /= Right, Par /= Right ->
+           wf:session(right_parent_id, Id);
+       true ->
+           ok
+    end,
+    render_tasks(),
     wf:update(body, render_task(Task));
 event({task_list, prrev}) ->
-    #db_task{id=Id, parent=Parent} = wf:session(current_task),
-    wf:session(current_task_id,Parent),
-    {ok, [#db_task{parent=PP}=PT]} = db:get_task(Parent),
-    wf:session(current_task, PT),
-    wf:update(subgroups, render_tasks(Parent)),
-    wf:update(groups, render_tasks(PP)),
-    wf:update(body, render_task(PT));
+    Left = wf:session(left_parent_id),
+    case db:get_task(Left) of
+        {ok,  [ #db_task{id=Left, parent=Parent} ] } ->
+            wf:session(left_parent_id, Parent),
+            wf:session(right_parent_id, Left),
+            render_tasks();
+        {ok, []} ->
+            ok
+    end;
+event({task_list, next}) ->
+    Id = wf:session(current_task_id),
+    Right = wf:session(right_parent_id),
+    wf:session(left_parent_id, Right),
+    wf:session(right_parent_id, Id),
+    render_tasks();
 event({edit, Id}) ->
     Task = wf:session(current_task),
     wf:session(current_task, Task#db_task{status=changed}),
@@ -214,25 +248,24 @@ event(show) ->
 event(Click) ->
     io:format("~p~n",[Click]).
 
-drop_event({task, Id}, { subtask, PId }) ->
-    if PId /= Id ->
+drop_event({task, Id}, { subtask, PId }) when PId /= Id->
+    case db:get_task(PId) of 
+        {ok, [#db_task{parent=Id}]} ->
+            ok;
+        _ ->
             db:save_subtask(Id, PId),
             %db:save_task_tree(Id, PId),
             common:send_task_tree(Id, PId),
-            wf:wire(#event{postback={task_chosen, PId}});
-        true ->
-            ok
+            wf:wire(#event{postback={task_chosen, PId}})
     end;
 drop_event({task, Id}, task) ->
-    PId = wf:session(current_task_id),
-    {ok, [#db_task{parent=Parent}]} = db:get_task(PId),
-    common:send_task_tree(Id, Parent),
+    PId = wf:session(left_parent_id),
+    common:send_task_tree(Id, PId),
     %db:delete_task_tree(Id, PId),
-    db:save_subtask(Id, Parent).
+    db:save_subtask(Id, PId);
+drop_event(_, _) ->
+    ok.
 
 incoming() ->
-    CT = wf:session(current_task_id),
-    {ok, [#db_task{parent=PP}]} = db:get_task(CT),
-    wf:update(groups, tasks:render_tasks(PP)),
-    wf:update(subgroups, tasks:render_tasks(CT)),
+    render_tasks(),
     wf:flush().
