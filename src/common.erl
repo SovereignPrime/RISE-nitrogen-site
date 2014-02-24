@@ -333,3 +333,30 @@ get_torrent(FID) ->
     #db_contact{bitmessage=From} = wf:user(),
     {ok, To} = db:get_owner(FID),
     bitmessage:send_message(From, To, <<"Get torrent">>, wf:to_binary(FID), 6).
+
+backup(#db_contact{id=Id} = Contact) ->
+    {ok, Data} = db:backup(Contact),
+    io:format("Backup data: ~p~n", [length(Data)]),
+    Path = wf:f("scratch/backup_~p.dets", [Id]),
+    file:delete(Path),
+    dets:open_file(backup, [{type, bag}, {file, Path}]),
+    lists:foreach(fun(D) ->
+                          io:format("~p~n", [D]),
+                          ok=dets:insert(backup, D),
+                          dets:sync(backup)
+                  end, Data),
+    io:format("~p~n", [dets:info(backup)]),
+    ok=dets:close(backup).
+restore(FID) ->
+    dets:open_file(backup, [{file, wf:f("scratch/~s", [FID])}, {type, bag}]),
+    [ PrK ] = dets:lookup(backup, privkey),
+    [ #db_contact{bitmessage=MyAddress} = Contact ] = dets:lookup(backup, db_contact),
+    Messages = dets:lookup(backup, message),
+    db:restore(PrK, Contact, Messages),
+    lists:foreach(fun(#message{hash=Hash, from=MyAddress}) ->
+                          receiver ! {msg, Hash};
+                     (_) ->
+                          ok
+                  end, Messages),
+    wf:redirect("/relationships").
+
