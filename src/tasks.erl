@@ -131,6 +131,7 @@ render_task(#db_task{id=Id, name=Name, due=Due, text=Text, parent=Parent, status
             {no, I}
     end,
     TextF = re:replace(Text, "\r*\n", "<br>", [{return, list}, noteol, global]), 
+    {ok, Updates} = db:get_task_history(Id),
 
     [
         #panel{ class="row-fluid", body=[
@@ -183,8 +184,11 @@ render_task(#db_task{id=Id, name=Name, due=Due, text=Text, parent=Parent, status
                                 #attachment{fid=Id, filename=Path, size=Size, time=Date, status=State}
                         end, Attachments)
                     ]
-        end
-        ].
+        end,
+        [
+         #update_element{collapse=true, from=From, to=To, text=Text, uid=Id, subject=Subject, enc=Enc} || #message{hash=Id, enc=Enc, to=To, subject=Subject, from=From, text=Text} <- sugar:sort_by_timestamp(Updates)
+        ] 
+    ].
 
 event({archive, #db_task{id=Id, parent=Parent} = Rec}) ->
     {ok, NTask} = db:archive(Rec),

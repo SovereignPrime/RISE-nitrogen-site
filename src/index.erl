@@ -1,4 +1,5 @@
 %% -*- mode: nitrogen -*-
+%% vim: ts=4 sw=4 et
 -module (index).
 -compile(export_all).
 -include_lib("nitrogen_core/include/wf.hrl").
@@ -51,7 +52,7 @@ left(Archive) ->
     end.
 render_left(Updates) ->
     Render = [ #update_preview{id=Id, icon=Enc, from=From, age="Age", subject=Subject, text=Text, flag=true, archive=(Status == archive)} || 
-      #message{hash=Id, from=From, subject=Subject, text=Text, enc=Enc, status=Status} <- sugar:sort_by_timestamp(Updates)],
+               #message{hash=Id, from=From, subject=Subject, text=Text, enc=Enc, status=Status} <- sugar:sort_by_timestamp(Updates)],
     #panel{id=left,class="span3 scrollable", body=Render}.
 
 body() ->
@@ -69,12 +70,12 @@ render_body(Subject, Archive) ->
     wf:session(current_subject, Subject),
     {ok, Updates} = db:get_updates_by_subject(Subject, Archive),
     [
-        #h1{html_encode=false, text="<i class='icon-globe'></i> " ++ Subject},
-        [
-        #update_element{collapse=true, from=From, to=To, text=Text, uid=Id, subject=Subject, enc=Enc} || #message{hash=Id, enc=Enc, to=To, subject=Subject, from=From, text=Text} <- sugar:sort_by_timestamp(Updates)
-            ] 
-            ].
-	
+     #h1{html_encode=false, text="<i class='icon-globe'></i> " ++ Subject},
+     [
+      #update_element{collapse=true, from=From, to=To, text=Text, uid=Id, subject=Subject, enc=Enc} || #message{hash=Id, enc=Enc, to=To, subject=Subject, from=From, text=Text} <- sugar:sort_by_timestamp(Updates)
+     ] 
+    ].
+
     
 event({selected, Id, Subject, Archive}) ->
     wf:session(current_subject, Subject),
