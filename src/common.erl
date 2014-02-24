@@ -382,9 +382,9 @@ backup(#db_contact{id=Id} = Contact) ->
 restore(FID) ->
     dets:open_file(backup, [{file, wf:f("scratch/~s", [FID])}, {type, bag}]),
     [ PrK ] = dets:lookup(backup, privkey),
-    [ #db_contact{bitmessage=MyAddress} = Contact ] = dets:lookup(backup, db_contact),
+    Contacts = dets:lookup(backup, db_contact),
     Messages = dets:lookup(backup, message),
-    db:restore(PrK, Contact, Messages),
+    {ok, MyAddress} = db:restore(PrK, Contacts, Messages),
     lists:foreach(fun(#message{hash=Hash, to=MyAddress}) ->
                           receiver ! {msg, Hash};
                      (_) ->

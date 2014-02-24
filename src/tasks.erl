@@ -37,7 +37,10 @@ buttons(main) ->
 %                               ]},
                 #listitem{body=[
                                 #link{id=archive, body="<i class='icon-list-alt'></i> Archive", postback={show_archive, true}}
-                            ]}
+                               ]},
+                #listitem{body=[
+                                common:settings_menu()
+                               ]}
                     ]}.
 
 left() ->

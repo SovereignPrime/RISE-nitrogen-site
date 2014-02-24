@@ -477,23 +477,25 @@ get_contacts_by_name(Name) ->
                 end).
 backup(#db_contact{address=Address} = Cotact) ->
     transaction(fun() ->
-                        [ Cotact ] ++
+                        mnesia:select(db_contact, [{#db_contact{status='$1', _='_'}, [{'/=', '$1', 'archive'}], ['$_']}]) ++
                         mnesia:match_object(#privkey{address=Address, _='_'}) ++
                         mnesia:select(incoming, [{#message{to=Address, status='$1', _='_'}, [{'/=', '$1', 'archive'}], ['$_']}]) ++
                         mnesia:select(sent, [{#message{from=Address, status='$1', _='_'}, [{'/=', '$1', 'archive'}], ['$_']}])
                         %mnesia:match_object(#db_task{to=Address, _='_'}) ++
                 end).
-restore(Privkey, #db_contact{bitmessage=MyAddress} = Contact, Messages) ->
-    error_logger:info_msg("My address: ~p~n", [MyAddress]),
+restore(Privkey, Contacts, Messages) ->
     transaction(fun() ->
                         ok=mnesia:write(privkey, Privkey, write),
-                        ok=mnesia:write(db_contact, Contact, write),
+                        lists:foreach(fun(Contact) ->
+                                              mnesia:write(db_contact, Contact, write)
+                                      end, Contacts),
+                        [ #db_contact{bitmessage=MyAddress}] = mnesia:match_object(#db_contact{my=true, _='_'}),
                         lists:foreach(fun(#message{from=F} = Msg) when F == MyAddress ->
-                                              error_logger:info_msg("Msg: ~p~n", [Msg]),
                                               ok=mnesia:write(sent, Msg, write);
                                           (#message{to=F} = Msg) when MyAddress == F ->    
                                               ok=mnesia:write(incoming, Msg, write)
-                                      end, Messages)
+                                      end, Messages),
+                        MyAddress
                 end).
 
 %%%
