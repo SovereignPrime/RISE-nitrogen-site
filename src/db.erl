@@ -484,12 +484,14 @@ backup(#db_contact{address=Address} = Cotact) ->
                         %mnesia:match_object(#db_task{to=Address, _='_'}) ++
                 end).
 restore(Privkey, #db_contact{bitmessage=MyAddress} = Contact, Messages) ->
+    error_logger:info_msg("My address: ~p~n", [MyAddress]),
     transaction(fun() ->
                         ok=mnesia:write(privkey, Privkey, write),
                         ok=mnesia:write(db_contact, Contact, write),
-                        lists:foreach(fun(#message{from=MyAddress} = Msg) ->
+                        lists:foreach(fun(#message{from=F} = Msg) when F == MyAddress ->
+                                              error_logger:info_msg("Msg: ~p~n", [Msg]),
                                               ok=mnesia:write(sent, Msg, write);
-                                          (#message{to=MyAddress} = Msg) ->    
+                                          (#message{to=F} = Msg) when MyAddress == F ->    
                                               ok=mnesia:write(incoming, Msg, write)
                                       end, Messages)
                 end).

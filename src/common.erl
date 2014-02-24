@@ -175,6 +175,19 @@ render_filters() ->
                     end, Filters)
                  }
             ]}.
+settings_menu() ->
+    #panel{ class="btn-group", body=[
+            #link{class="btn dropdown-toggle btn-link", body="<i class='icon-gear'></i> Settings", data_fields=[{toggle, "dropdown"}], url="#", new=false},
+            #list{numbered=false, class="dropdown-menu",
+                  body=[
+                        #listitem{ class="", body=[
+                                                   #link{text="Backup user", postback=backup, delegate=?MODULE}
+                                                  ]},
+                        #listitem{ class="", body=[
+                                                   #link{text="Restore user", postback=restore, delegate=?MODULE}
+                                                  ]}
+                       ]}
+            ]}.
 
 event(add_group) ->
     {ok, Id} = db:next_id(db_group),
@@ -237,6 +250,21 @@ event({search, Term}) ->
 event({save_filter, Term}) ->
     db:save(#db_search{text=Term}),
     wf:wire(#script{script="$('.sigma_search_x_button').click()"});
+event(backup) ->
+    #db_contact{id=Id} = Contact = wf:user(),
+    common:backup(Contact),
+    wf:redirect(wf:f("/raw?id=backup_~p.dets&file=backup_~p.dets", [Id, Id]));
+event(restore) ->
+    wf:insert_bottom("body", #panel{ class="modal fade", body=[
+                                             #panel{ class="modal-header", body=[
+                                                                                 #button{class="btn-link pull-right", text="x", postback=cancel},
+                                                                                 #h3{text="Restore user"}
+                                                                                ]},
+                                             #panel{ class="modal-body", body=[
+                                                                               #upload{id=attachments, tag=restore, delegate=common, droppable=true, show_button=false, droppable_text="Drag and drop backup file here",  multiple=false}
+                                                                              ]}
+                                            ]}),
+    wf:wire(#script{script="$('.modal').modal('show')"});
 event(E) ->
     io:format("Event ~p occured in ~p~n", [E, ?MODULE]).
 
@@ -254,6 +282,10 @@ autocomplete_select_event({struct, [{<<"id">>, K}, {<<"value">>, V}]} = Selected
 
 start_upload_event(_) ->
     ok.
+finish_upload_event(restore, FName, FPath, _Node) ->
+    FID = filename:basename(FPath),
+    common:restore(FID),
+    wf:redirect("/relationships");
 finish_upload_event(filename, FName, FPath, _Node) ->
     FID = filename:basename(FPath),
     io:format("File uploaded: ~p to ~p for ~p~n", [FName, FPath, new]),
@@ -353,7 +385,7 @@ restore(FID) ->
     [ #db_contact{bitmessage=MyAddress} = Contact ] = dets:lookup(backup, db_contact),
     Messages = dets:lookup(backup, message),
     db:restore(PrK, Contact, Messages),
-    lists:foreach(fun(#message{hash=Hash, from=MyAddress}) ->
+    lists:foreach(fun(#message{hash=Hash, to=MyAddress}) ->
                           receiver ! {msg, Hash};
                      (_) ->
                           ok
