@@ -3,6 +3,7 @@
 -module (tasks).
 -compile(export_all).
 -include_lib("nitrogen_core/include/wf.hrl").
+-include_lib("bitmessage/include/bm.hrl").
 -include("records.hrl").
 -include("db.hrl").
 
@@ -75,7 +76,7 @@ left() ->
                                 #panel{class="span6", body=[
                                         #droppable{id=subgroups, style="height:100%;", tag=subtask, accept_groups=tasks, body=[
                                                 if 
-                                                    CId /= Par->
+                                                    CId /= Par, CId /= undefined ->
                                                         render_tasks(CId);
                                                     true ->
                                                         []
@@ -132,6 +133,7 @@ render_task(#db_task{id=Id, name=Name, due=Due, text=Text, parent=Parent, status
     end,
     TextF = re:replace(Text, "\r*\n", "<br>", [{return, list}, noteol, global]), 
     {ok, Updates} = db:get_task_history(Id),
+    io:format("Upd: ~p~n", [Updates]),
 
     [
         #panel{ class="row-fluid", body=[

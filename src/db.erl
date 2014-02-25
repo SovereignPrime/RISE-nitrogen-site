@@ -236,21 +236,25 @@ get_task(Id) ->
 
 get_task_history(Hash) ->
     transaction(fun() ->
-                        mnesia:foldr(fun(#message{hash=Id, enc=4, text=D, status=S}, A) when status /= archive ->
+                    mnesia:foldr(fun(#message{hash=Id, enc=4, text=D, status=S}=Msg, A) when status /= archive ->
                                              case binary_to_term(D) of
-                                                 #db_task{id=Hash}=Task ->
-                                                     A ++ [Task];
+                                                 #task_packet{id=Hash}=Task ->
+                                                     A ++ [Msg];
                                                  _ ->
                                                      A
-                                             end
+                                             end;
+                                        (_, A) ->
+                                            A
                                      end, [], incoming) ++ 
-                        mnesia:foldr(fun(#message{hash=Id, enc=4, text=D, status=S}, A) when status /= archive ->
+                        mnesia:foldr(fun(#message{hash=Id, enc=4, text=D, status=S}=Msg, A) when status /= archive ->
                                              case binary_to_term(D) of
-                                                 #db_task{id=Hash}=Task ->
-                                                     A ++ [Task];
+                                                 #task_packet{id=Hash}=Task ->
+                                                     A ++ [Msg];
                                                  _ ->
                                                      A
-                                             end
+                                             end;
+                                        (_, A) ->
+                                            A
                                      end, [], sent)
                 end).
 
