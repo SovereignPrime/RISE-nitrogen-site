@@ -220,8 +220,7 @@ event(add_update) ->
     {ok, Id} = db:next_id(db_update),
     wf:session(current_subject, undefined),
     wf:session(current_update_id, Id),
-    wf:session(current_update, #db_update{id=Id}),
-    wf:session(attached_files, sets:new()),
+    wf:session(current_update, #db_update{id=Id}), wf:session(attached_files, sets:new()),
     wf:redirect("/edit_update");
 event(check_all) ->
     case wf:q(check_all) of
@@ -254,10 +253,13 @@ event(backup) ->
     #db_contact{id=Id} = Contact = wf:user(),
     common:backup(Contact),
     wf:redirect(wf:f("/raw?id=backup_~p.dets&file=backup_~p.dets", [Id, Id]));
+event(cancel) ->
+    wf:wire(#script{script="$('.modal').modal('hide')"}),
+    wf:remove(".modal");
 event(restore) ->
     wf:insert_bottom("body", #panel{ class="modal fade", body=[
                                              #panel{ class="modal-header", body=[
-                                                                                 #button{class="btn-link pull-right", text="x", postback=cancel},
+                                                                                 #button{class="btn-link pull-right", text="x", postback=cancel, delegate=?MODULE},
                                                                                  #h3{text="Restore user"}
                                                                                 ]},
                                              #panel{ class="modal-body", body=[
