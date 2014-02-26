@@ -75,11 +75,11 @@ render_element(#vcard{id=Id, photo=Photo, name=Name, email=Email, phone=Phone, a
                             #listitem{body=[
                                     #link{body=[
                                             "<i class='icon-list-alt icon-large'></i> Archive"
-                                            ], postback={archive, Address}, new=false}]},
-                            #listitem{body=[
-                                    #link{body=[
-                                            "<i class='icon-save icon-large'></i> Backup user"
-                                            ], postback={backup, Address}, new=false}]}
+                                            ], postback={archive, Address}, new=false}]}
+                       %     #listitem{body=[
+                       %             #link{body=[
+                       %                     "<i class='icon-save icon-large'></i> Backup user"
+                       %                     ], postback={backup, Address}, new=false}]}
                                     ]}
                             ]}
                     ]}
