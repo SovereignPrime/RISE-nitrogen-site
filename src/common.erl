@@ -83,7 +83,7 @@ render_files() ->
                                                                            ]},
             #br{},
             lists:map(fun(#db_file{path=Path, size=Size, date=Date, id=Id, status=Status}) ->
-                        #attachment{filename=Path, size=Size, time=Date, status=Status}
+                        #attachment{fid=Id, filename=Path, size=Size, time=Date, status=Status}
                 end, Attachments)
             ]}.
 
