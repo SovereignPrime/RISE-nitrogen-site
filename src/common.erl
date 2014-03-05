@@ -6,7 +6,7 @@
 -include("db.hrl").
 -include("protokol.hrl").
 
-main() -> 
+main() ->  % {{{1
     PWD = application:get_env(nitrogen, work_dir, "."),
     Timeout = application:get_env(nitrogen, db_timeout, 300),
     case mnesia:wait_for_tables([db_group], Timeout) of
@@ -36,7 +36,7 @@ main() ->
             wf:redirect("/legal")
     end.
 
-connection_status() ->
+connection_status() -> % {{{1
     case ets:info(addrs, size) of
         0 ->
             "<script type='text/javascript'>" ++
@@ -60,7 +60,7 @@ connection_status() ->
             "</script>"
     end.
 
-search() ->
+search() -> %{{{1
     #sigma_search{tag=search, 
                   placeholder="Search", 
                   class="input-append input-block-level search", 
@@ -73,7 +73,7 @@ search() ->
                   results_summary_class="search-results",
                   delegate=?MODULE}.
 
-render_files() ->
+render_files() -> % {{{1
     {ok, Attachments} = db:get_files(sets:to_list(wf:session_default(attached_files, sets:new()))),
     #panel{id=files, class="span12", body=[
                                            #panel{ class="row-fluid", body=[
@@ -87,7 +87,7 @@ render_files() ->
                 end, Attachments)
             ]}.
 
-sigma_search_event(search, Term) ->
+sigma_search_event(search, Term) -> % {{{1
     {ok, {Contacts, Messages, Tasks, Files}} = db:search(Term),
     
     Out = #panel{body=[
@@ -162,7 +162,7 @@ sigma_search_event(search, Term) ->
                 #panel{body=#link{body="<i class='icon icon-filter'></i> Create filter with search", postback={save_filter, Term}, delegate=?MODULE}}
                 
                 ]}}.  
-render_filters() ->
+render_filters() -> %{{{1
     {ok, Filters} = db:get_filters(),
     #panel{ class="btn-group", body=[
             #link{class="btn dropdown-toggle btn-link", body="<i class='icon-filter'></i> Smart filter", data_fields=[{toggle, "dropdown"}], url="#", new=false},
@@ -175,7 +175,7 @@ render_filters() ->
                     end, Filters)
                  }
             ]}.
-settings_menu() ->
+settings_menu() -> %{{{1
     #panel{ class="btn-group", body=[
             #link{class="btn dropdown-toggle btn-link", body="<i class='icon-gear'></i> Settings", data_fields=[{toggle, "dropdown"}], url="#", new=false},
             #list{numbered=false, class="dropdown-menu",
@@ -189,7 +189,7 @@ settings_menu() ->
                        ]}
             ]}.
 
-event(add_group) ->
+event(add_group) -> %{{{1
     {ok, Id} = db:next_id(db_group),
     db:save(#db_group{
             id=Id,
@@ -197,7 +197,7 @@ event(add_group) ->
             subgroups=undefined
             }),
     wf:redirect("/relationships");
-event(add_contact) ->
+event(add_contact) -> %{{{1
     {ok, Id} = db:next_id(db_contact),
     wf:session(current_contact, undefined),
     wf:session(current_contact_id, Id),
@@ -206,57 +206,57 @@ event(add_contact) ->
             name="Contact Name"
             }),
     wf:redirect("/relationships");
-event(add_task) ->
+event(add_task) -> %{{{1
     wf:session(current_task, undefined),
     wf:session(attached_files, sets:new()),
     wf:redirect("/edit_task");
-event(add_expense) ->
+event(add_expense) -> %{{{1
     {ok, Id} = db:next_id(db_expense),
     wf:session(current_expense_id, Id),
     wf:session(current_expense, #db_expense{id=Id}),
     wf:session(attached_files, sets:new()),
     wf:redirect("/edit_expense");
-event(add_update) ->
+event(add_update) -> %{{{1
     {ok, Id} = db:next_id(db_update),
     wf:session(current_subject, undefined),
     wf:session(current_update_id, Id),
     wf:session(current_update, #db_update{id=Id}), wf:session(attached_files, sets:new()),
     wf:redirect("/edit_update");
-event(check_all) ->
+event(check_all) -> %{{{1
     case wf:q(check_all) of
         "on" ->
             wf:replace(check, #checkbox{id=check,  postback=check_all, checked=true, delegate=common});
         undefined ->
             wf:replace(check, #checkbox{id=check,  postback=check_all, checked=false, delegate=common})
     end;
-event({db_contact, Id}) ->
+event({db_contact, Id}) -> %{{{1
     wf:session(current_contact_id, Id),
     wf:redirect("/relationships");
-event({db_update, Id}) ->
+event({db_update, Id}) -> %{{{1
     wf:session(current_subject, Id),
     wf:redirect("/");
-event({db_task, Id}) ->
+event({db_task, Id}) -> %{{{1
     wf:session(current_task_id, Id),
     {ok, [ Task ]} = db:get_task(Id),
     wf:session(current_task, Task),
     wf:redirect("/tasks");
-event({db_file, Id}) ->
+event({db_file, Id}) -> %{{{1
     wf:redirect("/files");
-event({search, Term}) ->
+event({search, Term}) -> %{{{1
     wf:set(".sigma_search_textbox", Term),
     sigma_search_event(search, Term),
     wf:wire(#script{script="$('.sigma_search_textbox').keydown()"});
-event({save_filter, Term}) ->
+event({save_filter, Term}) -> %{{{1
     db:save(#db_search{text=Term}),
     wf:wire(#script{script="$('.sigma_search_x_button').click()"});
-event(backup) ->
+event(backup) -> %{{{1
     #db_contact{id=Id} = Contact = wf:user(),
     common:backup(Contact),
     wf:redirect(wf:f("/raw?id=backup_~p.dets&file=backup_~p.dets", [Id, Id]));
-event(cancel) ->
+event(cancel) -> %{{{1
     wf:wire(#script{script="$('.modal').modal('hide')"}),
     wf:remove(".modal");
-event(restore) ->
+event(restore) -> %{{{1
     wf:insert_bottom("body", #panel{ class="modal fade", body=[
                                              #panel{ class="modal-header", body=[
                                                                                  #button{class="btn-link pull-right", text="x", postback=cancel, delegate=?MODULE},
@@ -267,28 +267,28 @@ event(restore) ->
                                                                               ]}
                                             ]}),
     wf:wire(#script{script="$('.modal').modal('show')"});
-event(E) ->
+event(E) -> %{{{1
     io:format("Event ~p occured in ~p~n", [E, ?MODULE]).
 
-dropevent(A, P) ->
+dropevent(A, P) -> %{{{1
     io:format("Drag ~p drop ~p~n", [A, P]).
 
-autocomplete_enter_event(Term, _Tag) ->
+autocomplete_enter_event(Term, _Tag) -> %{{{1
     io:format("Term ~p~n", [Term]),
     {ok, Contacts} = db:get_contacts_by_group(all),
     List = [{struct, [{id, Id}, {label, wf:to_binary(Name ++ " - " ++ wf:to_list(Email))}, {value, wf:to_binary(Name)}]} || #db_contact{id=Id, name=Name, email=Email} <- Contacts, string:str(string:to_lower(wf:to_list(Name) ++ " - " ++ wf:to_list(Email)), string:to_lower(Term)) > 0],
     mochijson2:encode(List).
-autocomplete_select_event({struct, [{<<"id">>, K}, {<<"value">>, V}]} = Selected, _Tag) ->
+autocomplete_select_event({struct, [{<<"id">>, K}, {<<"value">>, V}]} = Selected, _Tag) -> %{{{1
     io:format("Selected ~p~n", [Selected]),
     wf:session(V, wf:to_integer(K)).
 
-start_upload_event(_) ->
+start_upload_event(_) -> %{{{1
     ok.
-finish_upload_event(restore, FName, FPath, _Node) ->
+finish_upload_event(restore, FName, FPath, _Node) -> %{{{1
     FID = filename:basename(FPath),
     common:restore(FID),
     wf:redirect("/relationships");
-finish_upload_event(filename, FName, FPath, _Node) ->
+finish_upload_event(filename, FName, FPath, _Node) -> %{{{1
     FID = filename:basename(FPath),
     io:format("File uploaded: ~p to ~p for ~p~n", [FName, FPath, new]),
     TName = wf:f("scratch/~s.torrent", [FID]),
@@ -299,7 +299,7 @@ finish_upload_event(filename, FName, FPath, _Node) ->
     wf:session(attached_files, sets:add_element( FID , AF)),
     wf:update(files, render_files()).
 
-incoming() ->
+incoming() -> %{{{1
     receive
         update ->
             (wf:page_module()):incoming(),
@@ -309,8 +309,7 @@ incoming() ->
             wf:flush(),
             incoming()
     end.
-
-save_involved(Type, TId) ->
+save_involved(Type, TId) -> %{{{1
     Involved = wf:qs(person),
     Role = wf:qs(responsible),
     io:format("~p ~p~n", [Involved, Role]),
@@ -322,14 +321,14 @@ save_involved(Type, TId) ->
                 db:save(P#db_contact_roles{id=NPId, contact=CID})
         end, List).
 
-send_messages(#db_update{subject=Subject, text=Text, from=FID, to=Contacts, date=Date}=U) ->
+send_messages(#db_update{subject=Subject, text=Text, from=FID, to=Contacts, date=Date}=U) -> %{{{1
     #db_contact{address=From} = wf:user(),
     {ok, Attachments} = db:get_attachments(U),
     MSG = term_to_binary(#message_packet{subject=Subject, text=Text, involved=[From | Contacts], attachments=Attachments, time=bm_types:timestamp()}),
     lists:foreach(fun(To) ->
                       bitmessage:send_message(From, wf:to_binary(To), wf:to_binary(Subject), MSG, 3)
                   end, Contacts);
-send_messages(#db_task{id=UID, name=Subject, text=Text, due=Date, parent=Parent, status=Status} = U) ->
+send_messages(#db_task{id=UID, name=Subject, text=Text, due=Date, parent=Parent, status=Status} = U) -> %{{{1
     {ok, Involved} = db:get_involved(UID),
     Contacts = [#role_packet{address=C, role=R} || {_, R, #db_contact{bitmessage=C}}  <- Involved],
     #db_contact{address=From} = wf:user(),
@@ -344,7 +343,7 @@ send_messages(#db_task{id=UID, name=Subject, text=Text, due=Date, parent=Parent,
                 ok
         end, Contacts).
 
-send_task_tree(Id, Parent) ->
+send_task_tree(Id, Parent) -> %{{{1
     {ok, Involved } = db:get_involved(Id),
     #db_contact{bitmessage=From} = wf:user(),
     lists:foreach(fun({_, _, #db_contact{bitmessage=To, my=false}}) ->
@@ -356,19 +355,19 @@ send_task_tree(Id, Parent) ->
 
 
 
-encode_attachments(Attachments) ->
+encode_attachments(Attachments) -> %{{{1
     AttachmentsL = lists:map(fun(#db_file{user=UID}=A) ->
                     {ok, #db_contact{bitmessage=Addr}} = db:get_contact(UID),
                     term_to_binary(A#db_file{user=Addr})
             end, Attachments),
     <<"Attachments:", << <<A/bytes,";">> || A <- AttachmentsL>>/bytes, 10>>.
 
-get_torrent(FID) ->
+get_torrent(FID) -> %{{{1
     #db_contact{bitmessage=From} = wf:user(),
     {ok, To} = db:get_owner(FID),
     bitmessage:send_message(From, To, <<"Get torrent">>, wf:to_binary(FID), 6).
 
-backup(#db_contact{id=Id} = Contact) ->
+backup(#db_contact{id=Id} = Contact) -> %{{{1
     {ok, Data} = db:backup(Contact),
     io:format("Backup data: ~p~n", [length(Data)]),
     Path = wf:f("scratch/backup_~p.dets", [Id]),
@@ -381,7 +380,7 @@ backup(#db_contact{id=Id} = Contact) ->
                   end, Data),
     io:format("~p~n", [dets:info(backup)]),
     ok=dets:close(backup).
-restore(FID) ->
+restore(FID) -> %{{{1
     dets:open_file(backup, [{file, wf:f("scratch/~s", [FID])}, {type, bag}]),
     [ PrK ] = dets:lookup(backup, privkey),
     Contacts = dets:lookup(backup, db_contact),

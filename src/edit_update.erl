@@ -11,9 +11,9 @@ title() -> "Welcome to Nitrogen".
 
 icon() -> "<i class='icon-globe icon-2x'></i>".
 
-buttons(left) ->
+buttons(left) -> % {{{1
     "";
-buttons(main) ->
+buttons(main) -> % {{{1
     #panel{class='row-fluid', body=[
             #panel{class='span9 offset3', body=[
                     #panel{class="row-fluid", body=[
@@ -24,7 +24,7 @@ buttons(main) ->
                     ]}
             ]}.
 
-left() ->
+left() -> % {{{1
     Subject = wf:session(current_subject),
     {ok, Updates} = db:get_updates_by_subject(Subject),
     [
@@ -45,7 +45,7 @@ left() ->
                     end
                     ]}
                 ]}].
-body() ->
+body() -> % {{{1
     #db_update{subject=Subject, text=Text, to=To}  = wf:session(current_update),
     #panel{ class="span9", body=[
             #panel{ class="row-fluid", body=[
@@ -74,13 +74,13 @@ body() ->
 %                    ]}
             ]}.
             
-add_existing_rows(To) when is_list(To) ->
+add_existing_rows(To) when is_list(To) -> % {{{1
     Tos = lists:zip(To, lists:seq(1, length(To))),
     ToN = lists:filter(fun({ T, N }) ->
                 case db:get_contact_by_address(T) of
                     {ok, #db_contact{id=CID, name=Name} } ->
                         wf:session(wf:to_binary(Name), CID),
-                        element_addable_row:event({add, #addable_row{id=roles, num= N - 1, body=#to{text=Name}}}), 
+                        element_addable_row:event({add, #addable_row{id=roles, num= N - 1, body=#to{text=Name} }}), 
                         true;
                     _ ->
                         false
@@ -91,13 +91,13 @@ add_existing_rows(To) when is_list(To) ->
             ok;
         _ ->
             element_addable_row:event({del, #addable_row{id=roles, num= 0}}),
-            element_addable_row:event({add, #addable_row{id=roles, num= length(Tos), body=#to{}}})
+            element_addable_row:event({add, #addable_row{id=roles, num= length(Tos), body=#to{} }})
     end,
     [];
-add_existing_rows(_To) ->
+add_existing_rows(_To) -> % {{{1
     [].
     
-event(add_file) ->
+event(add_file) -> % {{{1
     Subject = wf:q(name),
     InvolvedS = wf:qs(person),
     Text = wf:q(text),
@@ -118,7 +118,7 @@ event(add_file) ->
                                date=date(), status=new},
     wf:session(current_update, NUpdate),
     wf:redirect("/files");
-event(save) ->
+event(save) -> % {{{1
     Subject = wf:q(name),
     InvolvedS = wf:qs(person),
     Text = wf:q(text),
@@ -141,5 +141,5 @@ event(save) ->
     db:save_attachments(NUpdate, wf:session_default(attached_files, sets:new())),
     common:send_messages(NUpdate),
     wf:redirect("/");
-event(Ev) ->
+event(Ev) -> % {{{1
     io:format("Event ~p in module ~p~n", [Ev, ?MODULE]).
