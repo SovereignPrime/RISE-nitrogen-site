@@ -94,3 +94,10 @@
                      sub,
                      archive=false
     }).
+-record(progressbar, {?ELEMENT_BASE(element_progressbar),
+                      border_color="#000",
+                      color="#000",
+                      progress=0,
+                      width=100,
+                      bg="#fff"
+    }).

@@ -25,9 +25,9 @@ render_element(_Record = #file_row{fid=FID, id=Id, name=Name, type=Type, size=Si
     {ok, Linked} = db:get_linked_messages(FID),
     {Leechers, Seed, Percent} = case ets:match_object(etorrent_torrent,#torrent{display_name=wf:to_binary(Id), _='_'}) of
         [#torrent{leechers=L, seeders=S, left=Left, total=Total}] ->
-            {L, S, wf:to_list((Total - Left)  * 100 / Total)};
+            {L, S, ((Total - Left)  * 100 / Total)};
         [] ->
-            {0, 0, wf:to_list(0)}
+            {0, 0, 0}
     end,
     Peer = Leechers + Seed,
     Check =  sets:is_element(FID, wf:session_default(attached_files, sets:new())),
@@ -41,11 +41,11 @@ render_element(_Record = #file_row{fid=FID, id=Id, name=Name, type=Type, size=Si
             #tablecell{text=For, class=""},
             #tablecell{text=Linked, class=""},
             #tablecell{text=sugar:date_format(Date), class=""},
-            #tablecell{text=Seed, class=""},
-            #tablecell{text=Peer, class=""},
+            %#tablecell{text=Seed, class=""},
+            %#tablecell{text=Peer, class=""},
             case Status of
                 downloading ->
-                    #tablecell{text=Percent, class=""};
+                    #tablecell{body=#progressbar{progress=Percent, width=80}, class=""};
                 _ ->
                     #tablecell{text=Status, class=""}
             end
