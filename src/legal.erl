@@ -6,7 +6,7 @@
 -include("records.hrl").
 
 main() -> 
-    PWD = application:get_env(nitrogen, work_dir, "."),
+    PWD = os:get_env("ROOTDIR"),
     {ok, Pid} = wf:comet(fun() -> counter(1) end),
     spawn_link(db, install, [Pid]),
     timer:send_interval(1000, Pid, timeout),

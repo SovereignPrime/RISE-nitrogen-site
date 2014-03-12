@@ -7,7 +7,7 @@
 -include("protokol.hrl").
 
 main() ->  % {{{1
-    PWD = application:get_env(nitrogen, work_dir, "."),
+    PWD = os:get_env("ROOTDIR"),
     Timeout = application:get_env(nitrogen, db_timeout, 300),
     case mnesia:wait_for_tables([db_group], Timeout) of
         ok ->
