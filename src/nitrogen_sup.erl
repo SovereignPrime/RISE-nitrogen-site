@@ -33,7 +33,7 @@ init([]) ->
     {ok, BindAddress} = application:get_env(cowboy, bind_address),
     {ok, Port} = application:get_env(cowboy, port),
     {ok, ServerName} = application:get_env(cowboy, server_name),
-    {ok, DocRoot} = application:get_env(cowboy, document_root),
+    DocRoot = os:getenv("DOC_ROOT"),
     {ok, StaticPaths} = application:get_env(cowboy, static_paths),
 
     io:format("Starting Cowboy Server (~s) on ~s:~p, root: '~s'~n",
