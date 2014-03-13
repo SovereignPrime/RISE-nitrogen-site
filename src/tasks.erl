@@ -169,23 +169,23 @@ render_task(#db_task{id=Id, name=Name, due=Due, text=Text, parent=Parent, status
                 #panel{ class="span12", body=TextF}
                 ]},
         case db:get_attachments(Task) of
-            {ok, []} ->  % {{{1
+            {ok, []} ->
                 [];
-            {ok, [], undefined} ->  % {{{1
+            {ok, [], undefined} ->
                 [];
-            {ok, Attachments} ->  % {{{1
+            {ok, Attachments} ->
                 [
                     #panel{class="row-fluid", body=[
                             #panel{class="span6", body="<i class='icon-file-alt'></i> Attachment"},
                             #panel{class="span2 offset4", body="<i class='icon-download-alt'></i> Download all"}
                             ]},
-                    lists:map(fun(#db_file{path=Path, size=Size, date=Date, id=Id, status=State}) ->  % {{{1
+                    lists:map(fun(#db_file{path=Path, size=Size, date=Date, id=Id, status=State}) ->
                                 #attachment{fid=Id, filename=Path, size=Size, time=Date, status=State}
                         end, Attachments)
                     ]
         end,
         [
-         #update_element{collapse=true, from=From, to=To, text=Text, uid=Id, subject=Subject, enc=Enc} || #message{hash=Id, enc=Enc, to=To, subject=Subject, from=From, text=Text} <- sugar:sort_by_timestamp(Updates)
+         #update_element{collapse=true, from=From, to=To, text=Text, uid=Id, subject=Subject, enc=Enc, status=Status} || #message{hash=Id, enc=Enc, to=To, subject=Subject, from=From, text=Text, status=Status} <- sugar:sort_by_timestamp(Updates)
         ] 
     ].
 
