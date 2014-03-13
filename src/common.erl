@@ -395,5 +395,7 @@ restore(FID) -> %{{{1
                      (_) ->
                           ok
                   end, Messages),
+    {ok, [Me]} = db:get_my_accounts(),
+    wf:user(Me),
     wf:redirect("/relationships").
 
