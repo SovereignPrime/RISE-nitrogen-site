@@ -44,7 +44,7 @@ render_element(#update_element{id=Id, from=From, text=Data, age=Age, collapse=tr
                                                     "&nbsp;<i class='icon-mail-forward'></i>"
                                             end
                                            ]}
-            ], actions=#event{type=click, postback={unfold, Record}}};
+            ], actions=#event{type=click, postback={unfold, Record}, delegate=common}};
 render_element(#update_element{id=Id, uid=UID, from=From, to=To, text=Data, age=Age, subject=Subject, collapse=false, enc=Enc, status=Status}=Record) -> % {{{1
     FromName = case db:get_contact_by_address(From) of
                    {ok, #db_contact{name=FN}} ->
@@ -75,7 +75,7 @@ render_element(#update_element{id=Id, uid=UID, from=From, to=To, text=Data, age=
                                                     "&nbsp;<i class='icon-mail-forward'></i>"
                                             end
                        ]}
-                ], actions=#event{type=click, postback={fold, Record} }},
+                ], actions=#event{type=click, postback={fold, Record}, delegate=common}},
         #panel{class="row-fluid", body=[
                 #panel{class="span12", body=Text}
                 ]},

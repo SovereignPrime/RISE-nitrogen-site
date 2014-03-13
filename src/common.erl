@@ -271,6 +271,28 @@ event(restore) -> %{{{1
                                                                               ]}
                                             ]}),
     wf:wire(#script{script="$('.modal').modal('show')"});
+event({unfold, #update_element{id=Id, uid=Uid, enc=Enc}=Update}) -> % {{{1
+    case Enc of
+        3 -> % {{{1
+            {ok,Attachments} = db:get_attachments(#db_update{id=Uid});
+        4 -> % {{{1
+            {ok,Attachments} = db:get_attachments(#db_task{id=Uid})
+    end,
+
+    case db:set_read(Uid) of
+        {ok, new} -> % {{{1
+                New = wf:session(unread) - 1,
+                wf:session(unread, New),
+                wf:replace(count, #span{id=count, class='label label-inverse',text=wf:f("~p new", [New])});
+        {ok, _} -> % {{{1
+            ok
+    end,
+
+    wf:replace(Id, Update#update_element{collapse=false, attachments=[
+                #attachment{fid=FId, filename=File, size=Size, time=Time, status=Status} || #db_file{id=FId, path=File, size=Size, date=Time, status=Status} <- Attachments
+                                                               ]});
+event({fold, #update_element{id=Id}=Update}) -> % {{{1
+    wf:replace(Id, Update#update_element{collapse=true});
 event(E) -> %{{{1
     io:format("Event ~p occured in ~p~n", [E, ?MODULE]).
 
