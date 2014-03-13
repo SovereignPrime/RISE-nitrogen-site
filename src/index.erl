@@ -14,10 +14,6 @@ title() -> "Welcome to Nitrogen".
 
 icon() -> "<i class='icon-globe icon-2x' style='margin-top:-5px;'></i>".
 
-buttons(left) ->
-    {ok, New} = db:get_unread_updates(),
-    wf:session(unread, length(New)),
-    #span{id=count, class='label label-inverse',text=wf:f("~p new", [length(New)])};
 buttons(main) ->
     #list{class="nav nav-pills", style="display:inline-block;", numbered=false,
           body=[

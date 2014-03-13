@@ -14,22 +14,20 @@ title() -> "Hello from relationships.erl!".
 icon() -> #image{image="/img/tasks.svg", class="icon", style="height: 32px;"}.
 
 
-buttons(left) ->
-    #button{id=hide_show, class="btn btn-link", body="<i class='icon-angle-left'></i> Hide tasks", 
-            actions=#event{type=click, actions=[
-                                                #hide{trigger=hide_show,target=tasks}, 
-                                                #event{postback=hide}
-                                               ]}};
-buttons(main) ->
+buttons(main) ->  % {{{1
     #list{numbered=false, class="nav nav-pills", style="display:inline-block",
           body=[
 %                #listitem{body=[
 %
 %                                %#panel{ class='span2', body="<i class='icon-user'></i> All accounts"},
 %                               ]},
-%                #listitem{body=[
-%                                %#panel{ class='span2', body=},
-%                               ]},
+                #listitem{body=[
+                                #button{id=hide_show, class="btn btn-link", body="<i class='icon-angle-left'></i> Hide tasks", 
+                                        actions=#event{type=click, actions=[
+                                                                            #hide{trigger=hide_show,target=tasks}, 
+                                                                            #event{postback=hide}
+                                                                           ]}}
+                               ]},
                 #listitem{body=[
                                 common:render_filters()
                                ]},
@@ -44,9 +42,9 @@ buttons(main) ->
                                ]}
                     ]}.
 
-left() ->
+left() ->  % {{{1
     CId = wf:session(current_task_id),
-    Par = case wf:session(current_task) of
+    Par = case wf:session(current_task) of  % {{{2
               #db_task{id=CId, parent=Parent} ->
                   %{ok, [#db_task{parent=PParent} ]} = db:get_task(Parent),
                   wf:session(left_parent_id, Parent),
@@ -75,8 +73,7 @@ left() ->
                                         ]},
                                 #panel{class="span6", body=[
                                         #droppable{id=subgroups, style="height:100%;", tag=subtask, accept_groups=tasks, body=[
-                                                if 
-                                                    CId /= Par, CId /= undefined ->
+                                                if CId /= Par, CId /= undefined ->  % {{{3
                                                         render_tasks(CId);
                                                     true ->
                                                         []
@@ -89,23 +86,23 @@ left() ->
         ].
 
 
-render_tasks() ->
+render_tasks() ->  % {{{1
     Left = wf:session(left_parent_id),
     Right = wf:session(right_parent_id),
     wf:update(groups, render_tasks(Left)),
     wf:update(subgroups, render_tasks(Right)).
-render_tasks(Parent) ->
+render_tasks(Parent) ->  % {{{1
     render_tasks(Parent, false).
-render_tasks(Parent, Archive) ->
+render_tasks(Parent, Archive) ->  % {{{1
     CId = wf:session(current_task_id),
     Par = wf:session(right_parent_id),
-    case db:get_tasks(Parent, Archive) of
+    case db:get_tasks(Parent, Archive) of  % {{{2
         {ok, Tasks} ->
             [
                 #list{numbered=false,
-                      body=lists:map(fun(#db_task{name=Task, due=Due, id=Id}) when Id == CId; Id == Par ->
+                      body=lists:map(fun(#db_task{name=Task, due=Due, id=Id}) when Id == CId; Id == Par ->  % {{{3
                                              #task_leaf{tid=Id, name=Task, due=Due, delegate=?MODULE, current=true};
-                                        (#db_task{name=Task, due=Due, id=Id})  ->
+                                        (#db_task{name=Task, due=Due, id=Id})  ->  % {{{3
                                              #task_leaf{tid=Id, name=Task, due=Due, delegate=?MODULE}
                                      end, Tasks)
                      },
@@ -117,18 +114,18 @@ render_tasks(Parent, Archive) ->
                 ]
     end.
 
-body() ->
+body() ->  % {{{1
     #db_task{id=Id, name=Name, due=Due, text=Text, parent=Parent, status=Status}=Task = wf:session_default(current_task, #db_task{text=""}),
     #panel{id=body, class="span8", body=
            [
             render_task(Task)
             ]}.
-render_task(#db_task{id=Id, name=Name, due=Due, text=Text, parent=Parent, status=Status}=Task) ->
+render_task(#db_task{id=Id, name=Name, due=Due, text=Text, parent=Parent, status=Status}=Task) ->  % {{{1
     {ok, Involved} = db:get_involved(Id),
     {My, InvolvedN} = case lists:partition(fun({"Me", _, _}) -> true; (_) -> false end, Involved) of
-        {[{_,M, _}], I} ->
+        {[{_,M, _}], I} ->  % {{{1
             {M, I};
-        {[], I} ->
+        {[], I} ->  % {{{1
             {no, I}
     end,
     TextF = re:replace(Text, "\r*\n", "<br>", [{return, list}, noteol, global]), 
@@ -143,7 +140,7 @@ render_task(#db_task{id=Id, name=Name, due=Due, text=Text, parent=Parent, status
                         "Due: ", Due , #br{},
                         #br{},
                         "My role - ", My, #br{},
-                        lists:map(fun({Name, Role, _}) ->
+                        lists:map(fun({Name, Role, _}) ->  % {{{1
                                     [ Name, " - ", Role, #br{}]
                             end, InvolvedN)
                         ]},
@@ -172,17 +169,17 @@ render_task(#db_task{id=Id, name=Name, due=Due, text=Text, parent=Parent, status
                 #panel{ class="span12", body=TextF}
                 ]},
         case db:get_attachments(Task) of
-            {ok, []} ->
+            {ok, []} ->  % {{{1
                 [];
-            {ok, [], undefined} ->
+            {ok, [], undefined} ->  % {{{1
                 [];
-            {ok, Attachments} ->
+            {ok, Attachments} ->  % {{{1
                 [
                     #panel{class="row-fluid", body=[
                             #panel{class="span6", body="<i class='icon-file-alt'></i> Attachment"},
                             #panel{class="span2 offset4", body="<i class='icon-download-alt'></i> Download all"}
                             ]},
-                    lists:map(fun(#db_file{path=Path, size=Size, date=Date, id=Id, status=State}) ->
+                    lists:map(fun(#db_file{path=Path, size=Size, date=Date, id=Id, status=State}) ->  % {{{1
                                 #attachment{fid=Id, filename=Path, size=Size, time=Date, status=State}
                         end, Attachments)
                     ]
@@ -192,89 +189,89 @@ render_task(#db_task{id=Id, name=Name, due=Due, text=Text, parent=Parent, status
         ] 
     ].
 
-event({archive, #db_task{id=Id, parent=Parent} = Rec}) ->
+event({archive, #db_task{id=Id, parent=Parent} = Rec}) ->  % {{{1
     {ok, NTask} = db:archive(Rec),
     common:send_messages(NTask),
     wf:update(groups, render_tasks(Parent)),
     wf:update(subgroups, render_tasks(Id)),
     wf:update(body, render_task(Rec));
-event({show_archive, true}) ->
+event({show_archive, true}) ->  % {{{1
     wf:update(groups, render_tasks(undefined, true)),
     wf:replace(archive, #link{id=archive, body="<i class='icon-list-alt'></i> Actual", postback={show_archive, false}}),
     wf:update(subgroups, []);
-event({show_archive, false}) ->
+event({show_archive, false}) ->  % {{{1
     wf:update(groups, render_tasks(undefined, false)),
     wf:replace(archive, #link{id=archive, body="<i class='icon-list-alt'></i> Archive", postback={show_archive, true}}),
     wf:update(subgroups, []);
-event({task_chosen, Id}) ->
+event({task_chosen, Id}) ->  % {{{1
     wf:session(current_task_id, Id),
     EID = wf:to_atom(binary:decode_unsigned(Id)),
     Right = wf:session(right_parent_id),
     {ok, [ #db_task{parent=Par, status=S} = Task ]} = db:get_task(Id),
     wf:session(current_task, Task),
     wf:session(current_task_id, Id),
-    if Id /= Right, Par /= Right ->
+    if Id /= Right, Par /= Right ->  % {{{1
            wf:session(right_parent_id, Id);
-       true ->
+       true ->  % {{{1
            ok
     end,
     render_tasks(),
     wf:update(body, render_task(Task));
-event({task_list, prrev}) ->
+event({task_list, prrev}) ->  % {{{1
     Left = wf:session(left_parent_id),
     case db:get_task(Left) of
-        {ok,  [ #db_task{id=Left, parent=Parent} ] } ->
+        {ok,  [ #db_task{id=Left, parent=Parent} ] } ->  % {{{1
             wf:session(left_parent_id, Parent),
             wf:session(right_parent_id, Left),
             render_tasks();
-        {ok, []} ->
+        {ok, []} ->  % {{{1
             ok
     end;
-event({task_list, next}) ->
+event({task_list, next}) ->  % {{{1
     Id = wf:session(current_task_id),
     Right = wf:session(right_parent_id),
     wf:session(left_parent_id, Right),
     wf:session(right_parent_id, Id),
     render_tasks();
-event({edit, Id}) ->
+event({edit, Id}) ->  % {{{1
     Task = wf:session(current_task),
     wf:session(current_task, Task#db_task{status=changed}),
     wf:redirect("/edit_task");
-event(hide) ->
+event(hide) ->  % {{{1
     wf:wire(body, [#remove_class{class="span8"}, #add_class{class="span12"}]),
     wf:replace(hide_show, #button{id=hide_show, class="btn btn-link", body="Show tasks <i class='icon-angle-right'></i>", 
                                     actions=#event{type=click, actions=[
                                         #show{trigger=hide_show,target=tasks}, 
                                         #event{postback=show}
                                         ]}});
-event(show) ->
+event(show) ->  % {{{1
     wf:wire(body, [#remove_class{class="span12"}, #add_class{class="span8"}]),
     wf:replace(hide_show, #button{id=hide_show, class="btn btn-link", body="<i class='icon-angle-left'></i> Hide tasks", 
                                     actions=#event{type=click, actions=[
                                         #hide{trigger=hide_show,target=tasks}, 
                                         #event{postback=hide}
                                         ]}});
-event(Click) ->
+event(Click) ->  % {{{1
     io:format("~p~n",[Click]).
 
-drop_event({task, Id}, { subtask, PId }) when PId /= Id->
+drop_event({task, Id}, { subtask, PId }) when PId /= Id->  % {{{1
     case db:get_task(PId) of 
-        {ok, [#db_task{parent=Id}]} ->
+        {ok, [#db_task{parent=Id}]} ->  % {{{1
             ok;
-        _ ->
+        _ ->  % {{{1
             db:save_subtask(Id, PId),
             %db:save_task_tree(Id, PId),
             common:send_task_tree(Id, PId),
             wf:wire(#event{postback={task_chosen, PId}})
     end;
-drop_event({task, Id}, task) ->
+drop_event({task, Id}, task) ->  % {{{1
     PId = wf:session(left_parent_id),
     common:send_task_tree(Id, PId),
     %db:delete_task_tree(Id, PId),
     db:save_subtask(Id, PId);
-drop_event(_, _) ->
+drop_event(_, _) ->  % {{{1
     ok.
 
-incoming() ->
+incoming() ->  % {{{1
     render_tasks(),
     wf:flush().

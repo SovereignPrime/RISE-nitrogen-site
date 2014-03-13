@@ -14,14 +14,12 @@ title() -> "Hello from relationships.erl!".
 
 icon() -> "<i class='icon-user icon-2x'></i>".
 
-buttons(left) ->
-    #link{style="display:inline-block;text-align:right;",  body="<i class='icon-envelope-alt'></i> Email connect", postback=invite};
 buttons(main) ->
     #list{numbered=false, class="nav nav-pills", style="display:inline-block;",
         body=[
-%            #listitem{body=[
-%                            %#panel{ class='span2', body="<i class='icon-user'></i> All accounts"},
-%                           ]},
+            #listitem{body=[
+                            #link{style="display:inline-block;text-align:right;",  body="<i class='icon-envelope-alt'></i> Email connect", postback=invite}
+                           ]},
             #listitem{body=[
                             common:render_filters()
                            ]},
