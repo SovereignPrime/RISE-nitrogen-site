@@ -90,7 +90,11 @@ render_tasks() ->  % {{{1
     Left = wf:session(left_parent_id),
     Right = wf:session(right_parent_id),
     wf:update(groups, render_tasks(Left)),
-    wf:update(subgroups, render_tasks(Right)).
+    if Right /= undefined ->
+           wf:update(subgroups, render_tasks(Right));
+       true ->
+           ok
+    end.
 render_tasks(Parent) ->  % {{{1
     render_tasks(Parent, false).
 render_tasks(Parent, Archive) ->  % {{{1
@@ -122,12 +126,12 @@ body() ->  % {{{1
             ]}.
 render_task(#db_task{id=Id, name=Name, due=Due, text=Text, parent=Parent, status=Status}=Task) ->  % {{{1
     {ok, Involved} = db:get_involved(Id),
-    {My, InvolvedN} = case lists:partition(fun({"Me", _, _}) -> true; (_) -> false end, Involved) of
-        {[{_,M, _}], I} ->  % {{{1
+    {My, InvolvedN} = case lists:partition(fun({"Me", _, _}) -> true; (_) -> false end, Involved) of % {{{2
+        {[{_,M, _}], I} ->  
             {M, I};
-        {[], I} ->  % {{{1
+        {[], I} ->  
             {no, I}
-    end,
+    end, %}}}
     TextF = re:replace(Text, "\r*\n", "<br>", [{return, list}, noteol, global]), 
     {ok, Updates} = db:get_task_history(Id),
     io:format("Upd: ~p~n", [Updates]),
@@ -140,9 +144,9 @@ render_task(#db_task{id=Id, name=Name, due=Due, text=Text, parent=Parent, status
                         "Due: ", Due , #br{},
                         #br{},
                         "My role - ", My, #br{},
-                        lists:map(fun({Name, Role, _}) ->  % {{{1
+                        lists:map(fun({Name, Role, _}) ->  % {{{2
                                     [ Name, " - ", Role, #br{}]
-                            end, InvolvedN)
+                            end, InvolvedN) % }}}
                         ]},
                 #panel{ class="span1", body=[
                         #panel{class="btn btn-link", body = #link{body=[
@@ -168,7 +172,7 @@ render_task(#db_task{id=Id, name=Name, due=Due, text=Text, parent=Parent, status
         #panel{ class="row-fluid", body=[
                 #panel{ class="span12", body=TextF}
                 ]},
-        case db:get_attachments(Task) of
+        case db:get_attachments(Task) of % {{{2
             {ok, []} ->
                 [];
             {ok, [], undefined} ->
@@ -183,11 +187,11 @@ render_task(#db_task{id=Id, name=Name, due=Due, text=Text, parent=Parent, status
                                 #attachment{fid=Id, filename=Path, size=Size, time=Date, status=State}
                         end, Attachments)
                     ]
-        end,
+        end, % }}}
         [
          #update_element{collapse=true, from=From, to=To, text=Text, uid=Id, subject=Subject, enc=Enc, status=Status} || #message{hash=Id, enc=Enc, to=To, subject=Subject, from=From, text=Text, status=Status} <- sugar:sort_by_timestamp(Updates)
         ] 
-    ].
+    ]. % }}}
 
 event({archive, #db_task{id=Id, parent=Parent} = Rec}) ->  % {{{1
     {ok, NTask} = db:archive(Rec),
@@ -210,23 +214,23 @@ event({task_chosen, Id}) ->  % {{{1
     {ok, [ #db_task{parent=Par, status=S} = Task ]} = db:get_task(Id),
     wf:session(current_task, Task),
     wf:session(current_task_id, Id),
-    if Id /= Right, Par /= Right ->  % {{{1
+    if Right == undefined; Id /= Right, Par /= Right ->  % {{{2
            wf:session(right_parent_id, Id);
-       true ->  % {{{1
+       true ->  
            ok
-    end,
+    end, % }}}
     render_tasks(),
     wf:update(body, render_task(Task));
 event({task_list, prrev}) ->  % {{{1
     Left = wf:session(left_parent_id),
     case db:get_task(Left) of
-        {ok,  [ #db_task{id=Left, parent=Parent} ] } ->  % {{{1
+        {ok,  [ #db_task{id=Left, parent=Parent} ] } ->  % {{{2
             wf:session(left_parent_id, Parent),
             wf:session(right_parent_id, Left),
             render_tasks();
-        {ok, []} ->  % {{{1
+        {ok, []} ->
             ok
-    end;
+    end; 
 event({task_list, next}) ->  % {{{1
     Id = wf:session(current_task_id),
     Right = wf:session(right_parent_id),
@@ -255,10 +259,10 @@ event(Click) ->  % {{{1
     io:format("~p~n",[Click]).
 
 drop_event({task, Id}, { subtask, PId }) when PId /= Id->  % {{{1
-    case db:get_task(PId) of 
-        {ok, [#db_task{parent=Id}]} ->  % {{{1
+    case db:get_task(PId) of   % {{{2
+        {ok, [#db_task{parent=Id}]} ->
             ok;
-        _ ->  % {{{1
+        _ ->
             db:save_subtask(Id, PId),
             %db:save_task_tree(Id, PId),
             common:send_task_tree(Id, PId),
