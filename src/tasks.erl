@@ -104,8 +104,10 @@ render_tasks(Parent, Archive) ->  % {{{1
         {ok, Tasks} ->
             [
                 #list{numbered=false,
-                      body=lists:map(fun(#db_task{name=Task, due=Due, id=Id}) when Id == CId; Id == Par ->  % {{{3
+                      body=lists:map(fun(#db_task{name=Task, due=Due, id=Id}) when Id == CId ->  % {{{3
                                              #task_leaf{tid=Id, name=Task, due=Due, delegate=?MODULE, current=true};
+                                        (#db_task{name=Task, due=Due, id=Id}) when Id == Par ->  % {{{3
+                                             #task_leaf{tid=Id, name=Task, due=Due, delegate=?MODULE, current=parent};
                                         (#db_task{name=Task, due=Due, id=Id})  ->  % {{{3
                                              #task_leaf{tid=Id, name=Task, due=Due, delegate=?MODULE}
                                      end, Tasks)

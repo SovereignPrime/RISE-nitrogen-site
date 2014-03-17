@@ -56,10 +56,12 @@ render_element(_Record = #task_leaf{tid=Id, due=Due, name=Task, delegate=Delegat
 
                                                                                                                                    #checkbox{id=john, postback={check, Id}, checked=Checked, delegate=Delegate}
                                                                                                                                   ]},
-                                                                                                      #panel{ class="span11", body=[
+                                                                                                      #panel{ class="span10", body=[
                                                                                                                                     "<b class='shorten-text'  style='-webkit-line-clamp:1;'>", Task, "</b>",
                                                                                                                                     "Due: ",  Due
-                                                                                                                                   ]}
+                                                                                                                                   ]},
+                                                                                                      #panel{ class="span1", style="line-height:22px;", body=["<i class='icon-chevron-right'></i>"]}
+                                                                                                      
                                                                                                      ]}
                             ]}
                     ]}]}.
