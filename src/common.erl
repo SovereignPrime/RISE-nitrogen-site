@@ -254,9 +254,11 @@ event({save_filter, Term}) -> %{{{1
     db:save(#db_search{text=Term}),
     wf:wire(#script{script="$('.sigma_search_x_button').click()"});
 event(backup) -> %{{{1
-    #db_contact{id=Id} = Contact = wf:user(),
-    common:backup(Contact),
-    wf:redirect(wf:f("/raw?id=backup_~p.dets&file=backup_~p.dets", [Id, Id]));
+    mnesia:stop(), 
+    {ok, FS} = file:list_dir("data"),
+    erl_tar:create("scratch/backup.tgz", lists:map(fun(F) -> "data/" ++ F end, FS), [compressed]),
+    mnesia:start(),
+    wf:redirect("/raw?id=backup.tgzs&file=backup.tgz");
 event(cancel) -> %{{{1
     wf:wire(#script{script="$('.modal').modal('hide')"}),
     wf:remove(".modal");
@@ -273,18 +275,18 @@ event(restore) -> %{{{1
     wf:wire(#script{script="$('.modal').modal('show')"});
 event({unfold, #update_element{id=Id, uid=Uid, enc=Enc}=Update}) -> % {{{1
     case Enc of
-        3 -> % {{{1
+        3 -> 
             {ok,Attachments} = db:get_attachments(#db_update{id=Uid});
-        4 -> % {{{1
+        4 ->
             {ok,Attachments} = db:get_attachments(#db_task{id=Uid})
     end,
 
     case db:set_read(Uid) of
-        {ok, new} -> % {{{1
+        {ok, new} ->
                 New = wf:session(unread) - 1,
                 wf:session(unread, New),
                 wf:replace(count, #span{id=count, class='label label-inverse',text=wf:f("~p new", [New])});
-        {ok, _} -> % {{{1
+        {ok, _} ->
             ok
     end,
 
@@ -393,30 +395,10 @@ get_torrent(FID) -> %{{{1
     {ok, To} = db:get_owner(FID),
     bitmessage:send_message(From, To, <<"Get torrent">>, wf:to_binary(FID), 6).
 
-backup(#db_contact{id=Id} = Contact) -> %{{{1
-    {ok, Data} = db:backup(Contact),
-    io:format("Backup data: ~p~n", [length(Data)]),
-    Path = wf:f("scratch/backup_~p.dets", [Id]),
-    file:delete(Path),
-    dets:open_file(backup, [{type, bag}, {file, Path}]),
-    lists:foreach(fun(D) ->
-                          io:format("~p~n", [D]),
-                          ok=dets:insert(backup, D),
-                          dets:sync(backup)
-                  end, Data),
-    io:format("~p~n", [dets:info(backup)]),
-    ok=dets:close(backup).
 restore(FID) -> %{{{1
-    dets:open_file(backup, [{file, wf:f("scratch/~s", [FID])}, {type, bag}]),
-    [ PrK ] = dets:lookup(backup, privkey),
-    Contacts = dets:lookup(backup, db_contact),
-    Messages = dets:lookup(backup, message),
-    {ok, MyAddress} = db:restore(PrK, Contacts, Messages),
-    lists:foreach(fun(#message{hash=Hash, to=MyAddress}) ->
-                          receiver ! {msg, Hash};
-                     (_) ->
-                          ok
-                  end, Messages),
+    mnesia:stop(),
+    erl_tar:extract(wf:f("scratch/~s", [FID]), [{cwd, "data"}, compressed]),
+    mnesia:start(),
     {ok, [Me]} = db:get_my_accounts(),
     wf:user(Me),
     wf:redirect("/relationships").
