@@ -315,6 +315,7 @@ start_upload_event(_) -> %{{{1
 finish_upload_event(restore, FName, FPath, _Node) -> %{{{1
     FID = filename:basename(FPath),
     common:restore(FID),
+    timer:sleep(100),
     wf:redirect("/relationships");
 finish_upload_event(filename, FName, FPath, _Node) -> %{{{1
     FID = filename:basename(FPath),
