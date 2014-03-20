@@ -400,6 +400,7 @@ restore(FID) -> %{{{1
     mnesia:stop(),
     erl_tar:extract(wf:f("scratch/~s", [FID]), [compressed]),
     mnesia:start(),
+    bm_db:wait_db(),
     {ok, [Me]} = db:get_my_accounts(),
     wf:user(Me).
 
