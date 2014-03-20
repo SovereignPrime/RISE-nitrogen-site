@@ -258,7 +258,7 @@ event(backup) -> %{{{1
     {ok, FS} = file:list_dir("data"),
     erl_tar:create("scratch/backup.tgz", lists:map(fun(F) -> "data/" ++ F end, FS), [compressed]),
     mnesia:start(),
-    wf:redirect("/raw?id=backup.tgzs&file=backup.tgz");
+    wf:redirect("/raw?id=backup.tgz&file=backup.tgz");
 event(cancel) -> %{{{1
     wf:wire(#script{script="$('.modal').modal('hide')"}),
     wf:remove(".modal");
@@ -314,6 +314,7 @@ start_upload_event(_) -> %{{{1
     ok.
 finish_upload_event(restore, FName, FPath, _Node) -> %{{{1
     FID = filename:basename(FPath),
+    io:format("FID: ~p~n", [FID]),
     common:restore(FID),
     wf:redirect("/relationships");
 finish_upload_event(filename, FName, FPath, _Node) -> %{{{1
@@ -396,6 +397,7 @@ get_torrent(FID) -> %{{{1
     bitmessage:send_message(From, To, <<"Get torrent">>, wf:to_binary(FID), 6).
 
 restore(FID) -> %{{{1
+    io:format("FID restore: ~p~n", [FID]),
     mnesia:stop(),
     erl_tar:extract(wf:f("scratch/~s", [FID]), [{cwd, "data"}, compressed]),
     mnesia:start(),
