@@ -14,7 +14,7 @@
 reflect() -> record_info(fields, update_preview).
 
 -spec render_element(#update_preview{}) -> body().
-render_element(#update_preview{id=Id, icon=Icon, from=From, age=Age, subject=Subject, text=Data, flag=Flag, archive=Archive}) when Icon==3->
+render_element(#update_preview{id=Id, icon=Icon, from=From, age=Age, subject=Subject, text=Data, flag=Flag, archive=Archive}) when Icon==3; Icon==5 -> % {{{1
     FromName = case db:get_contact_by_address(From) of
                    {ok, #db_contact{name=FN}} ->
                        FN;
@@ -26,9 +26,9 @@ render_element(#update_preview{id=Id, icon=Icon, from=From, age=Age, subject=Sub
                3 ->
                    #message_packet{text=T, attachments=A, time=TS} = binary_to_term(Data),
                    {T, A, TS};
-               4 ->
-                   #task_packet{text=T, attachments=A, time=TS} = binary_to_term(Data),
-                   {T, A, TS}
+               5 ->
+                   #update_packet{text=T, time=TS} = binary_to_term(Data),
+                   {T, [], TS}
            end,
     TD = bm_types:timestamp() - Timestamp,
     CurrentSession = wf:session(current_subject),
@@ -41,7 +41,12 @@ render_element(#update_preview{id=Id, icon=Icon, from=From, age=Age, subject=Sub
 
     #panel{class=Class, style="line-height:18px;margin-top:18px;", body=[
                                                             #panel{class="row-fluid no-padding", body=[
-                                                                                                       #panel{class='span1 no-padding', body=["<i class='icon-globe'></i>"]},
+                                                                                                       case Icon of
+                                                                                                           3 ->
+                                                                                                               #panel{class='span1 no-padding', body=["<i class='icon-globe'></i>"]};
+                                                                                                           5 ->
+                                                                                                               #panel{class='span1 no-padding', body=["<i class='icon-refresh'></i>"]}
+                                                                                                       end,
                                                                                                        #panel{class='span7 no-padding', body=["<b>From: </b>", FromName]},
                                                                                                        #panel{class='span4 cell-right no-padding', body=[sugar:format_timedelta(TD)]}
                                                                                                       ]},
@@ -67,7 +72,7 @@ render_element(#update_preview{id=Id, icon=Icon, from=From, age=Age, subject=Sub
                                                                                             end
                                                                                            ]}
                                                            ], actions=#event{type=click, postback={selected, Id, Subject, Archive}}};
-render_element(#update_preview{id=Id, icon=Icon, from=From, age=Age, subject=Subject, text=Data, flag=Flag, archive=Archive}) when Icon==4 ->
+render_element(#update_preview{id=Id, icon=Icon, from=From, age=Age, subject=Subject, text=Data, flag=Flag, archive=Archive}) when Icon==4 ->  % {{{1
     {ok, #db_contact{name=FromName}} = db:get_contact_by_address(From),
     #task_packet{text=Text, time=Timestamp} = binary_to_term(Data),
     TD = bm_types:timestamp() - Timestamp,

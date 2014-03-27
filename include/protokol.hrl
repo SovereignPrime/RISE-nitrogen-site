@@ -2,3 +2,4 @@
 -record(role_packet, {address, role}).
 -record(task_tree_packet, {task, parent}).
 -record(message_packet, {subject, text, involved, attachments, time}).
+-record(update_packet, {subject, text, version, attachments, time}).

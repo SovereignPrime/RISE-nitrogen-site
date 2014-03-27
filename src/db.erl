@@ -4,7 +4,7 @@
 -include("protokol.hrl").
 -include_lib("bitmessage/include/bm.hrl").
 
-install(Pid)->
+install(Pid)->  % {{{1
 %    application:stop(bitmessage),
 %    mnesia:stop(),
 %    mnesia:create_schema([node()]),
@@ -37,7 +37,7 @@ install(Pid)->
 %% Get new id fot Type
 %%%
 
-next_id(Type) ->
+next_id(Type) ->  % {{{1
     transaction(fun() ->
                 case mnesia:last(Type) of
                     '$end_of_table' ->
@@ -49,13 +49,13 @@ next_id(Type) ->
 %%%
 %% General routines
 %%
-save(Contact) ->
+save(Contact) ->  % {{{1
     transaction(fun() ->
                 mnesia:write(Contact)
         end).
 
 
-save_uniq(Contact) ->
+save_uniq(Contact) ->  % {{{1
     transaction(fun() ->
                 case mnesia:match_object(Contact) of
                     [_] ->
@@ -65,18 +65,18 @@ save_uniq(Contact) ->
                 end
         end).
 
-delete(Type, Id) ->
+delete(Type, Id) ->  % {{{1
     transaction(fun() ->
                 mnesia:delete({Type, Id})
         end).
 
-archive(Rec) when is_record(Rec, db_task) ->
+archive(Rec) when is_record(Rec, db_task) ->  % {{{1
     transaction(fun() ->
                 R = Rec#db_task{status=archive},
                 mnesia:write(R),
                 R
         end);
-archive(Rec) when is_record(Rec, message) ->
+archive(Rec) when is_record(Rec, message) ->  % {{{1
     transaction(fun() ->
                         #message{hash=Id} = Rec,
                         case mnesia:wread({incoming, Id}) of
@@ -91,12 +91,12 @@ archive(Rec) when is_record(Rec, message) ->
                                 RN
                         end
                 end);
-archive(#db_contact{address=Address}) ->
+archive(#db_contact{address=Address}) ->  % {{{1
     transaction(fun() ->
                 [R] = mnesia:index_read(db_contact, Address, #db_contact.address),
                 mnesia:write(R#db_contact{status=archive})
         end);
-archive(Rec) when is_list(Rec) ->
+archive(Rec) when is_list(Rec) ->  % {{{1
     transaction(fun() ->
                 iterate(db_file, Rec, fun(_T, R) ->
                             [R1] = mnesia:wread({db_file, R}),
@@ -104,33 +104,33 @@ archive(Rec) when is_list(Rec) ->
                             [R1]
                     end)
         end);
-archive(Rec) when is_record(Rec, db_expense) ->
+archive(Rec) when is_record(Rec, db_expense) ->  % {{{1
     transaction(fun() ->
                 mnesia:write(Rec#db_expense{status=archive})
         end).
 
-get_archive(Type) when Type == db_task ->
+get_archive(Type) when Type == db_task ->  % {{{1
     transaction(fun() ->
                 mnesia:index_read(Type, archive, #db_task.status)
         end);
-get_archive(Type) when Type == db_update ->
+get_archive(Type) when Type == db_update ->  % {{{1
     transaction(fun() ->
                 mnesia:index_read(Type, archive, #db_update.status)
         end);
-get_archive(Type) when Type == db_contact ->
+get_archive(Type) when Type == db_contact ->  % {{{1
     transaction(fun() ->
                 mnesia:index_read(Type, archive, #db_contact.status)
         end);
-get_archive(Type) when Type == db_file ->
+get_archive(Type) when Type == db_file ->  % {{{1
     transaction(fun() ->
                 mnesia:index_read(Type, archive, #db_file.status)
         end);
-get_archive(Type) when Type == db_expense ->
+get_archive(Type) when Type == db_expense ->  % {{{1
     transaction(fun() ->
                 mnesia:index_read(Type, archive, #db_expense.status)
         end).
 
-search(Term) ->
+search(Term) ->  % {{{1
     transaction(fun() ->
                         Contacts = mnesia:foldr(fun(#db_contact{id=Id, name=Name, email=Email, phone=Phone, status=Status} = Rec, Acc) when Status /= archive ->
                                                         {ok, GIDS} = db:get_groups_for_user(Id),
@@ -209,7 +209,7 @@ search(Term) ->
                                              end, [], db_file),
                         { Contacts, Messages , Tasks ++ TasksU, Files }
                 end).
-get_filters() ->
+get_filters() ->  % {{{1
     transaction(fun() ->
                         mnesia:select(db_search, [{#db_search{text='$1', _='_'}, [], ['$1']}])
                 end).
@@ -218,23 +218,23 @@ get_filters() ->
 %%%
 
 
-save_subtask(Id, PId) ->
+save_subtask(Id, PId) ->  % {{{1
     transaction(fun() ->
                 [ C ] = mnesia:wread({ db_task, Id }),
                 mnesia:write(C#db_task{parent=PId})
         end).
 
-get_task() ->
+get_task() ->  % {{{1
     transaction(fun() ->
                 mnesia:read(db_task, mnesia:last(db_task))
             end).
 
-get_task(Id) -> 
+get_task(Id) ->   % {{{1
     transaction(fun() ->
                 mnesia:read(db_task, Id)
             end).
 
-get_task_history(Hash) ->
+get_task_history(Hash) ->  % {{{1
     transaction(fun() ->
                     mnesia:foldr(fun(#message{hash=Id, enc=4, text=D, status=S}=Msg, A) when status /= archive ->
                                              case binary_to_term(D) of
@@ -259,7 +259,7 @@ get_task_history(Hash) ->
                 end).
 
 
-get_tasks_by_user(UID) ->
+get_tasks_by_user(UID) ->  % {{{1
     transaction(fun() ->
                 Tasks = mnesia:match_object(#db_contact_roles{contact=UID, type=db_task, _='_'}),
                 iterate(db_task, Tasks, fun(_, #db_contact_roles{tid=I, role=Role}) ->
@@ -269,37 +269,37 @@ get_tasks_by_user(UID) ->
         end).
 
 
-get_tasks(Parent) when not is_boolean(Parent) ->
+get_tasks(Parent) when not is_boolean(Parent) ->  % {{{1
     transaction(fun() ->
                         %Parents = mnesia:index_read(db_task_tree, Parent, #db_task_tree.parent),
                 mnesia:select(db_task, [{#db_task{parent=Parent, status='$1', _='_'}, [{'/=', '$1', archive}], ['$_']}])
             end);
-get_tasks(false) ->
+get_tasks(false) ->  % {{{1
     transaction(fun() ->
                 mnesia:select(db_task, [{#db_task{status='$1', _='_'}, [{'/=', '$1', 'archive'}], ['$_']}])
             end);
-get_tasks(true) ->
+get_tasks(true) ->  % {{{1
     transaction(fun() ->
                 mnesia:select(db_task, [{#db_task{status='$1', _='_'}, [{'==', '$1', 'archive'}], ['$_']}])
             end).
-get_tasks(Parent, false) ->
+get_tasks(Parent, false) ->  % {{{1
     transaction(fun() ->
                 mnesia:select(db_task, [{#db_task{parent=Parent, status='$1', _='_'}, [{'/=', '$1', 'archive'}], ['$_']}])
             end);
-get_tasks(Parent, true) ->
+get_tasks(Parent, true) ->  % {{{1
     transaction(fun() ->
                 mnesia:select(db_task, [{#db_task{status='$1', _='_'}, [{'==', '$1', 'archive'}], ['$_']}])
             end).
 
-get_tasks_by_subject(Subject, false) ->
+get_tasks_by_subject(Subject, false) ->  % {{{1
     transaction(fun() ->
                 mnesia:select(db_task, [{#db_task{name=Subject, status='$1', _='_'}, [{'/=', '$1', 'archive'}], ['$_']}])
             end);
-get_tasks_by_subject(Subject, true) ->
+get_tasks_by_subject(Subject, true) ->  % {{{1
     transaction(fun() ->
                 mnesia:select(db_task, [{#db_task{name=Subject, status='$1', _='_'}, [{'==', '$1', 'archive'}], ['$_']}])
             end).
-save_task_tree(Id, Parent) ->
+save_task_tree(Id, Parent) ->  % {{{1
     transaction(fun() ->
                         TT = #db_task_tree{task=Id, parent=Parent},
                         case mnesia:read(db_task, Id) of
@@ -315,12 +315,12 @@ save_task_tree(Id, Parent) ->
 %% Expense routines
 %%%
 
-get_expense(Id) ->
+get_expense(Id) ->  % {{{1
     transaction(fun() ->
                 mnesia:read(db_expense, Id)
         end).
 
-get_expense_tasks(EId) ->
+get_expense_tasks(EId) ->  % {{{1
     transaction(fun() ->
                 T = mnesia:read(db_expense_tasks, EId),
                 iterate(db_task, T, fun(Type, #db_expense_tasks{task=Id}) ->
@@ -331,49 +331,49 @@ get_expense_tasks(EId) ->
 %% Updates routines
 %%%
 
-get_updates(false) ->
+get_updates(false) ->  % {{{1
     transaction(fun() ->
                         mnesia:select(incoming, [{#message{status='$1', enc='$2', subject='$3', _='_'}, [{'and', {'/=', '$1', archive}, {'/=', '$2', 6}}, {'/=', '$3', <<"Update223322">>}], ['$_']}])
                         ++
                         mnesia:select(sent, [{#message{status='$1', enc='$2', subject='$3', _='_'}, [{'and', {'/=', '$1', archive}, {'/=', '$2', 6}}, {'/=', '$3', <<"Update223322">>}], ['$_']}])
                 end);
-get_updates(true) ->
+get_updates(true) ->  % {{{1
     transaction(fun() ->
                         mnesia:select(incoming, [{#message{status='$1', enc='$2', subject='$3', _='_'}, [{'and', {'==', '$1', archive}, {'/=', '$2', 6}}, {'/=', '$3', <<"Update223322">>}], ['$_']}])
                         ++
                         mnesia:select(sent, [{#message{status='$1', enc='$2', subject='$3', _='_'}, [{'and', {'==', '$1', archive}, {'/=', '$2', 6}}, {'/=', '$3', <<"Update223322">>}], ['$_']}])
                 end).
 
-get_updates_by_subject(Subject) ->
+get_updates_by_subject(Subject) ->  % {{{1
     get_updates_by_subject(Subject, false).
 
-get_updates_by_subject(Subject, Archive) when is_list(Subject) ->
+get_updates_by_subject(Subject, Archive) when is_list(Subject) ->  % {{{1
     get_updates_by_subject(list_to_binary(Subject), Archive);
-get_updates_by_subject(Subject, false) ->
+get_updates_by_subject(Subject, false) ->  % {{{1
     transaction(fun() ->
                         mnesia:select(incoming, [{#message{status='$1', enc='$2', subject=Subject, _='_'}, [{'and', {'/=', '$1', archive}, {'/=', '$2', 6}}], ['$_']}])
                         ++
                         mnesia:select(sent, [{#message{status='$1', enc='$2', subject=Subject, _='_'}, [{'and', {'/=', '$1', archive}, {'/=', '$2', 6}}], ['$_']}])
                 end);
-get_updates_by_subject(Subject, true) ->
+get_updates_by_subject(Subject, true) ->  % {{{1
     transaction(fun() ->
                         mnesia:select(incoming, [{#message{status='$1', enc='$2', subject=Subject, _='_'}, [{'and', {'==', '$1', archive}, {'/=', '$2', 6}}], ['$_']}])
                         ++
                         mnesia:select(sent, [{#message{status='$1', enc='$2', subject=Subject, _='_'}, [{'and', {'==', '$1', archive}, {'/=', '$2', 6}}], ['$_']}])
                 end).
-get_updates_by_user(UID) when is_list(UID) -> 
+get_updates_by_user(UID) when is_list(UID) ->   % {{{1
     get_updates_by_user(list_to_binary(UID)); 
-get_updates_by_user(UID) -> 
+get_updates_by_user(UID) ->   % {{{1
     transaction(fun() ->
                         mnesia:select(incoming, [{#message{status='$1', enc=3, from=UID, _='_'}, [{'/=', '$1', archive}], ['$_']}])
         end).
 
-get_unread_updates() ->
+get_unread_updates() ->  % {{{1
     transaction(fun() ->
                 mnesia:select(incoming, [{#message{status=new, enc='$1', subject='$2', _='_'}, [{'/=', '$1', 6}, {'/=', '$2', <<"Update223322">>}], ['$_']}])
         end).
 
-set_read(Id) ->
+set_read(Id) ->  % {{{1
     transaction(fun() ->
                  case  mnesia:wread({ incoming, Id }) of
                       [#message{status=S} = U] ->
@@ -388,16 +388,16 @@ set_read(Id) ->
 %% Contact routines
 %%%
 
-get_contact(undefined) ->
+get_contact(undefined) ->  % {{{1
     {ok, Id} = next_id(db_contact),
     {ok, #db_contact{id=Id}};
-get_contact(Id) ->
+get_contact(Id) ->  % {{{1
     transaction(fun() ->
                 [U] = mnesia:read(db_contact, Id),
                 U
         end).
 
-get_contact_by_address(Address) ->
+get_contact_by_address(Address) ->  % {{{1
     transaction(fun() ->
                 case mnesia:index_read(db_contact, Address, #db_contact.address) of
                     [U] when U#db_contact.status /= archive ->
@@ -407,7 +407,7 @@ get_contact_by_address(Address) ->
                 end
         end).
 
-get_involved(Id) ->
+get_involved(Id) ->  % {{{1
     transaction(fun() ->
                 R = mnesia:match_object(#db_contact_roles{type=db_task, tid=Id, _='_'}),
                 L = lists:map(fun(#db_contact_roles{role=Role, contact=Contact}) ->
@@ -417,31 +417,31 @@ get_involved(Id) ->
         end).
 
 
-get_users(N) ->
+get_users(N) ->  % {{{1
     transaction(fun() ->
                 mnesia:select(db_contact, [{#db_contact{name='$1'}, [], ['$1']}], N, read)
         end).
 
-add_user_to_group(Group, User) ->
+add_user_to_group(Group, User) ->  % {{{1
     transaction(fun() ->
                 mnesia:write(#db_group_members{group=Group, contact=User})
         end).
 
-get_contacts_by_group(Group) ->
+get_contacts_by_group(Group) ->  % {{{1
     get_contacts_by_group(Group, false).
 get_contacts_by_group(my, false) ->
-    transaction(fun() ->
+    transaction(fun() ->  % {{{1
                 mnesia:match_object(#db_contact{my=true, _='_'})
         end);
-get_contacts_by_group(all, false) ->
+get_contacts_by_group(all, false) ->  % {{{1
     transaction(fun() ->
                 mnesia:select(db_contact, [{#db_contact{my=false,status='$1', _='_'}, [{'/=', '$1', archive}],['$_']}])
         end);
-get_contacts_by_group(all, true) ->
+get_contacts_by_group(all, true) ->  % {{{1
     transaction(fun() ->
                 mnesia:select(db_contact, [{#db_contact{my=false,status='$1', _='_'}, [{'==', '$1', archive}],['$_']}])
         end);
-get_contacts_by_group(Group, false) ->
+get_contacts_by_group(Group, false) ->  % {{{1
     transaction(fun() ->
                 G = mnesia:select(db_group, [{#db_group{id='$1', subgroups=Group, _='_'}, [], ['$1']}]),
                 U = iterate(db_group_members, [Group | G]),
@@ -455,7 +455,7 @@ get_contacts_by_group(Group, false) ->
                             end
                     end)
         end);
-get_contacts_by_group(Group, true) ->
+get_contacts_by_group(Group, true) ->  % {{{1
     transaction(fun() ->
                 G = mnesia:select(db_group, [{#db_group{id='$1', subgroups=Group, _='_'}, [], ['$1']}]),
                 U = iterate(db_group_members, [Group | G]),
@@ -470,13 +470,13 @@ get_contacts_by_group(Group, true) ->
                     end)
         end).
 
-get_groups_for_user(UID) ->
+get_groups_for_user(UID) ->  % {{{1
     transaction(fun() ->
                 GIDS = mnesia:select(db_group_members, [{#db_group_members{group='$1', contact=UID}, [], ['$1']}]),
                 iterate(db_group, GIDS)
         end).
 
-clear_roles(Type, Id) ->
+clear_roles(Type, Id) ->  % {{{1
     transaction(fun() ->
                 case mnesia:match_object(#db_contact_roles{type=Type, tid=Id, _='_'}) of
                     [] ->
@@ -489,12 +489,12 @@ clear_roles(Type, Id) ->
                 end
         end).
 
-get_contacts_by_name(Name) ->
+get_contacts_by_name(Name) ->  % {{{1
     transaction(fun() ->
                         [C] = mnesia:select(db_contact, [{#db_contact{name=Name, status='$1', _='_'}, [{'/=', '$1', archive}], ['$_']}]),
                         C
                 end).
-backup(#db_contact{address=Address} = Cotact) ->
+backup(#db_contact{address=Address} = Cotact) ->  % {{{1
     transaction(fun() ->
                         mnesia:select(db_contact, [{#db_contact{status='$1', _='_'}, [{'/=', '$1', 'archive'}], ['$_']}]) ++
                         mnesia:match_object(#privkey{address=Address, _='_'}) ++
@@ -502,7 +502,7 @@ backup(#db_contact{address=Address} = Cotact) ->
                         mnesia:select(sent, [{#message{from=Address, status='$1', _='_'}, [{'/=', '$1', 'archive'}], ['$_']}])
                         %mnesia:match_object(#db_task{to=Address, _='_'}) ++
                 end).
-restore(Privkey, Contacts, Messages) ->
+restore(Privkey, Contacts, Messages) ->  % {{{1
     transaction(fun() ->
                         ok=mnesia:write(privkey, Privkey, write),
                         lists:foreach(fun(Contact) ->
@@ -521,22 +521,22 @@ restore(Privkey, Contacts, Messages) ->
 %% Group routines
 %%%
 
-get_groups() ->
+get_groups() ->  % {{{1
     transaction(fun() ->
                 get_subgroup(undefined)
         end).
 
-update_group_name(Id, Name) ->
+update_group_name(Id, Name) ->  % {{{1
     transaction(fun() ->
                 [G] = mnesia:read(db_group, Id),
                 mnesia:write(G#db_group{id=Id, name=Name})
         end).
-save_subgroup(Id, Parent) ->
+save_subgroup(Id, Parent) ->  % {{{1
     transaction(fun() ->
                 [G] = mnesia:wread({db_group, Id}),
                 mnesia:write(G#db_group{subgroups=Parent})
         end).
-delete_group(Id) ->
+delete_group(Id) ->  % {{{1
     transaction(fun() ->
                 Sub = mnesia:match_object(#db_group{subgroups=Id, _='_'}),
                 iterate(db_group, Sub, fun(_Type, G) ->
@@ -550,7 +550,7 @@ delete_group(Id) ->
 %% File routines
 %%%
 
-save_file(Name, Path, #db_contact{id=UID}) ->
+save_file(Name, Path, #db_contact{id=UID}) ->  % {{{1
     Size = filelib:file_size(Path),
     Type = filename:extension(Name),
     File = #db_file{id=filename:basename(Path), 
@@ -570,7 +570,7 @@ save_file(Name, Path, #db_contact{id=UID}) ->
 %% Attachment routines
 %%%
 
-get_attachments(Record) ->
+get_attachments(Record) ->  % {{{1
     Type = element(1, Record),
     Id = element(2, Record),
      transaction(fun() ->
@@ -578,7 +578,7 @@ get_attachments(Record) ->
                 iterate(db_file, A)
             end).
 
-save_attachments(Record, Files) ->
+save_attachments(Record, Files) ->  % {{{1
     Type = element(1, Record),
     Id = element(2, Record),
      transaction(fun() ->
@@ -586,27 +586,27 @@ save_attachments(Record, Files) ->
                 save_attachment(Type, Id, sets:to_list(Files), NId)
             end).
 
-get_files(FIDs) when is_list(FIDs) ->
+get_files(FIDs) when is_list(FIDs) ->  % {{{1
     transaction(fun() ->
                 iterate(db_file, FIDs)
         end);
-get_files(true)  ->
+get_files(true)  ->  % {{{1
     transaction(fun() ->
                 mnesia:select(db_file, [{#db_file{status=archive, _='_'}, [], ['$_']}])
         end);
-get_files(false)  ->
+get_files(false)  ->  % {{{1
     transaction(fun() ->
                 mnesia:select(db_file, [{#db_file{status='$1', _='_'}, [{'/=', '$1', archive}], ['$_']}])
         end).
 
-get_owner(FID) ->
+get_owner(FID) ->  % {{{1
     transaction(fun() ->
                 [ #db_file{user=UID} ] = mnesia:read(db_file, FID),
                 [ #db_contact{bitmessage=Address} ] = mnesia:read(db_contact, UID),
                 Address
         end).
 
-get_addresat(FID) ->
+get_addresat(FID) ->  % {{{1
     transaction(fun() ->
                 Attachments = mnesia:read(db_attachment, FID),
                 iterate(db_contact, Attachments, fun(_, #db_attachment{type=Type, tid=TID}) ->
@@ -615,13 +615,13 @@ get_addresat(FID) ->
                     end)
         end).
 
-mark_downloaded(Id) ->
+mark_downloaded(Id) ->  % {{{1
     transaction(fun() ->
                 [F] = mnesia:wread({ db_file, Id }),
                 mnesia:write(F#db_file{status=downloaded})
         end).
 
-get_linked_messages(FID) ->
+get_linked_messages(FID) ->  % {{{1
     transaction(fun() ->
                 Attachments = mnesia:index_read(db_attachment, FID, #db_attachment.file),
                 iterate(db_attachment, Attachments, fun(_Ty, #db_attachment{type=T, tid=Id}) when T == db_update ->
@@ -641,50 +641,50 @@ get_linked_messages(FID) ->
 %%  Admin functions
 %%%
     
-all_tasks() ->
+all_tasks() ->  % {{{1
     transaction(fun() ->
                 mnesia:match_object(#db_task{_='_'})
             end).
-all_expenses() ->
+all_expenses() ->  % {{{1
     transaction(fun() ->
                 mnesia:match_object(#db_expense{_='_'})
             end).
 
-all_updates() ->
+all_updates() ->  % {{{1
     transaction(fun() ->
                 mnesia:match_object(#db_update{_='_'})
             end).
 
-all_expense_taskss() ->
+all_expense_taskss() ->  % {{{1
     transaction(fun() ->
                 mnesia:match_object(#db_expense_tasks{_='_'})
             end).
-all_memberss() ->
+all_memberss() ->  % {{{1
     transaction(fun() ->
                 mnesia:match_object(#db_group_members{_='_'})
             end).
 
-all_attachments() ->
+all_attachments() ->  % {{{1
     transaction(fun() ->
                 mnesia:match_object(#db_attachment{_='_'})
             end).
 
-all_files() ->
+all_files() ->  % {{{1
     transaction(fun() ->
                 mnesia:match_object(#db_file{_='_'})
             end).
 
-all_groups() ->
+all_groups() ->  % {{{1
     transaction(fun() ->
                 mnesia:match_object(#db_group{_='_'})
             end).
  
-all_contacts() ->
+all_contacts() ->  % {{{1
     transaction(fun() ->
                 mnesia:match_object(#db_contact{_='_'})
             end).
 
-all_involved() ->
+all_involved() ->  % {{{1
     transaction(fun() ->
                 mnesia:match_object(#db_contact_roles{_='_'})
             end).
@@ -692,12 +692,12 @@ all_involved() ->
 %% Account routines
 %%%
 
-get_my_accounts() ->
+get_my_accounts() ->  % {{{1
     transaction(fun() ->
                 mnesia:match_object(db_contact, #db_contact{my=true, _='_'}, read)
         end).
 
-create_account(User, Passwd, Address) ->
+create_account(User, Passwd, Address) ->  % {{{1
     transaction(fun() ->
                 case mnesia:match_object(db_contact, #db_contact{email=User, my=Passwd, _='_'}, write) of
                     [] -> 
@@ -725,7 +725,7 @@ create_account(User, Passwd, Address) ->
 %% Transaction helper
 %%%
 
-transaction(Fun) ->
+transaction(Fun) ->  % {{{1
    case mnesia:transaction(Fun) of
         {error, R} ->
             {error, R};
@@ -738,9 +738,9 @@ transaction(Fun) ->
 %% Helpers
 %%%
 
-save_attachment(_Type, _Id, [], _N) ->
+save_attachment(_Type, _Id, [], _N) ->  % {{{1
     ok;
-save_attachment(Type, Id, [File|Rest], N) ->
+save_attachment(Type, Id, [File|Rest], N) ->  % {{{1
     case mnesia:match_object(#db_attachment{file=File, type=Type, tid=Id, _='_'}) of
         [] ->
             mnesia:write(#db_attachment{id=N, file=File, type=Type, tid=Id}),
@@ -749,17 +749,17 @@ save_attachment(Type, Id, [File|Rest], N) ->
             save_attachment(Type, Id, Rest, N)
     end.
 
-iterate(_, []) ->
+iterate(_, []) ->  % {{{1
     [];
-iterate(Type, [Id|R]) ->
+iterate(Type, [Id|R]) ->  % {{{1
     mnesia:read(Type, Id) ++ iterate(Type, R).
 
-iterate(_, [], _) ->
+iterate(_, [], _) ->  % {{{1
     [];
-iterate(Type, [Id|R], Fun) ->
+iterate(Type, [Id|R], Fun) ->  % {{{1
     Fun(Type, Id) ++ iterate(Type, R, Fun).
 
-get_subgroup(G) ->
+get_subgroup(G) ->  % {{{1
     Groups = mnesia:match_object(#db_group{subgroups=G, _='_'}),
     Sub = lists:map(fun(#db_group{id=N}=Gr) ->
                     Gr#db_group{subgroups=get_subgroup(N)}

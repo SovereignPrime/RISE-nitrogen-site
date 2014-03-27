@@ -22,12 +22,15 @@ render_element(#update_element{id=Id, from=From, text=Data, age=Age, collapse=tr
                        wf:to_list(From)
                end,
     {Text, Attachments, Timestamp} = case Enc of
-               3 ->
-                   #message_packet{text=T, attachments=A, time=TS} = binary_to_term(Data),
-                   {T, A, TS};
-               4 ->
-                   #task_packet{text=T, attachments=A, time=TS} = binary_to_term(Data),
-                  {T, A, TS}
+                                         3 ->
+                                             #message_packet{text=T, attachments=A, time=TS} = binary_to_term(Data),
+                                             {T, A, TS};
+                                         4 ->
+                                             #task_packet{text=T, attachments=A, time=TS} = binary_to_term(Data),
+                                             {T, A, TS};
+                                         5 ->
+                                             #update_packet{text=T, time=TS} = binary_to_term(Data),
+                                             {T, [], TS}
            end,
     TD = bm_types:timestamp() - Timestamp,
         #panel{id=Id, class="row-fluid", body=[
@@ -36,9 +39,9 @@ render_element(#update_element{id=Id, from=From, text=Data, age=Age, collapse=tr
                 #panel{class="span2", body=[
                                             sugar:format_timedelta(TD),
                                             case Status of
-                                                S when S==read; S==received ->
+                                                S when S==read; S==sent ->
                                                     #image{image="/img/read.svg",  style="height: 16px;vertical-align:middle;margin-left: 5px;"};
-                                                S when S==unread; S==sent ->
+                                                S when S==unread; S==ackwait ->
                                                     #image{image="/img/unread.svg",  style="height: 16px;vertical-align:middle;margin-left: 5px;"};
                                                 S when S==new; S==wait_pubkey; S==encrypting ->
                                                     "&nbsp;<i class='icon-mail-forward'></i>"
@@ -53,13 +56,19 @@ render_element(#update_element{id=Id, uid=UID, from=From, to=To, text=Data, age=
                        wf:to_list(From)
                end,
     {Text, Attachments, Timestamp} = case Enc of
-               3 ->
-                   #message_packet{text=T, attachments=A, time=TS} = binary_to_term(Data),
-                   {T, A, TS};
-               4 ->
-                   #task_packet{text=T, attachments=A, time=TS} = binary_to_term(Data),
-                  {T, A, TS}
-           end,
+                                         3 ->
+                                             #message_packet{text=T, attachments=A, time=TS} = binary_to_term(Data),
+                                             {T, A, TS};
+                                         4 ->
+                                             #task_packet{text=T, attachments=A, time=TS} = binary_to_term(Data),
+                                             {T, A, TS};
+                                         5 ->
+                                             #update_packet{text=T, attachments=A, time=TS} = binary_to_term(Data),
+                                             TB = [T, #panel{id=command, body=[
+                                                                               #link{class="btn btn-link", body="<i class="icon-ok"></i> Start-update", postback={start_update, A}, new=false, delegate=common}
+                                                                              ]}],
+                                             {T, [], TS}
+                                     end,
     TD = bm_types:timestamp() - Timestamp,
     #panel{id=Id, body=[
         #panel{class="row-fluid", body=[
@@ -67,9 +76,9 @@ render_element(#update_element{id=Id, uid=UID, from=From, to=To, text=Data, age=
                 #panel{class="span2 offset9", body=[
                                             sugar:format_timedelta(TD),
                                             case Status of
-                                                S when S==read; S==received ->
+                                                S when S==read; S==sent ->
                                                     #image{image="/img/read.svg",  style="height: 16px;vertical-align:middle;margin-left: 5px;"};
-                                                S when S==unread; S==sent ->
+                                                S when S==unread; S==ackwait ->
                                                     #image{image="/img/unread.svg",  style="height: 16px;vertical-align:middle;margin-left: 5px;"};
                                                 S when S==new; S==wait_pubkey; S==encrypting ->
                                                     "&nbsp;<i class='icon-mail-forward'></i>"
@@ -85,8 +94,6 @@ render_element(#update_element{id=Id, uid=UID, from=From, to=To, text=Data, age=
                                     #span{class="icon-reply icon-large", text=" "}
                                     ], postback={reply, Subject, From}, new=false},
                             
-                        %#span{class="icon-refresh icon-large", text=" "},
-                        %#span{class="icon-reorder icon-large"}
                         #panel{class="btn-group", body=[
                                 #link{ class="btn btn-link droppdown-toggle", body=[
                                         "<i class='icon-reorder icon-large'></i>"
