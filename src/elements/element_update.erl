@@ -65,7 +65,7 @@ render_element(#update_element{id=Id, uid=UID, from=From, to=To, text=Data, age=
                                          5 ->
                                              #update_packet{text=T, attachments=A, time=TS} = binary_to_term(Data),
                                              TB = [T, #panel{id=command, body=[
-                                                                               #link{class="btn btn-link", body="<i class="icon-ok"></i> Start-update", postback={start_update, A}, new=false, delegate=common}
+                                                                               #link{class="btn btn-link", body="<i class='icon-ok'></i> Start-update", postback={start_update, A}, new=false, delegate=common}
                                                                               ]}],
                                              {T, [], TS}
                                      end,
