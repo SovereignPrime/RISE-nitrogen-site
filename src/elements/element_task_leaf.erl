@@ -12,8 +12,9 @@
 reflect() -> record_info(fields, task_leaf).
 
 -spec render_element(#task_leaf{}) -> body().
-render_element(_Record = #task_leaf{tid=Id, due=Due, name=Task, delegate=Delegate, checked=Checked, current=false}) ->
+render_element(_Record = #task_leaf{tid=Id, due=Due, name=Task, delegate=Delegate, checked=Checked, current=false}) ->  % {{{1
     EID = wf:to_atom(binary:decode_unsigned(Id)),
+    {ok, Sub } = db:get_tasks(Id),
     #draggable{tag={task, Id}, group=tasks, clone=false, body=[
             #droppable{id=task, tag={subtask, Id}, accept_groups=tasks, body=[
                                            #listitem{id=EID, class="leaf clearfix", body=[
@@ -22,15 +23,22 @@ render_element(_Record = #task_leaf{tid=Id, due=Due, name=Task, delegate=Delegat
 
                                                                                                                                    #checkbox{id=john, postback={check, Id}, checked=Checked, delegate=Delegate}
                                                                                                                                   ]},
-                                                                                                      #panel{ class="span11", body=[
+                                                                                                      #panel{ class="span10", body=[
 
                                                                                                                                     "<b class='shorten-text' style='-webkit-line-clamp:1;'>", Task, "</b>",
                                                                                                                                     "Due: ",  Due
-                                                                                                                                   ]}
+                                                                                                                                   ]},
+                                                                                                      case Sub of
+                                                                                                          [] ->
+                                                                                                              #panel{ class="span1", style="line-height:22px;", body=[]};
+                                                                                                          _ ->
+                                                                                                              #panel{ class="span1", style="line-height:22px;", body=["<i class='icon-chevron-right'></i>"]}
+                                                                                                      end
                                                                                                      ]}
                                                                             ], actions=#event{type=click, postback={task_chosen, Id}, delegate=Delegate}}]}]};
-render_element(_Record = #task_leaf{tid=Id, due=Due, name=Task, delegate=Delegate, checked=Checked, current=true}) ->
+render_element(_Record = #task_leaf{tid=Id, due=Due, name=Task, delegate=Delegate, checked=Checked, current=true}) ->  % {{{1
     EID = wf:to_atom(binary:decode_unsigned(Id)),
+    {ok, Sub } = db:get_tasks(Id),
     #draggable{tag={task, Id}, group=tasks, clone=false, body=[
             #droppable{id=task, tag={ subtask, Id }, accept_groups=tasks, body=[
                     #listitem{id=EID, class="leaf clearfix current", body=[
@@ -39,14 +47,20 @@ render_element(_Record = #task_leaf{tid=Id, due=Due, name=Task, delegate=Delegat
 
                                                                                                                                    #checkbox{id=john, postback={check, Id}, checked=Checked, delegate=Delegate}
                                                                                                                                   ]},
-                                                                                                      #panel{ class="span11", body=[
+                                                                                                      #panel{ class="span10", body=[
                                                                                                                                     "<b class='shorten-text'  style='-webkit-line-clamp:1;'>", Task, "</b>",
                                                                                                                                     "Due: ",  Due
-                                                                                                                                   ]}
+                                                                                                                                   ]},
+                                                                                                      case Sub of
+                                                                                                          [] ->
+                                                                                                              #panel{ class="span1", style="line-height:22px;", body=[]};
+                                                                                                          _ ->
+                                                                                                              #panel{ class="span1", style="line-height:22px;", body=["<i class='icon-chevron-right'></i>"]}
+                                                                                                      end
                                                                                                      ]}
                             ]}
                     ], actions=#event{type=click, postback={task_chosen, Id}, delegate=Delegate}}]};
-render_element(_Record = #task_leaf{tid=Id, due=Due, name=Task, delegate=Delegate, checked=Checked, current=parent}) ->
+render_element(_Record = #task_leaf{tid=Id, due=Due, name=Task, delegate=Delegate, checked=Checked, current=parent}) ->  % {{{1
     EID = wf:to_atom(binary:decode_unsigned(Id)),
     #draggable{tag={task, Id}, group=tasks, clone=false, body=[
             #droppable{id=task, tag={subtask, Id}, accept_groups=tasks, body=[
@@ -64,4 +78,4 @@ render_element(_Record = #task_leaf{tid=Id, due=Due, name=Task, delegate=Delegat
                                                                                                       
                                                                                                      ]}
                             ]}
-                    ]}]}.
+                    ], actions=#event{type=click, postback={task_chosen, Id}, delegate=Delegate}}]}.
