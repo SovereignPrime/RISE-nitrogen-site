@@ -127,8 +127,9 @@ body() ->  % {{{1
             render_task(Task)
             ]}.
 render_task(#db_task{id=Id, name=Name, due=Due, text=Text, parent=Parent, status=Status}=Task) ->  % {{{1
+    #db_contact{name=Me} = wf:user(),
     {ok, Involved} = db:get_involved(Id),
-    {My, InvolvedN} = case lists:partition(fun({"Me", _, _}) -> true; (_) -> false end, Involved) of % {{{2
+    {My, InvolvedN} = case lists:partition(fun({Me, _, _}) -> true; (_) -> false end, Involved) of % {{{2
         {[{_,M, _}], I} ->  
             {M, I};
         {[], I} ->  
