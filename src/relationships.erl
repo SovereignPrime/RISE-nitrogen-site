@@ -140,7 +140,7 @@ event({invite, Server, REmail}) ->
     Login = wf:q(mail),
     Passwd = wf:q(passwd),
     Con = pat:connect({wf:to_binary( Server ), 25}, [{user, wf:to_binary( Login )}, {password, wf:to_binary(Passwd)}, {timeout, 60000}]),
-    {ok, Text} = file:read_file("etc/invitation.tpl"),
+    {ok, Text} = file:read_file("invitation.tpl"),
     wf:wire(#script{script="$('.modal').modal('hide')"}),
     error_logger:info_msg("Rec: ~p~n", [ Server]),
     Err = pat:send(Con, #email{sender=wf:to_binary(Login), 
