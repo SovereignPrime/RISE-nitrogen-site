@@ -21,31 +21,14 @@ render_element(#update_element{id=Id, from=From, text=Data, age=Age, collapse=tr
                    {ok, none} ->
                        wf:to_list(From)
                end,
-    {Text, Attachments, Timestamp} = case Enc of
-                                         3 ->
-                                             #message_packet{text=T, attachments=A, time=TS} = binary_to_term(Data),
-                                             {T, A, TS};
-                                         4 ->
-                                             #task_packet{text=T, attachments=A, time=TS} = binary_to_term(Data),
-                                             {T, A, TS};
-                                         5 ->
-                                             #update_packet{text=T, time=TS} = binary_to_term(Data),
-                                             {T, [], TS}
-           end,
+    {Text, Attachments, Timestamp} = decode_enc(Enc, Data),
     TD = bm_types:timestamp() - Timestamp,
         #panel{id=Id, class="row-fluid", body=[
                 #panel{class="span2", body="<i class='icon-chevron-down'></i> " ++ FromName},
                 #panel{class="span8", body=io_lib:format("~100s", [Text])},
                 #panel{class="span2", body=[
                                             sugar:format_timedelta(TD),
-                                            case Status of
-                                                S when S==read; S==sent ->
-                                                    #image{image="/img/read.svg",  style="height: 16px;vertical-align:middle;margin-left: 5px;"};
-                                                S when S==unread; S==ackwait ->
-                                                    #image{image="/img/unread.svg",  style="height: 16px;vertical-align:middle;margin-left: 5px;"};
-                                                S when S==new; S==wait_pubkey; S==encrypting ->
-                                                    "&nbsp;<i class='icon-mail-forward'></i>"
-                                            end
+                                            format_status(Status)
                                            ]}
             ], actions=#event{type=click, postback={unfold, Record}, delegate=common}};
 render_element(#update_element{id=Id, uid=UID, from=From, to=To, text=Data, age=Age, subject=Subject, collapse=false, enc=Enc, status=Status}=Record) -> % {{{1
@@ -75,14 +58,7 @@ render_element(#update_element{id=Id, uid=UID, from=From, to=To, text=Data, age=
                 #panel{class="span1", body=FromName},
                 #panel{class="span2 offset9", body=[
                                             sugar:format_timedelta(TD),
-                                            case Status of
-                                                S when S==read; S==sent ->
-                                                    #image{image="/img/read.svg",  style="height: 16px;vertical-align:middle;margin-left: 5px;"};
-                                                S when S==unread; S==ackwait ->
-                                                    #image{image="/img/unread.svg",  style="height: 16px;vertical-align:middle;margin-left: 5px;"};
-                                                S when S==new; S==wait_pubkey; S==encrypting ->
-                                                    "&nbsp;<i class='icon-mail-forward'></i>"
-                                            end
+                                            format_status(Status)
                        ]}
                 ], actions=#event{type=click, postback={fold, Record}, delegate=common}},
         #panel{class="row-fluid", body=[
@@ -127,14 +103,7 @@ render_element(#update_element{id=Id, uid=UID, from=From, to=To, text=Data, age=
 
             ]};
 render_element(#update_element{enc=Enc, from=From, subject=Subject, text=Data, age=Age, collapse=paragraph}) -> % {{{1
-    {Text, Attachments, Timestamp} = case Enc of
-               3 ->
-                   #message_packet{text=T, attachments=A, time=TS} = binary_to_term(Data),
-                   {T, A, TS};
-               4 ->
-                   #task_packet{text=T, attachments=A, time=TS} = binary_to_term(Data),
-                  {T, A, TS}
-           end,
+    {Text, Attachments, Timestamp} = decode_enc(Enc, Data),
     TD = bm_types:timestamp() - Timestamp,
     [
         #panel{class="row", body=[
@@ -145,3 +114,28 @@ render_element(#update_element{enc=Enc, from=From, subject=Subject, text=Data, a
                 #panel{class="span12", body=Text}
                 ]}
         ].
+
+format_status(ok) ->  % {{{1
+    " (received)";
+format_status(read) ->  % {{{1
+    " (read)";
+format_status(unread) ->  % {{{1
+    " (unread)";
+format_status(ackwait) ->  % {{{1
+    " (sent)";
+format_status(new) ->  % {{{1
+    " (sending)";
+format_status(Status) when Status==wait_pubkey; Status==encrypting ->  % {{{1
+    " (sending)";
+format_status(Status) ->  % {{{1
+    wf:to_list(Status).
+
+decode_enc(3, Data) ->  % {{{1
+    #message_packet{text=T, attachments=A, time=TS} = binary_to_term(Data),
+    {T, A, TS};
+decode_enc(4, Data) ->  % {{{1
+    #task_packet{text=T, attachments=A, time=TS} = binary_to_term(Data),
+    {T, A, TS};
+decode_enc(5, Data) ->  % {{{1
+    #update_packet{text=T, time=TS} = binary_to_term(Data),
+    {T, [], TS}.
