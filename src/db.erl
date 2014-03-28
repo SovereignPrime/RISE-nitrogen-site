@@ -263,8 +263,12 @@ get_tasks_by_user(UID) ->  % {{{1
     transaction(fun() ->
                 Tasks = mnesia:match_object(#db_contact_roles{contact=UID, type=db_task, _='_'}),
                 iterate(db_task, Tasks, fun(_, #db_contact_roles{tid=I, role=Role}) ->
-                            [Task] = mnesia:read(db_task, I),
-                            [ Task#db_task{parent=Role} ]
+                             case mnesia:read(db_task, I) of
+                                  [Task] ->
+                                      [ Task#db_task{parent=Role} ];
+                                  [] ->
+                                      []
+                             end
                     end)
         end).
 
