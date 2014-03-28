@@ -332,6 +332,8 @@ incoming() -> %{{{1
     receive
         update ->
             (wf:page_module()):incoming(),
+            wf:replace(count, unread()),
+            wf:flush(),
             incoming();
         status ->
             wf:update(connection, connection_status()),

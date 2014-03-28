@@ -103,8 +103,4 @@ event(Click) -> % {{{1
     io:format("Event ~p in ~p~n", [Click, ?MODULE]).
 
 incoming() -> % {{{1
-    wf:replace(left, left()),
-    {ok, New} = db:get_unread_updates(),
-    wf:session(unread, length(New)),
-    wf:replace(count, #span{id=count, class='label label-inverse',text=wf:f("~p new", [length(New)])}),
-    wf:flush().
+    wf:replace(left, left()).
