@@ -6,18 +6,18 @@
 -include("protokol.hrl").
 
 %% API
--export([
+-export([  % {{{1
     start_link/0,
     register_receiver/1
-    ]).
+    ]). % }}}
 
 %% gen_server callbacks
--export([init/1,
+-export([init/1,  % {{{1
          handle_call/3,
          handle_cast/2,
          handle_info/2,
          terminate/2,
-         code_change/3]).
+         code_change/3]).  % }}}
 
 -record(state, {pid}).
 
@@ -32,10 +32,10 @@
 %% @spec start_link() -> {ok, Pid} | ignore | {error, Error}
 %% @end
 %%--------------------------------------------------------------------
-start_link() ->
+start_link() ->  % {{{1
     gen_server:start_link({local, ?MODULE}, ?MODULE, [], []).
 
-register_receiver(Pid) ->
+register_receiver(Pid) ->  % {{{1
     gen_server:cast(?MODULE, {register, Pid}).
 %%%===================================================================
 %%% gen_server callbacks
@@ -52,7 +52,7 @@ register_receiver(Pid) ->
 %%                     {stop, Reason}
 %% @end
 %%--------------------------------------------------------------------
-init([]) ->
+init([]) ->  % {{{1
     bitmessage:register_receiver(self()),
     {ok, #state{}}.
 
@@ -70,7 +70,7 @@ init([]) ->
 %%                                   {stop, Reason, State}
 %% @end
 %%--------------------------------------------------------------------
-handle_call(_Request, _From, State) ->
+handle_call(_Request, _From, State) ->  % {{{1
     Reply = ok,
     {reply, Reply, State}.
 
@@ -84,9 +84,9 @@ handle_call(_Request, _From, State) ->
 %%                                  {stop, Reason, State}
 %% @end
 %%--------------------------------------------------------------------
-handle_cast({register, Pid}, State) ->
+handle_cast({register, Pid}, State) ->  % {{{1
     {noreply, State#state{pid=Pid}};
-handle_cast(_Msg, State) ->
+handle_cast(_Msg, State) ->  % {{{1
     {noreply, State}.
 
 %%--------------------------------------------------------------------
@@ -99,7 +99,7 @@ handle_cast(_Msg, State) ->
 %%                                   {stop, Reason, State}
 %% @end
 %%--------------------------------------------------------------------
-handle_info({msg, Hash}, State) ->
+handle_info({msg, Hash}, State) ->  % {{{1
     %io:format("~p~n", [Hash]),
     {ok, #message{from=From, to=To, subject=Subject, text=Text, enc=Enc} = Message}= bitmessage:get_message(Hash),
     FID = get_or_request_contact(From, From, To),
@@ -107,7 +107,7 @@ handle_info({msg, Hash}, State) ->
     apply_message(Message, FID, ToID),
     State#state.pid ! update,
     {noreply, State};
-handle_info(_Info, State) ->
+handle_info(_Info, State) ->  % {{{1
     {noreply, State}.
 
 %%--------------------------------------------------------------------
@@ -121,7 +121,7 @@ handle_info(_Info, State) ->
 %% @spec terminate(Reason, State) -> void()
 %% @end
 %%--------------------------------------------------------------------
-terminate(_Reason, _State) ->
+terminate(_Reason, _State) ->  % {{{1
     ok.
 
 %%--------------------------------------------------------------------
@@ -132,7 +132,7 @@ terminate(_Reason, _State) ->
 %% @spec code_change(OldVsn, State, Extra) -> {ok, NewState}
 %% @end
 %%--------------------------------------------------------------------
-code_change(_OldVsn, State, _Extra) ->
+code_change(_OldVsn, State, _Extra) ->  % {{{1
     {ok, State}.
 
 %%%===================================================================
@@ -142,19 +142,19 @@ code_change(_OldVsn, State, _Extra) ->
 %%% Technical messages (not visible for users
 %%%
 
-apply_message(#message{from=BMF, to=BMT, subject= <<"Get vCard">>, text=Data, enc=6}, FID, ToID) ->
+apply_message(#message{from=BMF, to=BMT, subject= <<"Get vCard">>, text=Data, enc=6}, FID, ToID) ->  % {{{1
                        {ok,  #db_contact{name=Name, email=Email, phone=Phone, bitmessage=BM, address=Address} } = db:get_contact_by_address(Data),
                        bitmessage:send_message(BMT, BMF, <<"vCard">>, <<(wf:to_binary(Name))/bytes, ",", (wf:to_binary(Email))/bytes, ",", (wf:to_binary(Phone))/bytes, ",", (wf:to_binary(Address))/bytes, ",", (wf:to_binary(BM))/bytes>>, 6);
-apply_message(#message{from=BMF, to=BMT, subject= <<"vCard">>, text=Data, enc=6}, FID, ToID) ->
+apply_message(#message{from=BMF, to=BMT, subject= <<"vCard">>, text=Data, enc=6}, FID, ToID) ->  % {{{1
     [Name, Email, Phone, Address, BM] = binary:split(Data, <<",">>, [global, trim]),
     {ok, Contact } = db:get_contact_by_address(BM),
     db:save(Contact#db_contact{name=Name, email=Email, phone=Phone, address=Address});
 
-apply_message(#message{from=BMF, to=BMT, subject= <<"Get torrent">>, text=Data, enc=6}, FID, ToID) ->
+apply_message(#message{from=BMF, to=BMT, subject= <<"Get torrent">>, text=Data, enc=6}, FID, ToID) ->  % {{{1
     {ok,  F } = file:read_file("scratch/" ++ wf:to_list(Data) ++ ".torrent"),
     bitmessage:send_message(BMT, BMF, <<"torrent">>, <<Data/bytes, ";", F/bytes>>, 6);
 
-apply_message(#message{from=BMF, to=BMT, subject= <<"torrent">>, text=Data, enc=6}, FID, ToID) ->
+apply_message(#message{from=BMF, to=BMT, subject= <<"torrent">>, text=Data, enc=6}, FID, ToID) ->  % {{{1
     [Id, Torrent] = binary:split(Data, <<";">>, [trim]),
     Path = wf:f(".new/~s.torrent", [Id]),
     file:write_file("scratch/" ++ Path, Torrent),
@@ -163,7 +163,7 @@ apply_message(#message{from=BMF, to=BMT, subject= <<"torrent">>, text=Data, enc=
                     file:rename("scratch/" ++ Path, wf:f("scratch/~s.torrent", [Id]))
         end});
 
-apply_message(#message{from=BMF, to=BMT, subject= <<"Task tree">>, text=Data, enc=6}, FID, ToID) ->
+apply_message(#message{from=BMF, to=BMT, subject= <<"Task tree">>, text=Data, enc=6}, FID, ToID) ->  % {{{1
     #task_tree_packet{task=Task, parent=Parent} = binary_to_term(Data),
     case db:get_task(Parent) of
         [] ->
@@ -172,7 +172,7 @@ apply_message(#message{from=BMF, to=BMT, subject= <<"Task tree">>, text=Data, en
             db:save_subtask(Task, Parent)
     end;
 
-apply_message(#message{from=BMF, to=BMT, subject= <<"Update223322">>, text=Data, enc=2}, FID, ToID) ->
+apply_message(#message{from=BMF, to=BMT, subject= <<"Update223322">>, text=Data, enc=2}, FID, ToID) ->  % {{{1
     [BVSN, Torrent] = binary:split(Data, <<";">>, [trim]),
     {ok, CVSN} = application:get_key(nitrogen, 'vsn'),
     PWD = application:get_env(nitrogen, work_dir, "."),
@@ -202,7 +202,7 @@ apply_message(#message{from=BMF, to=BMT, subject= <<"Update223322">>, text=Data,
 %% Informational messages
 %%%
 
-apply_message(#message{from=BMF, to=BMT, subject=Subject, text=Data, enc=3}, FID, ToID)  ->
+apply_message(#message{from=BMF, to=BMT, subject=Subject, text=Data, enc=3}, FID, ToID)  ->  % {{{1
     {ok, Id} = db:next_id(db_update),
 
     #message_packet{text=Text, attachments=Attachments, involved=Involved} = binary_to_term(Data),
@@ -213,7 +213,7 @@ apply_message(#message{from=BMF, to=BMT, subject=Subject, text=Data, enc=3}, FID
                                     I
                     end, Attachments),
     db:save_attachments(Message, sets:from_list(Files));
-apply_message(#message{from=BMF, to=BMT, subject=Subject, text=Data, enc=4}, FID, ToID)  ->
+apply_message(#message{from=BMF, to=BMT, subject=Subject, text=Data, enc=4}, FID, ToID)  ->  % {{{1
     #task_packet{id=UID, 
                  due=Due, 
                  %name=wf:to_list(Subject), 
@@ -240,12 +240,12 @@ apply_message(#message{from=BMF, to=BMT, subject=Subject, text=Data, enc=4}, FID
                 C = get_or_request_contact(A, BMF, BMT),
                 db:save(#db_contact_roles{id=NPUID, type=db_task, role=wf:to_list(R), tid=UID, contact=C})
         end, Involved);
-apply_message(Message, FID, ToID) ->
-    error_logger:warning_msg("Wrong incomming message: ~p from ~p~n", [Message]).
+apply_message(Message, FID, ToID) ->  % {{{1
+    error_logger:warning_msg("Wrong incomming message: ~p from ~p~n", [Message, FID]).
 
-get_vcard(BM, To, From) ->
+get_vcard(BM, To, From) ->  % {{{1
     bitmessage:send_message(From, To, <<"Get vCard">>, BM, 6).
-get_or_request_contact(BM, From, To) ->
+get_or_request_contact(BM, From, To) ->  % {{{1
     case db:get_contact_by_address(BM) of
         {ok, none} ->
             {ok, CID} = db:next_id(db_contact),
@@ -257,7 +257,7 @@ get_or_request_contact(BM, From, To) ->
             CID
     end.
 
-decode_attachments(A, BMF, BMT) ->
+decode_attachments(A, BMF, BMT) ->  % {{{1
     AT = binary:split(A, <<";">>, [global, trim]),
     lists:map(fun(A) -> 
                     #db_file{id=FId, user=U} = F = binary_to_term(A),

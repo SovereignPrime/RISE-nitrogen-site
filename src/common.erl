@@ -42,7 +42,7 @@ unread() -> % {{{1
     #span{id=count, class='label label-inverse',text=wf:f("~p new", [length(New)])}.
 connection_status() -> % {{{1
     case ets:info(addrs, size) of
-        0 ->
+         C when C==0; C==undefined ->
             "<script type='text/javascript'>" ++
                 "$('.tooltip').remove();" ++
             "</script>" ++
@@ -253,6 +253,12 @@ event({search, Term}) -> %{{{1
 event({save_filter, Term}) -> %{{{1
     db:save(#db_search{text=Term}),
     wf:wire(#script{script="$('.sigma_search_x_button').click()"});
+event({reply, Subject, To}) -> % {{{1
+    {ok, Id} = db:next_id(db_update),
+    wf:session(current_subject, Subject),
+    wf:session(current_update, #db_update{id=Id, to=[ To ], subject=Subject}),
+    wf:session(attached_files, undefined),
+    wf:redirect("/edit_update");
 event(backup) -> %{{{1
     mnesia:stop(), 
     {ok, FS} = file:list_dir("data"),

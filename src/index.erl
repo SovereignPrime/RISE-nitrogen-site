@@ -93,12 +93,6 @@ event({show_archive, false}) -> % {{{1
     wf:replace(archive, #link{id=archive, body="<i class='icon-list-alt'></i> Archive", postback={show_archive, true}}),
     wf:replace(left, left()),
     wf:replace(body, body());
-event({reply, Subject, To}) -> % {{{1
-    {ok, Id} = db:next_id(db_update),
-    wf:session(current_subject, Subject),
-    wf:session(current_update, #db_update{id=Id, to=[ To ], subject=Subject}),
-    wf:session(attached_files, undefined),
-    wf:redirect("/edit_update");
 event(Click) -> % {{{1
     io:format("Event ~p in ~p~n", [Click, ?MODULE]).
 

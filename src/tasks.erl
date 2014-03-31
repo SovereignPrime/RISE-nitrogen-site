@@ -128,12 +128,12 @@ body() ->  % {{{1
             ]}.
 render_task(#db_task{id=Id, name=Name, due=Due, text=Text, parent=Parent, status=Status}=Task) ->  % {{{1
     {ok, Involved} = db:get_involved(Id),
-    {My, InvolvedN} = case lists:partition(fun({_, _, #db_contact{my=true}}) -> true; (_) -> false end, Involved) of % {{{2
+    {My, InvolvedN} = case lists:partition(fun({_, _, #db_contact{my=true}}) -> true; (_) -> false end, Involved) of 
         {[{_,M, _}], I} ->  
             {M, I};
         {[], I} ->  
             {no, I}
-    end, %}}}
+    end, 
     TextF = re:replace(Text, "\r*\n", "<br>", [{return, list}, noteol, global]), 
     {ok, Updates} = db:get_task_history(Id),
     io:format("Upd: ~p~n", [Updates]),
@@ -146,9 +146,9 @@ render_task(#db_task{id=Id, name=Name, due=Due, text=Text, parent=Parent, status
                         "Due: ", Due , #br{},
                         #br{},
                         "My role - ", My, #br{},
-                        lists:map(fun({Name, Role, _}) ->  % {{{2
+                        lists:map(fun({Name, Role, _}) ->
                                     [ Name, " - ", Role, #br{}]
-                            end, InvolvedN) % }}}
+                            end, InvolvedN) 
                         ]},
                 #panel{ class="span1", body=[
                         #panel{class="btn btn-link", body = #link{body=[
@@ -174,7 +174,7 @@ render_task(#db_task{id=Id, name=Name, due=Due, text=Text, parent=Parent, status
         #panel{ class="row-fluid", body=[
                 #panel{ class="span12", body=TextF}
                 ]},
-        case db:get_attachments(Task) of % {{{2
+        case db:get_attachments(Task) of 
             {ok, []} ->
                 [];
             {ok, [], undefined} ->
@@ -189,11 +189,11 @@ render_task(#db_task{id=Id, name=Name, due=Due, text=Text, parent=Parent, status
                                 #attachment{fid=Id, filename=Path, size=Size, time=Date, status=State}
                         end, Attachments)
                     ]
-        end, % }}}
+        end,
         [
          #update_element{collapse=true, from=From, to=To, text=Text, uid=Id, subject=Subject, enc=Enc, status=Status} || #message{hash=Id, enc=Enc, to=To, subject=Subject, from=From, text=Text, status=Status} <- sugar:sort_by_timestamp(Updates)
         ] 
-    ]. % }}}
+    ]. 
 
 event({archive, #db_task{id=Id, parent=Parent} = Rec}) ->  % {{{1
     {ok, NTask} = db:archive(Rec),
