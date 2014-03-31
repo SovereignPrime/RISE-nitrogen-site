@@ -183,10 +183,10 @@ format_status(ackwait) ->  % {{{1
     " (sent)";
 format_status(new) ->  % {{{1
     " (sending)";
-format_status(Status) when Status==wait_pubkey; Status==encrypting ->  % {{{1
+format_status(Status) when Status==wait_pubkey; Status==encrypt_message ->  % {{{1
     " (sending)";
 format_status(Status) ->  % {{{1
-    wf:to_list(Status).
+    " " ++ wf:to_list(Status).
 
 decode_enc(3, Data) ->  % {{{1
     #message_packet{text=T, attachments=A, time=TS} = binary_to_term(Data),
