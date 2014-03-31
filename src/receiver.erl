@@ -100,7 +100,7 @@ handle_cast(_Msg, State) ->  % {{{1
 %% @end
 %%--------------------------------------------------------------------
 handle_info({msg, Hash}, State) ->  % {{{1
-    %io:format("~p~n", [Hash]),
+    io:format("~p~n", [Hash]),
     {ok, #message{from=From, to=To, subject=Subject, text=Text, enc=Enc} = Message}= bitmessage:get_message(Hash),
     FID = get_or_request_contact(From, From, To),
     {ok, #db_contact{id=ToID}} = db:get_contact_by_address(To),
@@ -156,13 +156,8 @@ apply_message(#message{from=BMF, to=BMT, subject= <<"Get torrent">>, text=Data, 
 
 apply_message(#message{from=BMF, to=BMT, subject= <<"torrent">>, text=Data, enc=6}, FID, ToID) ->  % {{{1
     [Id, Torrent] = binary:split(Data, <<";">>, [trim]),
-    Path = wf:f(".new/~s.torrent", [Id]),
-    file:write_file("scratch/" ++ Path, Torrent),
-    etorrent:start(Path, {callback, fun() ->
-                    db:mark_downloaded(wf:to_list(Id)),
-                    file:rename("scratch/" ++ Path, wf:f("scratch/~s.torrent", [Id]))
-        end});
-
+    Path = wf:f("~s.torrent", [Id]),
+    file:write_file("scratch/" ++ Path, Torrent);
 apply_message(#message{from=BMF, to=BMT, subject= <<"Task tree">>, text=Data, enc=6}, FID, ToID) ->  % {{{1
     #task_tree_packet{task=Task, parent=Parent} = binary_to_term(Data),
     case db:get_task(Parent) of

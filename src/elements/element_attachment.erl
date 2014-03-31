@@ -33,7 +33,7 @@ render_element(#attachment{id=I, fid=Id, filename=File, size=Size, time=Time, st
             #panel{class="span3", body=DateS},
             #panel{class="span1", body="<i class='icon icon-save'></i>", style="text-align:center;", actions=#event{type=click, postback={save, File, Id}, delegate=?MODULE}}
             ]};
-render_element(#attachment{id=I, fid=Id, filename=File, size=Size, time=Time, status=downloading}) ->
+render_element(Record=#attachment{id=I, fid=Id, filename=File, size=Size, time=Time, status=downloading}) ->
     {Y, M, D} = Time,
     DateS = io_lib:format("~p-~p-~p", [Y, M, D]),
     #panel{id=I, class="row-fluid", body=[
@@ -42,6 +42,9 @@ render_element(#attachment{id=I, fid=Id, filename=File, size=Size, time=Time, st
             #panel{class="span4", body=DateS},
             #panel{class="span2", body=[
                     case ets:match_object(etorrent_torrent,#torrent{display_name=wf:to_binary(Id), _='_'}) of
+                        [#torrent{state=seeding}] ->
+                            db:mark_downloaded(wf:to_list(FID)),
+                            render_element(Record#attachment{status=downloaded});
                         [#torrent{leechers=L, seeders=S, left=Left, total=Total}] ->
                             wf:to_list((Total - Left)  * 100 / Total);
                         [] ->
