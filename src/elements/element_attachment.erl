@@ -43,7 +43,7 @@ render_element(Record=#attachment{id=I, fid=Id, filename=File, size=Size, time=T
             #panel{class="span2", body=[
                     case ets:match_object(etorrent_torrent,#torrent{display_name=wf:to_binary(Id), _='_'}) of
                         [#torrent{state=seeding}] ->
-                            db:mark_downloaded(wf:to_list(FID)),
+                            db:mark_downloaded(wf:to_list(Id)),
                             render_element(Record#attachment{status=downloaded});
                         [#torrent{leechers=L, seeders=S, left=Left, total=Total}] ->
                             wf:to_list((Total - Left)  * 100 / Total);
