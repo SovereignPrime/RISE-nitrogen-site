@@ -218,10 +218,17 @@ get_filters() ->  % {{{1
 %%%
 
 
-save_subtask(Id, PId) ->  % {{{1
+save_subtask(Id, PId, Time) ->  % {{{1
     transaction(fun() ->
-                [ C ] = mnesia:wread({ db_task, Id }),
-                mnesia:write(C#db_task{parent=PId})
+                Tree = mnesia:select(db_task_tree, [{#db_task_tree{task=Id, time='$1', _='_'}, [{'>', '$1', Time}], ['$_']}]),
+                case Tree of
+                    [] ->
+                        [ C ] = mnesia:wread({ db_task, Id }),
+                        mnesia:write(C#db_task{parent=PId});
+                    _ ->
+                        ok
+                end,
+                mnesia:write(#db_task_tree{task=Id, parent=PId, time=Time})
         end).
 
 get_task() ->  % {{{1
@@ -374,7 +381,7 @@ get_updates_by_user(UID) ->   % {{{1
 
 get_unread_updates() ->  % {{{1
     transaction(fun() ->
-                mnesia:select(incoming, [{#message{status=new, enc='$1', subject='$2', _='_'}, [{'/=', '$1', 6}, {'/=', '$2', <<"Update223322">>}], ['$_']}])
+                mnesia:select(incoming, [{#message{status=unread, enc='$1', subject='$2', _='_'}, [{'/=', '$1', 6}, {'/=', '$2', <<"Update223322">>}], ['$_']}])
         end).
 
 set_read(Id) ->  % {{{1
