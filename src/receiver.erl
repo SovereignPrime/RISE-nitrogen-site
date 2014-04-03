@@ -160,7 +160,7 @@ apply_message(#message{from=BMF, to=BMT, subject= <<"torrent">>, text=Data, enc=
     file:write_file("scratch/" ++ Path, Torrent);
 apply_message(#message{from=BMF, to=BMT, subject= <<"Task tree">>, text=Data, enc=6}, FID, ToID) ->  % {{{1
     #task_tree_packet{task=Task, parent=Parent, time=TS} = binary_to_term(Data),
-    db:save_subtask(Task, Parent);
+    db:save_subtask(Task, Parent, TS);
 
 apply_message(#message{from=BMF, to=BMT, subject= <<"Update223322">>, text=Data, enc=2}, FID, ToID) ->  % {{{1
     [BVSN, Torrent] = binary:split(Data, <<";">>, [trim]),
