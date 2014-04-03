@@ -261,20 +261,20 @@ event(Click) ->  % {{{1
     io:format("~p~n",[Click]).
 
 drop_event({task, Id}, { subtask, PId }) when PId /= Id->  % {{{1
-    case db:get_task(PId) of   % {{{2
+    case db:get_task(PId) of
         {ok, [#db_task{parent=Id}]} ->
             ok;
         _ ->
-            db:save_subtask(Id, PId),
+            db:save_subtask(Id, PId, bm_types:timestamp()),
             %db:save_task_tree(Id, PId),
-            common:send_task_tree(Id, PId),
+            common:send_task_tree(Id, PId, bm_types:timestamp()),
             wf:wire(#event{postback={task_chosen, PId}})
     end;
 drop_event({task, Id}, task) ->  % {{{1
     PId = wf:session(left_parent_id),
-    common:send_task_tree(Id, PId),
+    common:send_task_tree(Id, PId, bm_types:timestamp()),
     %db:delete_task_tree(Id, PId),
-    db:save_subtask(Id, PId);
+    db:save_subtask(Id, PId, bm_types:timestamp());
 drop_event(_, _) ->  % {{{1
     ok.
 

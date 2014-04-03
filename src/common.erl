@@ -380,12 +380,17 @@ send_messages(#db_task{id=UID, name=Subject, text=Text, due=Date, parent=Parent,
                 ok
         end, Contacts).
 
-send_task_tree(Id, Parent) -> %{{{1
+send_task_tree(Id, Parent, Time) -> %{{{1
+    {ok, PInvolved} = db:get_involved(Parent),
     {ok, Involved } = db:get_involved(Id),
+    PContact = sets:from_list(lists:map(fun({_, _, #db_contact{address=A}}) -> A end, PInvolved)),
     #db_contact{bitmessage=From} = wf:user(),
     lists:foreach(fun({_, _, #db_contact{bitmessage=To, my=false}}) ->
-                          MSG = term_to_binary(#task_tree_packet{task=Id, parent=Parent}),
-                          bitmessage:send_message(From, wf:to_binary(To), <<"Task tree">>, MSG, 6);
+                          if  sets:is_element(To) ->
+                                  MSG = term_to_binary(#task_tree_packet{task=Id, parent=Parent, time=Time}),
+                                  bitmessage:send_message(From, wf:to_binary(To), <<"Task tree">>, MSG, 6);
+                              true -> ok
+                          end;
                      (_) ->
                           ok
                   end, Involved).
