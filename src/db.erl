@@ -329,6 +329,24 @@ save_task_tree(Id, Parent) ->  % {{{1
                         end
                 end).
 
+search_parent(Id, PId) ->
+    transaction(fun() ->
+                        search_parent_rec(Id, PId)
+                end).
+
+get_children(UID, Time) ->
+    transaction(fun() ->
+                        CS = mnesia:select(db_task_tree, [{#db_task_tree{parent=UID,time='$1', _='_'}, [{'>', '$1', Time}], ['$_']}]),
+                        CSS = lists:sort(fun(#db_task_tree{time=A}, #db_task_tree{time=B}) -> A > B end, CS),
+                        lists:foldl(fun(#db_task_tree{task=T}, A) ->
+                                            case lists:keymember(T, 2, A) of
+                                                true ->
+                                                    A;
+                                                false ->
+                                                    [T|A]
+                                            end
+                                    end, [], CSS)
+                end). 
 
 %%%
 %% Expense routines
@@ -784,3 +802,16 @@ get_subgroup(G) ->  % {{{1
                     Gr#db_group{subgroups=get_subgroup(N)}
         end, Groups).
              
+search_parent_rec(Id, PId) ->
+    case mnesia:read(db_task, PId) of
+        [] ->
+            case mnesia:read(db_task_tree, PId) of
+                [] ->
+                    undefined;
+                P ->
+                    #db_task_tree{parent=PPId} = hd(lists:sort(fun(#db_task_tree{time=A}, #db_task_tree{time=B}) -> A > B end, P)),
+                    search_parent_rec(Id, PPId)
+            end;
+        [#db_task{id=PId}] ->
+            PId
+    end.

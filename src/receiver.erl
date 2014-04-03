@@ -210,11 +210,13 @@ apply_message(#message{from=BMF, to=BMT, subject=Subject, text=Data, enc=4}, FID
                  text=Text, 
                  parent=Parent, 
                  status=Status, 
+                 time=Time,
                  attachments=AttachmentsE, 
                  involved=Involved} = binary_to_term(Data),
     Task = case db:get_task(Parent) of
                {ok, []} ->
-                   #db_task{id=UID, due=Due,  name=wf:to_list(Subject), text=Text, status=Status};
+                   {ok, P} = db:search_parent(UID, Parent),
+                   #db_task{id=UID, due=Due,  name=wf:to_list(Subject), text=Text, parent=P, status=Status};
                {ok, _} ->
                    #db_task{id=UID, due=Due,  name=wf:to_list(Subject), text=Text, parent=Parent, status=Status}
            end,
@@ -229,7 +231,12 @@ apply_message(#message{from=BMF, to=BMT, subject=Subject, text=Data, enc=4}, FID
                 {ok, NPUID} = db:next_id(db_contact_roles),
                 C = get_or_request_contact(A, BMF, BMT),
                 db:save(#db_contact_roles{id=NPUID, type=db_task, role=wf:to_list(R), tid=UID, contact=C})
-        end, Involved);
+        end, Involved),
+    {ok, Children} = db:get_children(UID, Time),
+    lists:foreach(fun(#db_task_tree{task=T, time=TS}) ->
+                          db:save_subtask(T, UID, TS)
+                  end, Children);
+
 apply_message(Message, FID, ToID) ->  % {{{1
     error_logger:warning_msg("Wrong incomming message: ~p from ~p~n", [Message, FID]).
 
