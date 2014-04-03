@@ -148,7 +148,7 @@ apply_message(#message{from=BMF, to=BMT, subject= <<"Get vCard">>, text=Data, en
 apply_message(#message{from=BMF, to=BMT, subject= <<"vCard">>, text=Data, enc=6}, FID, ToID) ->  % {{{1
     [Name, Email, Phone, Address, BM] = binary:split(Data, <<",">>, [global, trim]),
     {ok, Contact } = db:get_contact_by_address(BM),
-    db:save(Contact#db_contact{name=Name, email=Email, phone=Phone, address=Address});
+    db:save(Contact#db_contact{name=wf:to_list(Name), email=wf:to_list(Email), phone=wf:to_list(Phone), address=Address});
 
 apply_message(#message{from=BMF, to=BMT, subject= <<"Get torrent">>, text=Data, enc=6}, FID, ToID) ->  % {{{1
     {ok,  F } = file:read_file("scratch/" ++ wf:to_list(Data) ++ ".torrent"),
