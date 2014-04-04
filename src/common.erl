@@ -17,9 +17,9 @@ main() ->  % {{{1
                         {ok, []} ->
                             wf:redirect("/legal");
                         {ok, [U]} ->
-                            wf:user(U)
-                    end,
-                    main();
+                            wf:user(U),
+							main()
+                    end;
                 R ->
                     {ok, Pid} = wf:comet_global(fun  incoming/0, incoming),
                     timer:send_interval(1000, Pid, status),
