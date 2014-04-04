@@ -288,17 +288,19 @@ event({unfold, #update_element{id=Id, uid=Uid, enc=Enc}=Update}) -> % {{{1
     end,
 
     case db:set_read(Uid) of
-        {ok, new} ->
+        {ok, unread} ->
                 New = wf:session(unread) - 1,
                 wf:session(unread, New),
+                wf:replace(Id, Update#update_element{collapse=false, status=read, attachments=[
+                                                                                  #attachment{fid=FId, filename=File, size=Size, time=Time, status=Status} || #db_file{id=FId, path=File, size=Size, date=Time, status=Status} <- Attachments
+                                                                                 ]}),
                 wf:replace(count, #span{id=count, class='label label-inverse',text=wf:f("~p new", [New])});
         {ok, _} ->
-            ok
-    end,
+            wf:replace(Id, Update#update_element{collapse=false, attachments=[
+                                                                              #attachment{fid=FId, filename=File, size=Size, time=Time, status=Status} || #db_file{id=FId, path=File, size=Size, date=Time, status=Status} <- Attachments
+                                                                             ]})
+    end;
 
-    wf:replace(Id, Update#update_element{collapse=false, attachments=[
-                #attachment{fid=FId, filename=File, size=Size, time=Time, status=Status} || #db_file{id=FId, path=File, size=Size, date=Time, status=Status} <- Attachments
-                                                               ]});
 event({fold, #update_element{id=Id}=Update}) -> % {{{1
     wf:replace(Id, Update#update_element{collapse=true});
 event(E) -> %{{{1
