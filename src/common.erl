@@ -18,7 +18,7 @@ main() ->  % {{{1
                             wf:redirect("/legal");
                         {ok, [U]} ->
                             wf:user(U),
-							main()
+                            main()
                     end;
                 R ->
                     {ok, Pid} = wf:comet_global(fun  incoming/0, incoming),
