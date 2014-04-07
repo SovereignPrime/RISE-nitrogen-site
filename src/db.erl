@@ -32,14 +32,19 @@ install(Pid)->  % {{{1
             Pid ! accept
     end.
 
-update() ->
-    mnesia:transform_table(db_task_tree, fun({db_task_tree, T, P, V}) ->
-                                                 #db_task_tree{task=T,
-                                                               parent=P,
-                                                               time=bm_types:timestamp(),
-                                                               visible=V}
-                                         end, record_info(fields, db_task_tree)).
-
+update() ->  % {{{1
+    Fields = mnesia:table_info(db_task_tree, attributes),
+    case Fields of
+        [task, parent,visible] ->
+            mnesia:transform_table(db_task_tree, fun({db_task_tree, T, P, V}) ->
+                                                         #db_task_tree{task=T,
+                                                                       parent=P,
+                                                                       time=bm_types:timestamp(),
+                                                                       visible=V}
+                                                 end, record_info(fields, db_task_tree));
+        _ ->
+            ok
+    end.
 
 %%%
 %% Get new id fot Type

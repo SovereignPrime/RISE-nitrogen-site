@@ -17,6 +17,7 @@ main() ->  % {{{1
                         {ok, []} ->
                             wf:redirect("/legal");
                         {ok, [U]} ->
+                            db:update(),
                             wf:user(U)
                     end,
                     main();
