@@ -73,7 +73,13 @@ render_element(#update_preview{id=Id, icon=Icon, from=From, age=Age, subject=Sub
                                                                                            ]}
                                                            ], actions=#event{type=click, postback={selected, Id, Subject, Archive}}};
 render_element(#update_preview{id=Id, icon=Icon, from=From, age=Age, subject=Subject, text=Data, flag=Flag, archive=Archive}) when Icon==4 ->  % {{{1
-    {ok, #db_contact{name=FromName}} = db:get_contact_by_address(From),
+    FromName = case db:get_contact_by_address(From) of
+                   {ok, #db_contact{name=FN}} ->
+                       FN;
+                   {ok, none} ->
+                       wf:to_list(From)
+               end,
+
     #task_packet{text=Text, time=Timestamp} = binary_to_term(Data),
     TD = bm_types:timestamp() - Timestamp,
     CurrentSession = wf:session(current_subject),
