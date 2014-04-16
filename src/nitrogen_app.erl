@@ -9,8 +9,11 @@
 start(_StartType, _StartArgs) ->
     application:start(mnesia),
     application:start(mimetypes),
+    application:start(crypto),
+    application:start(nprocreg),
+    application:start(ranch),
+    application:start(cowboy),
     etorrent:start_app(),
-    application:start(bitmessage),
     application:start(eminer),
     pat:start(),
     nitrogen_sup:start_link().

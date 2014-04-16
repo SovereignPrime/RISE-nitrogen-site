@@ -22,14 +22,6 @@ start_link() ->
 %% ===================================================================
 
 init([]) ->
-    %% Start the Process Registry...
-    application:start(crypto),
-    application:start(nprocreg),
-    application:start(ranch),
-    %wx_interface:start(),
-
-    %% Start Cowboy...
-    application:start(cowboy),
     {ok, BindAddress} = application:get_env(cowboy, bind_address),
     {ok, Port} = application:get_env(cowboy, port),
     {ok, ServerName} = application:get_env(cowboy, server_name),
