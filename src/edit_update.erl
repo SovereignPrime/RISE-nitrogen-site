@@ -143,3 +143,6 @@ event(save) -> % {{{1
     wf:redirect("/");
 event(Ev) -> % {{{1
     io:format("Event ~p in module ~p~n", [Ev, ?MODULE]).
+
+incoming() ->
+    ok.

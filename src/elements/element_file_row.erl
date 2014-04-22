@@ -15,7 +15,7 @@
 reflect() -> record_info(fields, file_row).
 
 -spec render_element(#file_row{}) -> body().
-render_element(Record = #file_row{fid=FID, id=Id, name=Name, type=Type, size=Size, for=For, date=Date, status=Status}) ->
+render_element(Record = #file_row{fid=FID, id=Id, name=Name, type=Type, size=Size, for=For, date=Date, status=Status}) ->  % {{{1
     FType = case Type of
         "." ++ T ->
             string:to_upper(T);
@@ -29,8 +29,8 @@ render_element(Record = #file_row{fid=FID, id=Id, name=Name, type=Type, size=Siz
                     db:mark_downloaded(wf:to_list(FID)),
                     render_element(Record#file_row{status=downloaded});
             [#torrent{leechers=L, seeders=S, left=Left, total=Total}] ->
-                {L, S, ((Total - Left)  * 100 / Total)};
-            [] ->
+                {L, S, ((Total - Left)  * 100 div Total)};
+             _ ->
                 {0, 0, 0}
         end;
        true ->
@@ -51,7 +51,7 @@ render_element(Record = #file_row{fid=FID, id=Id, name=Name, type=Type, size=Siz
             %#tablecell{text=Peer, class=""},
             case Status of
                 downloading ->
-                    #tablecell{body=#progressbar{progress=Percent, width=80}, class=""};
+                    #tablecell{body=#progressbar{progress=to_list(Percent), width=80}, class=""};
                 _ ->
                     #tablecell{text=Status, class=""}
             end

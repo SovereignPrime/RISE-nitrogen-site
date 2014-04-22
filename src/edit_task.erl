@@ -11,9 +11,9 @@ title() -> "Welcome to Nitrogen".
 
 icon() -> #image{image="/img/tasks.svg", class="icon", style="height: 32px;margin-top:-5px;"}.
 
-buttons(left) ->
+buttons(left) ->  % {{{1
     "";
-buttons(main) ->
+buttons(main) ->  % {{{1
     #panel{class='row-fluid', body=[
             #panel{class='span9 offset3', body=[
                     #panel{class="row-fluid", body=[
@@ -24,7 +24,7 @@ buttons(main) ->
                     ]}
             ]}.
 
-left() ->
+left() ->  % {{{1
     #db_task{id=CId, parent=PId} = Task = wf:session_default(current_task, #db_task{}),
     wf:session(current_task, Task),
     PName = case db:get_task(PId) of
@@ -83,7 +83,7 @@ left() ->
             ]}.
 
 
-body() ->
+body() ->  % {{{1
     #db_task{id=Id, name=Name, due=Due, text=Text} = wf:session(current_task),
     #db_contact{id=MID, name=Me} = wf:user(),
     wf:session(<<"Me">>, MID),
@@ -118,24 +118,24 @@ body() ->
 %                    ]}
             ]}.
 
-add_existing_rows(Id) ->
+add_existing_rows(Id) ->  % {{{1
     {ok, Involved} = db:get_involved(Id),
     Contacts = [{C, R} || {_, R, C}  <- Involved],
     Tos = lists:zip(Contacts, lists:seq(1, length(Contacts))),
     lists:foreach(fun({ {#db_contact{id=I, name=C}, R  }, N }) ->
                 wf:session(wf:to_binary(C), I),
-                element_addable_row:event({add, #addable_row{id=roles, num= N - 1, body=#involved{person=C, role=R}}})
+                element_addable_row:event({add, #addable_row{id=roles, num= N - 1, body=#involved{person=C, role=R} }})
         end, Tos),
     case length(Tos) of
         0 ->
-            element_addable_row:event({add, #addable_row{id=roles, num= length(Tos), body=#involved{}}});
+            element_addable_row:event({add, #addable_row{id=roles, num= length(Tos), body=#involved{} }});
         _ ->
             element_addable_row:event({del, #addable_row{id=roles, num= 0}}),
-            element_addable_row:event({add, #addable_row{id=roles, num= length(Tos), body=#involved{}}})
+            element_addable_row:event({add, #addable_row{id=roles, num= length(Tos), body=#involved{} }})
     end,
     [].
     
-event(add_file) ->
+event(add_file) ->  % {{{1
     TaskName = wf:to_binary(wf:q(name)),
     Due = wf:q(due),
     Text = wf:to_binary(wf:q(text)),
@@ -143,7 +143,7 @@ event(add_file) ->
     NTask = Task#db_task{name= TaskName , due=Due, text=Text},
     wf:session(current_task, NTask),
     wf:redirect("/files");
-event(save) ->
+event(save) ->  % {{{1
     TaskName = wf:to_binary(wf:q(name)),
     Due = wf:q(due),
     Text = wf:to_binary(wf:q(text)),
@@ -164,15 +164,15 @@ event(save) ->
     wf:session(task_attached_files, undefined),
     wf:redirect("/tasks");
 
-event(Ev) ->
+event(Ev) ->  % {{{1
     io:format("Event ~p in module ~p~n", [Ev, ?MODULE]).
 
-
+incoming() -> ok.  % {{{1
 
 %%%
 %% Helpers
 %%%
-save_payments(TaskName) ->
+save_payments(TaskName) ->  % {{{1
     Payable = wf:qs(payable),
     Amounts = wf:qs(amount),
     #db_contact{id=UID} = wf:user(),

@@ -347,6 +347,7 @@ incoming() -> %{{{1
         status ->
             wf:update(connection, connection_status()),
             wf:flush(),
+            (wf:page_module()):incoming(),
             incoming()
     end.
 save_involved(Type, TId) -> %{{{1

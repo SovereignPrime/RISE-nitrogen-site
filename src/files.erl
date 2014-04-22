@@ -97,3 +97,6 @@ event({check, FID, false}) ->
     wf:session(attached_files,  sets:add_element( FID, AF));
 event(Click) ->
     io:format("~p~n",[Click]).
+
+incoming() ->
+    wf:replace(body, body()).
