@@ -15,16 +15,29 @@
 reflect() -> record_info(fields, attachment).
 
 -spec render_element(#attachment{}) -> body().
-render_element(#attachment{id=I, fid=Id, filename=File, size=Size, time=Time, status=received} = Attachment) ->
+render_element(#attachment{id=I,
+                           fid=Id,
+                           filename=File,
+                           size=Size,
+                           time=Time,
+                           status=received} = Attachment) -> % {{{1
     {Y, M, D} = Time,
     DateS = io_lib:format("~p-~p-~p", [Y, M, D]),
     #panel{id=I, class="row-fluid", body=[
             #panel{class="span5", body=File},
             #panel{class="span1", body=sugar:format_file_size(Size)},
             #panel{class="span4", body=DateS},
-            #panel{class="span2", body="<i class='icon-download-alt'></i>", style="text-align:center;", actions=#event{type=click, postback={download, Attachment}, delegate=?MODULE}}
+            #panel{class="span2",
+                   body="<i class='icon-download-alt'></i>",
+                   style="text-align:center;",
+                   actions=#event{type=click,
+                                  postback={download, Attachment}, delegate=?MODULE}}
             ]};
-render_element(#attachment{id=I, fid=Id, filename=File, size=Size, time=Time, status=Status}) when Status==uploaded; Status==downloaded ->
+render_element(#attachment{id=I, fid=Id,
+                           filename=File,
+                           size=Size,
+                           time=Time,
+                           status=Status}) when Status==uploaded; Status==downloaded -> % {{{1
     {Y, M, D} = Time,
     DateS = io_lib:format("~p-~p-~p", [Y, M, D]),
     #panel{id=I, class="row-fluid", body=[
@@ -33,7 +46,12 @@ render_element(#attachment{id=I, fid=Id, filename=File, size=Size, time=Time, st
             #panel{class="span3", body=DateS},
             #panel{class="span1", body="<i class='icon icon-save'></i>", style="text-align:center;", actions=#event{type=click, postback={save, File, Id}, delegate=?MODULE}}
             ]};
-render_element(Record=#attachment{id=I, fid=Id, filename=File, size=Size, time=Time, status=downloading}) ->
+render_element(Record=#attachment{id=I,
+                                  fid=Id,
+                                  filename=File,
+                                  size=Size,
+                                  time=Time,
+                                  status=downloading}) -> % {{{1
     {Y, M, D} = Time,
     DateS = io_lib:format("~p-~p-~p", [Y, M, D]),
     #panel{id=I, class="row-fluid", body=[
@@ -54,9 +72,9 @@ render_element(Record=#attachment{id=I, fid=Id, filename=File, size=Size, time=T
 
             ]}.
 
-event({save, File, Id}) ->
+event({save, File, Id}) -> % {{{1
     wf:redirect("/raw?id=" ++ Id ++ "&file=" ++ File);
-event({download, #attachment{id=I, fid=Id} = Attachment}) ->
+event({download, #attachment{id=I, fid=Id} = Attachment}) -> % {{{1
     {ok, [ File ]} = db:get_files([Id]),
     common:get_torrent(Id), 
     db:save(File#db_file{status=downloading}),

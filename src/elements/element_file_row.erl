@@ -23,19 +23,19 @@ render_element(Record = #file_row{fid=FID, id=Id, name=Name, type=Type, size=Siz
             "BINARY"
     end,
     {ok, Linked} = db:get_linked_messages(FID),
-    {Leechers, Seed, Percent} = if Status == downloading -> 
-         case ets:match_object(etorrent_torrent, #torrent{display_name=wf:to_binary(FID), _='_'}) of
-            [#torrent{state=seeding}] ->
-                    db:mark_downloaded(wf:to_list(FID)),
-                    render_element(Record#file_row{status=downloaded});
-            [#torrent{leechers=L, seeders=S, left=Left, total=Total}] ->
-                {L, S, ((Total - Left)  * 100 div Total)};
-             _ ->
-                {0, 0, 0}
-        end;
-       true ->
-                {0, 0, 0}
-    end,
+    {Stat, Percent, Uploaded} = case ets:match_object(etorrent_torrent, #torrent{display_name=wf:to_binary(FID), _='_'}) of
+                               [#torrent{state=seeding, all_time_uploaded=U}] ->
+                                          if Status == downloading ->
+                                                 db:mark_downloaded(wf:to_list(FID)),
+                                                 {downloaded, 100, U};
+                                             true ->
+                                                 {Status, 100, U}
+                                          end;
+                               [#torrent{ all_time_uploaded=U, left=Left, total=Total}] ->
+                                   {downloading, ((Total - Left)  * 100 div Total), U};
+                               _ ->
+                                   {Status, 0, 0}
+                           end,
     Check =  sets:is_element(FID, wf:session_default(attached_files, sets:new())),
     #tablerow{ cells=[
             #tablecell{body=[
@@ -47,12 +47,12 @@ render_element(Record = #file_row{fid=FID, id=Id, name=Name, type=Type, size=Siz
             #tablecell{text=For, class=""},
             #tablecell{text=Linked, class=""},
             #tablecell{text=sugar:date_format(Date), class=""},
-            %#tablecell{text=Seed, class=""},
+            #tablecell{text=sugar:format_file_size(Uploaded), class=""},
             %#tablecell{text=Peer, class=""},
-            case Status of
+            case Stat of
                 downloading ->
-                    #tablecell{body=#progressbar{progress=to_list(Percent), width=80}, class=""};
+                    #tablecell{body=#progressbar{progress=wf:to_list(Percent), width=80}, class=""};
                 _ ->
-                    #tablecell{text=Status, class=""}
+                    #tablecell{text=Stat, class=""}
             end
             ]}.

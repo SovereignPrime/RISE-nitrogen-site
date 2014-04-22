@@ -67,7 +67,7 @@ body(Archive) ->
                         #tableheader{text="From/To", class=""},
                         #tableheader{text="Linked message", class=""},
                         #tableheader{text="Date", class=""},
-                        %#tableheader{text="Seed", class=""},
+                        #tableheader{text="Uploaded size", class=""},
                         %#tableheader{text="Peer", class=""},
                         #tableheader{text="Status", class=""}
                         ]},
