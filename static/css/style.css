@@ -19,6 +19,11 @@ a, a:hover, a:active {
 	color: #000;
     border: 0px #fff solid;
 }
+
+.textarea, .textbox {
+	color: black;
+}
+
 .btn-link, .btn-link:hover, .btn-link:visited, .btn-link:active, .btn-link:focus {
     color: #000;
     text-decoration: none;
@@ -187,4 +192,9 @@ img.wfid_img_vcard {
 	width: 16px;
 	display: inline-block !important;
 	text-align:center;
+}
+
+/* Plus icon same height as search bar */
+.icon-plus-upper-right {
+	font-size: 30px;
 }
