@@ -16,6 +16,7 @@ a, a:hover, a:active {
 
 .dropdown {
     background-color: #fff;
+	color: #000;
     border: 0px #fff solid;
 }
 .btn-link, .btn-link:hover, .btn-link:visited, .btn-link:active, .btn-link:focus {
