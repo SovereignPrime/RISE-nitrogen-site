@@ -158,3 +158,9 @@ img.wfid_img_vcard {
 .nav-pills>li>a {
 	margin-top:0 !important;
 }
+
+/* Prevent wordwrap on menu dropdown icon to the right of the search bar */
+.top-left-dropdown {
+	white-space:nowrap;
+	width: 42px;
+}
