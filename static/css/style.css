@@ -198,3 +198,18 @@ img.wfid_img_vcard {
 .icon-plus-upper-right {
 	font-size: 30px;
 }
+
+/* Fix spacing with plus button on tasks */
+/* Work in progress, but this at least fixes the inconsistent heights */
+.addable-row .dropdown {
+	height: 32px;
+	/*position:relative;
+	left:-6px;*/
+}
+
+.addable-row .button {
+	height:32px;
+	width:32px;
+	/*position:relative;
+	left:-12px;*/
+}
