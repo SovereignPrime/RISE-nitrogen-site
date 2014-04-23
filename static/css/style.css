@@ -20,7 +20,7 @@ a, a:hover, a:active {
     border: 0px #fff solid;
 }
 
-.textarea, .textbox {
+.textarea, .textbox, .textbox_autocomplete, input[type=text], .datepicker_textbox {
 	color: black;
 }
 

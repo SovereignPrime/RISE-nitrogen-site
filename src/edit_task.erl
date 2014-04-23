@@ -84,39 +84,59 @@ left() ->  % {{{1
 
 
 body() ->  % {{{1
+	fix_addable_rows(),
     #db_task{id=Id, name=Name, due=Due, text=Text} = wf:session(current_task),
     #db_contact{id=MID, name=Me} = wf:user(),
     wf:session(<<"Me">>, MID),
     #panel{ class="span9", body=[
-            #panel{ class="row-fluid", body=[
-                                             #panel{ class="input-prepend span12", body=[
-                                                                                         #span{ class="add-on", body=[
-                                                                                                                      #image{image="/img/tasks.svg", class="icon", style="height: 20px;"}
-                                                                                                                     ]},
-                                                                                         #textbox{id=name, placeholder="Task name", text=Name,  next=due, class="span11"}
-                                                                                        ]}
-                                            ]},
-            #panel{ class="row-fluid", body=[
-                    #panel{ class="input-prepend span12", body=[
-                            #span{ class="add-on", body=[
-                                    #span{html_encode=false, text="<i class='icon-calendar'></i>"}
-                                    ]},
-                            #datepicker_textbox{id=due,  next=due, text=Due, class="span9"}
-                            ]}
-                    ]},
-            #addable_row{id=roles, body= #involved{person=Me, role=accountable}},
-            add_existing_rows(Id),
-            #panel{ class="row-fluid", body=[
-                    #panel{class="span12", body=[
-                            #textarea{class="input-block-level",rows=15, placeholder="Some text here", id=text, text=Text}
-                            ]}
-                    ]}
+        #panel{ class="row-fluid", body=[
+            #panel{ class="input-prepend span12", body=[
+                #span{ class="add-on", body=[
+                    #image{image="/img/tasks.svg", class="icon", style="height: 20px;"}
+                ]},
+                #textbox{id=name, placeholder="Task name", text=Name,  next=due, class="span11"}
+            ]}
+        ]},
+        #panel{ class="row-fluid", body=[
+            #panel{ class="input-prepend span12", body=[
+                #span{ class="add-on", body=[
+                    #span{html_encode=false, text="<i class='icon-calendar'></i>"}
+                ]},
+                #datepicker_textbox{id=due,  next=due, text=Due, class="span9"}
+            ]}
+        ]},
+        #addable_row{id=roles, body= #involved{person=Me, role=accountable}},
+        add_existing_rows(Id),
+        #panel{ class="row-fluid", body=[
+            #panel{class="span12", body=[
+                #textarea{class="input-block-level",rows=15, placeholder="Some text here", id=text, text=Text}
+            ]}
+        ]}
 %            #panel{ class="row-fluid", body=[
-%                    #panel{class="span12", body=[
-%                            #checkbox{id=notice,class="pull-left", text=" Send notice about this update to everyone involved",  checked=true}
-%                            ]}
-%                    ]}
-            ]}.
+%                #panel{class="span12", body=[
+%                    #checkbox{id=notice,class="pull-left", text=" Send notice about this update to everyone involved",  checked=true}
+%                ]}
+%            ]}
+    ]}.
+
+fix_addable_rows() ->
+    %% This is a bit of a hack, but it solves the problem, however, if the window is resized, it does not immediately take effect
+    %% This can be solved by watching for an onresize event.
+	Str = [
+		"var reference_width = $(\".input-prepend\").width();",
+        "var reference_left = $(\".input-prepend\").position().left;",
+		"var reference_right =  + reference_width + reference_left;",
+		"var plus_left = $(\".row_plus\").position().left;",
+        "var plus_width = 30;",
+        %"var plus_width = $(\".row_plus\").width();",
+        "var plus_right = plus_left + plus_width;",
+        "var differential = plus_right - reference_right;",
+        "var current_width = $(\".addable-row > .span11\").width();",
+        "var new_width = current_width - differential;",
+		"$(\".addable-row > .span11\").width(new_width);"
+    ],
+    wf:defer(Str).
+
 
 add_existing_rows(Id) ->  % {{{1
     {ok, Involved} = db:get_involved(Id),
