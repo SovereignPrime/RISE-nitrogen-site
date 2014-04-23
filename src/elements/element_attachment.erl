@@ -64,7 +64,7 @@ render_element(Record=#attachment{id=I,
                             db:mark_downloaded(wf:to_list(Id)),
                             render_element(Record#attachment{status=downloaded});
                         [#torrent{leechers=L, seeders=S, left=Left, total=Total}] ->
-                            wf:to_list((Total - Left)  * 100 / Total);
+                            wf:to_list((Total - Left)  * 100 div Total);
                         [] ->
                             wf:to_list(0)
                     end

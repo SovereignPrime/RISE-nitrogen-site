@@ -57,7 +57,7 @@ body() -> % {{{1
 body(Archive) -> % {{{1
     case db:get_updates(Archive) of
         {ok, []} -> % {{{1
-            [];
+            #panel{id=body, class="span9 scrollable", body=[]};
         {ok, [ #message{subject=Subject} | _Updates ]} -> % {{{1
             #panel{id=body, class="span9 scrollable", body=render_body(wf:session_default(current_subject, Subject), Archive)}
     end.
