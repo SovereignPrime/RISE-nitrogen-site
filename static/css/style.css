@@ -6,7 +6,7 @@ html,body,div,span,applet,object,iframe,h1,h2,h3,h4,h5,h6,p,blockquote,pre,a,abb
 body { 
     font-family: "Helvetica Neue", "Lucida Grande", "Segoe UI", Tahoma, Helvetica, Arial, sans-serif; 
     font-size: 14px;
-    line-height: 32px;
+    line-height: 1.5em;
 }
 a, a:hover, a:active {
     color: black;
@@ -128,13 +128,16 @@ select.wfid_responsible {
     font-weight:normal;
     text-shadow: none;
     margin-top: -10px;
+	min-width: 50px;
 }
-.vcard h1 {
 
-    line-height: 1em;
+.vcard {
+	line-height:2em;
 }
+
 h1 .inplace_textbox .label {
     font-weight:bold;
+	font-size: 2em;
 }
 img.wfid_img_vcard {
     width: 150px;
@@ -164,4 +167,24 @@ img.wfid_img_vcard {
 .top-left-dropdown {
 	white-space:nowrap;
 	width: 42px;
+}
+
+/* Eliminate Left Padding on Label */
+
+.inplace_textbox .label {
+	padding-left: 0;
+}
+
+/* Fix rendering and cut-off of search button */
+.sigma_search_button {
+	position:relative;
+	right: 20px;
+	z-index:100;
+}
+
+/* Fix inconsistent widths of icons/font-awesome icons in menu upper left corner */
+.menu-left-icon {
+	width: 16px;
+	display: inline-block !important;
+	text-align:center;
 }
