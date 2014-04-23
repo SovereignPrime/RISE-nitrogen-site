@@ -153,3 +153,8 @@ img.wfid_img_vcard {
     margin-left: -3px !important;
 }
 
+
+/* Fix alignment issues in menu (Archive button in particular) */
+.nav-pills>li>a {
+	margin-top:0 !important;
+}
