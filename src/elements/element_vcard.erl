@@ -16,10 +16,11 @@ reflect() -> record_info(fields, vcard).
 
 -spec render_element(#vcard{}) -> body().
 render_element(#vcard{id=Id, photo=Photo, name=Name, email=Email, phone=Phone, address=Address, groups=Groups}) ->
+    Photo2 = ?WF_IF(Photo=="undefined.png","/img/nophoto.png","/photo/" ++ Photo),
     {ok, AGroups} = db:get_groups(),
     #panel{id=Id, class="vcard row-fluid", body=[
             #panel{class="span2", body=[
-                    #image{id=img_vcard, image="photo/" ++ Photo, class="image-polaroid", actions=[
+                    #image{id=img_vcard, image=Photo2, class="image-polaroid", actions=[
                             #event{type=click, actions=[
                                     #event{target=upload_vcard,  actions=#show{}},
                                     #event{actions=#hide{}}
@@ -101,9 +102,12 @@ start_upload_event(_) ->
     ok.
 finish_upload_event({photo, _}, FName, FPath, _Node) ->
     io:format("File uploaded: ~p to ~p ~n", [FName, FPath]),
-    file:copy(FPath, "./site/static/photo/" ++ FName),
+    NewFilename = filename:basename(FPath),% ++ filename:extension(FName),
+    NewPath = "./photo/" ++ NewFilename,
+    ok =  filelib:ensure_dir(NewPath),
+    ok = file:rename(FPath, NewPath),
     CU = wf:session(current_contact),
-    NCU = CU#db_contact{photo=FName},
+    NCU = CU#db_contact{photo=NewFilename},
     db:save(NCU),
     wf:session(current_contact, NCU),
     wf:update(contact_panel, relationships:contact_render(NCU)).
