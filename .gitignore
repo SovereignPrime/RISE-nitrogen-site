@@ -6,4 +6,6 @@ logs
 data
 *.log
 static/photo/*
-
+*~
+*.sw?
+*.beam
