@@ -43,7 +43,7 @@ render_element(#update_preview{id=Id, icon=Icon, from=From, age=Age, subject=Sub
                                                             #panel{class="row-fluid no-padding", body=[
                                                                                                        case Icon of
                                                                                                            3 ->
-                                                                                                               #panel{class='span1 no-padding', body=["<i class='icon-globe'></i>"]};
+                                                                                                               #panel{class='span1 no-padding', body=["<i class='icon-message'></i>"]};
                                                                                                            5 ->
                                                                                                                #panel{class='span1 no-padding', body=["<i class='icon-refresh'></i>"]}
                                                                                                        end,

@@ -161,6 +161,7 @@ select.wfid_responsible {
 	line-height:2em;
 }
 
+
 h1 .inplace_textbox .label {
     font-weight:bold;
 	font-size: 2em;
@@ -241,6 +242,14 @@ img.wfid_img_vcard {
 	padding-right: 20px;
 }
 
+/* Message icon */
+.icon-message {
+	display:inline-block;
+	width:16px;
+	height:16px;
+	background:url(/img/message16.png)
+}
 
-/* Hide checkboxes, but make other members of the same thead highlighted differently*/
-
+.current .icon-message {
+	background: url(/img/message16w.png);
+}

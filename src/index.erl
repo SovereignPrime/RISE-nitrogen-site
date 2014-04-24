@@ -66,7 +66,7 @@ render_body(Subject, Archive) -> % {{{1
     wf:session(current_subject, Subject),
     {ok, Updates} = db:get_updates_by_subject(Subject, Archive),
     [
-     #h1{html_encode=false, text="<i class='icon-globe'></i> " ++ Subject},
+     #h1{html_encode=false, text="<i class='icon-message'></i> " ++ Subject},
      [
       #update_element{collapse=true, from=From, to=To, text=Text, uid=Id, subject=Subject, enc=Enc, status=Status} || #message{hash=Id, enc=Enc, to=To, subject=Subject, from=From, text=Text, status=Status} <- sugar:sort_by_timestamp(Updates)
      ] 

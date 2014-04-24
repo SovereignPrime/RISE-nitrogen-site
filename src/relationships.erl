@@ -78,31 +78,38 @@ contact_render(#db_contact{id=Id, name=Name, email=Email, phone=Phone,  address=
     {ok, Groups} = db:get_groups_for_user(Id),
     [
         #vcard{id=vcard,name=Name, address=Address, email=Email, phone=Phone, photo=Photo, groups=[ N|| #db_group{name=N} <- Groups]},
-        #table{class="table table-condensed", 
-               rows=[
-                #tablerow{cells=[
-                                 #tableheader{ body=[
-                                                     #image{image="/img/tasks.svg", class="icon", style="height: 20px;"},
-                                " Tasks"
-                                ]},
-                        #tableheader{},
-                        #tableheader{body="Show all", class="cell-right"}
-                        ]},
-                lists:map(fun(#db_task{parent=Responsible, name=Name, due=Due}) ->
-                            #taskrow{type=Responsible, name=Name, due=Due}
-                    end, Tasks)
 
-                ]},
-            #singlerow{%class="table table-condensed", 
-                       cells=[ #tableheader{ body=[
-                        "<i class='icon-globe'></i> Updates"
-                        ]},
-                       #tableheader{},
-                       #tableheader{body="Show all", class="cell-right"}
-                             ]},
-            #panel{class="span12", body=
-                   [#update_element{collapse=paragraph, subject=Subject, age="Age", text=Text, enc=Enc} || #message{text=Text, subject=Subject, enc=Enc} <- Updates
-                        ]}].
+        #panel{class='row-fluid', body=[
+            #panel{class=span10, body=[
+                #h2{body=[
+                    #image{image="/img/tasks.svg", class="icon", style="height: 20px;"},
+                    " Tasks"
+                ]}
+            ]},
+            #panel{class=span2, body="Show All", style="text-align:right"}
+        ]},
+        lists:map(fun(#db_task{parent=Responsible, name=Name, due=Due}) ->
+            #panel{class='row-fluid', body=[
+                #panel{class=span2, text=Responsible},
+                #panel{class=span8, text=Name},
+                #panel{class=span2, style="text-align:right", text=Due}
+            ]}
+        end, Tasks),
+       
+        #panel{class='row-fluid', body=[
+            #panel{class=span10, body=[
+                #h2{body=[
+                    "<i class='icon-message'></i> Updates"
+                ]}  
+            ]},
+            #panel{class=span2, body="Show All", style="text-align:right"}
+        ]},
+        #panel{class="span12", body=[
+            lists:map(fun(#message{text=Text, subject=Subject, enc=Enc}) ->
+                #update_element{collapse=paragraph, subject=Subject, age="Age", text=Text, enc=Enc}
+            end, Updates)
+        ]}
+    ].
 
 %%%
 %% Event handlers

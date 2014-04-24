@@ -51,7 +51,7 @@ body() -> % {{{1
             #panel{ class="row-fluid", body=[
                     #panel{ class="input-prepend span12", body=[
                             #span{ class="add-on", body=[
-                                    #span{html_encode=false, text="<i class='icon-globe'></i>"}
+                                    #span{html_encode=false, text="<i class='icon-message'></i>"}
                                     ]},
                             #textbox{id=name, placeholder="Re:something", text=Subject, next=due, class="span12"}
                             ]}
