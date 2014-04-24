@@ -102,3 +102,8 @@
                       width=100,
                       bg="#fff"
     }).
+
+-record(expander, {?ELEMENT_BASE(element_expander),
+                   start=open,
+                   target
+    }).

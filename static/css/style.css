@@ -49,6 +49,10 @@ a, a:hover, a:active {
 	color: white;
 }
 
+a.current:hover {
+	color: white;
+}
+
 .update-preview {
     border: #fff 1px solid;
 	padding: 2px;
