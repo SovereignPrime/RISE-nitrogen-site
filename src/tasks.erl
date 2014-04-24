@@ -105,18 +105,18 @@ render_subtask(#db_task{name=Task, due=Due, id=Id}, Archive) ->
     
     #listitem{body=[
         #droppable{tag={subtask, Id}, accept_groups=[task_groups], body=[
-            #draggable{tag={task, Id}, group=task_groups, clone=false, body=[
+            #draggable{tag={task, Id}, group=task_groups, clone=false, distance=20, options=[{delay, 300}], body=[
                 #panel{style="display:block", body=[
                     Expander,
                     #link{postback={task_chosen, Id}, data_fields=[{link, ThisTaskIdMd5}], body=[
                         #image{style="width:16px; height:16px", image="/img/tasks.svg"},
                         wf:html_encode(Task),
                         #span{style="font-size:0.9em",body=[" (",?WF_IF(Due,["Due: ",Due],"No due date"),")"]}
-                    ]},
-                    Subtree
+                    ]}
                ]}
             ]}
-        ]}
+        ]},
+        Subtree
     ]}.
  
 render_tasks() ->  % {{{1
@@ -127,14 +127,16 @@ expand_to_task(Taskid) ->
         {ok, [#db_task{parent=undefined}]} ->
             ok;
         {ok, [#db_task{parent=Parentid}]} ->
-            Pickle = md5(Parentid),
-            wf:wire("$(\".expander[data-parent='" ++ Pickle ++ "']\").addClass('icon-caret-down').removeClass('icon-caret-right')"),
-            wf:wire(["$(\".list[data-list='",Pickle,"']\").show();"]),
+            expand_task(Parentid),
             expand_to_task(Parentid);
         _ ->
             ok
     end.
-            
+
+expand_task(Taskid) ->
+    Hashed = md5(Taskid),
+    wf:wire(["$(\".expander[data-parent='",Hashed,"']\").addClass('icon-caret-down').removeClass('icon-caret-right')"]),
+    wf:wire(["$(\".list[data-list='",Hashed,"']\").show();"]).
 
 body() ->  % {{{1
     #db_task{id=Id, name=Name, due=Due, text=Text, parent=Parent, status=Status}=Task = wf:session_default(current_task, #db_task{text=""}),
@@ -142,10 +144,11 @@ body() ->  % {{{1
            [
             render_task(Task)
             ]}.
+
 render_task(#db_task{id=Id, name=Name, due=Due, text=Text, parent=Parent, status=Status}=Task) ->  % {{{1
     {ok, Involved} = db:get_involved(Id),
     {My, InvolvedN} = case lists:partition(fun({_, _, #db_contact{my=true}}) -> true; (_) -> false end, Involved) of 
-        {[{_,M, _}], I} ->  
+        {[{_,M, _}|_], I} ->  
             {M, I};
         {[], I} ->  
             {no, I}
@@ -236,6 +239,7 @@ event({task_chosen, Id}) ->  % {{{1
     wf:session(current_task, Task),
     wf:session(current_task_id, Id),
     wf:update(body, render_task(Task)),
+    expand_task(Id),
     highlight_selected(Id);
 event({edit, Id}) ->  % {{{1
     Task = wf:session(current_task),
@@ -243,14 +247,14 @@ event({edit, Id}) ->  % {{{1
     wf:redirect("/edit_task");
 event(hide) ->  % {{{1
     wf:wire(body, [#remove_class{class="span8"}, #add_class{class="span12"}]),
-    wf:replace(hide_show, #button{id=hide_show, class="btn btn-link", body="Show tasks <i class='icon-angle-right'></i>", 
+    wf:replace(hide_show, #button{id=hide_show, class="btn btn-link", body="Show task list <i class='icon-angle-right'></i>", 
                                     actions=#event{type=click, actions=[
                                         #show{trigger=hide_show,target=tasks}, 
                                         #event{postback=show}
                                         ]}});
 event(show) ->  % {{{1
     wf:wire(body, [#remove_class{class="span12"}, #add_class{class="span8"}]),
-    wf:replace(hide_show, #button{id=hide_show, class="btn btn-link", body="<i class='icon-angle-left'></i> Hide tasks", 
+    wf:replace(hide_show, #button{id=hide_show, class="btn btn-link", body="<i class='icon-angle-left'></i> Hide task list", 
                                     actions=#event{type=click, actions=[
                                         #hide{trigger=hide_show,target=tasks}, 
                                         #event{postback=hide}
@@ -261,6 +265,7 @@ event(Click) ->  % {{{1
 drop_event({task, Id}, { subtask, PId }) when PId =:= Id->
     ok;
 drop_event({task, Id}, { subtask, PId }) when PId /= Id->  % {{{1
+    error_logger:info_msg("Taskid: ~p~nSubtask: ~p",[Id, PId]),
     case db:get_task(PId) of
         {ok, [#db_task{parent=Id}]} ->
             ok;
