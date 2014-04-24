@@ -77,7 +77,9 @@ event({selected, Id, Subject, Archive}) -> % {{{1
     wf:session(current_subject, Subject),
     wf:session(current_update_id, Id),
     wf:replace(left, left(Archive)),
-    wf:update(body, render_body(Subject, Archive));
+    wf:update(body, render_body(Subject, Archive)),
+    wf:wire("$(\".update-preview\").has(\"input[type=checkbox]:checked\").addClass(\"related-message\");"),
+    wf:wire("$(\".update-preview\").has(\"input[type=checkbox]:not(:checked)\").removeClass(\"related-message\");");
 event({archive, E, Rec}) -> % {{{1
     {ok, #message{subject=Subject}} = db:archive(#message{hash=Rec}),
     wf:replace(left, left()),

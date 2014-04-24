@@ -45,7 +45,24 @@ a, a:hover, a:active {
 }
 .current {
     border: #000 1px solid;
+	background: black;
+	color: white;
 }
+
+.update-preview {
+    border: #fff 1px solid;
+	padding: 2px;
+}
+
+.update-preview input[type=checkbox] {
+	display:none;
+}
+
+.related-message {
+	border: #000 1px solid;
+}
+
+
 .upload_drop {
     background-color: #fff;
     border-radius: 0;
@@ -219,3 +236,7 @@ img.wfid_img_vcard {
 .wfid_left {
 	padding-right: 20px;
 }
+
+
+/* Hide checkboxes, but make other members of the same thead highlighted differently*/
+

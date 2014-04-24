@@ -39,7 +39,7 @@ render_element(#update_preview{id=Id, icon=Icon, from=From, age=Age, subject=Sub
            ""
     end,
 
-    #panel{class=Class, style="line-height:18px;margin-top:18px;", body=[
+    #panel{class=['update-preview',Class], style="line-height:18px;margin-top:18px;", body=[
                                                             #panel{class="row-fluid no-padding", body=[
                                                                                                        case Icon of
                                                                                                            3 ->
@@ -89,7 +89,7 @@ render_element(#update_preview{id=Id, icon=Icon, from=From, age=Age, subject=Sub
        true ->
            ""
     end,
-    #panel{class=Class, style="line-height:18px;margin-top:18px;", body=[
+    #panel{class=['update-preview',Class], style="line-height:18px;margin-top:18px;", body=[
                                                             #panel{class="row-fluid no-padding", body=[
                                                                                                        #panel{class='span1 no-padding', body=[
                                                                                                                                               #image{image="/img/tasks.svg", class="icon", style="height:16px;vertical-align:middle;"}
