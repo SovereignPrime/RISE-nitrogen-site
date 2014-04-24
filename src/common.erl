@@ -342,14 +342,14 @@ incoming() -> %{{{1
         update ->
             (wf:page_module()):incoming(),
             wf:replace(count, unread()),
-            wf:flush(),
-            incoming();
+            wf:flush();
         status ->
             wf:update(connection, connection_status()),
-            wf:flush(),
-            (wf:page_module()):incoming(),
-            incoming()
-    end.
+            wf:flush()
+            %(wf:page_module()):incoming(),
+    end,
+	?MODULE:incoming().
+
 save_involved(Type, TId) -> %{{{1
     Involved = wf:qs(person),
     Role = wf:qs(responsible),

@@ -47,14 +47,14 @@ render_element(#update_preview{id=Id, icon=Icon, from=From, age=Age, subject=Sub
                                                                                                            5 ->
                                                                                                                #panel{class='span1 no-padding', body=["<i class='icon-refresh'></i>"]}
                                                                                                        end,
-                                                                                                       #panel{class='span7 no-padding', body=["<b>From: </b>", FromName]},
+                                                                                                       #panel{class='span7 no-padding', text=[FromName]},
                                                                                                        #panel{class='span4 cell-right no-padding', body=[sugar:format_timedelta(TD)]}
                                                                                                       ]},
                                                             case Subject of 
                                                                 undefined -> "";
                                                                 Subject ->
                                                                     #panel{class='row-fluid', body=[
-                                                                                                    #panel{class='span11 offset1 no-padding', style="overflow: hidden;", body=["<b>Subject: </b>", Subject]}
+                                                                                                    #panel{class='span11 offset1 no-padding', style="overflow: hidden; font-weight:bold", text=Subject}
                                                                                                    ]}
                                                             end,
                                                             #panel{class='row-fluid', body=[
@@ -65,10 +65,10 @@ render_element(#update_preview{id=Id, icon=Icon, from=From, age=Age, subject=Sub
                                                                                                        true ->
                                                                                                            #panel{class='span1', body=["<input type='checkbox'>"]}
                                                                                                     end,
-                                                                                                    #panel{class='span11 shorten-text', style="-webkit-line-clamp:2;", body=[Text]}
+                                                                                                    #panel{class='span11 shorten-text', style="-webkit-line-clamp:2;", text=[Text]}
                                                                                                    ];
                                                                                                true ->
-                                                                                                   #panel{class='span12 shorten-text', style="-webkit-line-clamp:2;", body=[Text]}
+                                                                                                   #panel{class='span12 shorten-text', style="-webkit-line-clamp:2;", text=[Text]}
                                                                                             end
                                                                                            ]}
                                                            ], actions=#event{type=click, postback={selected, Id, Subject, Archive}}};
@@ -95,14 +95,14 @@ render_element(#update_preview{id=Id, icon=Icon, from=From, age=Age, subject=Sub
                                                                                                                                               #image{image="/img/tasks.svg", class="icon", style="height:16px;vertical-align:middle;"}
                                                                                                                                               
                                                                                                                                              ]},
-                                                                                                       #panel{class='span7 no-padding', body=["<b>From: </b>", FromName]},
+                                                                                                       #panel{class='span7 no-padding',text=[FromName]},
                                                                                                        #panel{class='span4 cell-right no-padding', body=[sugar:format_timedelta(TD)]}
                                                                                                       ]},
                                                             case Subject of 
                                                                 undefined -> "";
                                                                 Subject ->
                                                                     #panel{class='row-fluid', body=[
-                                                                                                    #panel{class='span11 offset1 no-padding', style="overflow: hidden;", body=["<b>Subject: </b>", Subject]}
+                                                                                                    #panel{class='span11 offset1 no-padding', style="overflow: hidden;font-weight:bold",text=[Subject]}
                                                                                                    ]}
                                                             end,
                                                             #panel{class='row-fluid', body=[
@@ -113,10 +113,10 @@ render_element(#update_preview{id=Id, icon=Icon, from=From, age=Age, subject=Sub
                                                                                                        true ->
                                                                                                            #panel{class='span1', body=["<input type='checkbox'>"]}
                                                                                                     end,
-                                                                                                    #panel{class='span11 shorten-text', style="-webkit-line-clamp:2; height:2.7em;", body=[Text]}
+                                                                                                    #panel{class='span11 shorten-text', style="-webkit-line-clamp:2; height:2.7em;", text=[Text]}
                                                                                                    ];
                                                                                                true ->
-                                                                                                   #panel{class='span12 shorten-text', style="height:2.7em; -webkit-line-clamp:2;", body=[Text]}
+                                                                                                   #panel{class='span12 shorten-text', style="height:2.7em; -webkit-line-clamp:2;", text=[Text]}
                                                                                             end
                                                                                            ]}
                                                            ], actions=#event{type=click,  postback={selected, Id, Subject, Archive}}}.

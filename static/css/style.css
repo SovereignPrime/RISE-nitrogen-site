@@ -213,3 +213,9 @@ img.wfid_img_vcard {
 	/*position:relative;
 	left:-12px;*/
 }
+
+
+/* Prevent Scrollbar from rendering over content on preview list */
+.wfid_left {
+	padding-right: 20px;
+}
