@@ -15,38 +15,50 @@ icon() -> "<i class='icon-file-text-alt icon-2x'></i>".
 buttons(left) ->
     "";
 buttons(main) ->
-    #list{numbered=false, class="nav nav-pills", style="display:inline-block;",
-          body=[
-                #listitem{class="dropdown", body=[
-                                
-                                #link{class="btn btn-link dropdown-toggle",data_fields=[{toggle, "dropdown"}], 
-                                      body=["<i class='icon-reorder'></i> More options"], url="#", new=false},
-                                #list{class="dropdown-menu", numbered=false,
-                                      body=[
-                                            #listitem{body=#link{body=["<i class='icon icon-list-alt'></i> Archive selected"], postback=archive, new=false}},
-                                            #listitem{body=#link{body="Add to message", url = "/edit_update", new=false}},
-                                            #listitem{body=#link{body="Add to task", url = "/edit_task", new=false}}%,
-                                            %#listitem{body=#link{body="Add to expense", postback=edit, new=false}},
-                                            %#listitem{body=#link{body="Add to assert", postback=edit, new=false}}
-                                           ]}
+    #list{numbered=false, class="nav nav-pills", style="display:inline-block;",body=[
+        case wf:q(from) of
+            "task" -> done_button("/edit_task","Add to Task");
+            "message" -> done_button("/edit_update", "Add to Message");
+            _ -> more_options_buttons()
+        end,
+        #listitem{body=[
+            %#panel{ class='span2', body="<i class='icon-user'></i> All accounts"},
+                       ]},
+        #listitem{body=[
+            common:render_filters()
+                       ]},
+        #listitem{body=[
+            %#panel{ class='span2', body="<i class='icon-sort'></i> Sort"},
+                       ]},
+        #listitem{body=[
+            #link{id=archive, body="<i class='icon-list-alt'></i> Archive", postback={show_archive, true}}
+                       ]},
+        #listitem{body=[
+            common:settings_menu()
+        ]}
+    ]}.
 
-               ]},
+done_button(Url, Label) ->
     #listitem{body=[
-                    %#panel{ class='span2', body="<i class='icon-user'></i> All accounts"},
-                   ]},
-    #listitem{body=[
-                    common:render_filters()
-                   ]},
-    #listitem{body=[
-                    %#panel{ class='span2', body="<i class='icon-sort'></i> Sort"},
-                   ]},
-    #listitem{body=[
-                    #link{id=archive, body="<i class='icon-list-alt'></i> Archive", postback={show_archive, true}}
-                   ]},
-    #listitem{body=[
-                    common:settings_menu()
-                   ]}
-            ]}.
+        #link{class="btn btn-link", url=Url, new=false, body=[
+            "<i class='icon-ok'></i>Done, ", Label
+        ]}
+    ]}.
+
+more_options_buttons() ->
+    #listitem{class="dropdown", body=[
+        #link{class="btn btn-link dropdown-toggle",data_fields=[{toggle, "dropdown"}], url="#", new=false, body=[
+            "<i class='icon-reorder'></i> More options"
+        ]},
+        #list{class="dropdown-menu", numbered=false, body=[
+            #listitem{body=#link{body=["<i class='icon icon-list-alt'></i> Archive selected"], postback=archive, new=false}},
+            #listitem{body=#link{body="Add to message", url = "/edit_update", new=false}},
+            #listitem{body=#link{body="Add to task", url = "/edit_task", new=false}}%,
+            %#listitem{body=#link{body="Add to expense", postback=edit, new=false}},
+            %#listitem{body=#link{body="Add to assert", postback=edit, new=false}}
+        ]}
+    ]}.
+
 
 left() ->
     [].

@@ -18,7 +18,7 @@ buttons(main) ->  % {{{1
             #panel{class='span9 offset3', body=[
                     #panel{class="row-fluid", body=[
                             #button{ class='btn btn-link span2', body="<i class='icon-remove'></i> Discard", 
-   					click=#script{script="window.history.back();"}},
+   					click=#redirect{url="/tasks"}},
                             #button{ class='btn btn-link span2', body="<i class='icon-ok'></i> Save", postback=save, delegate=?MODULE}
                             ]}
                     ]}
@@ -61,7 +61,7 @@ left() ->  % {{{1
                                    "";
                                N -> 
                                     [
-                                        "Subtask of: ",N, #br{}
+                                        "Subtask of: ",wf:html_encode(N), #br{}
                                     ]
                             end,
                             case CId of
@@ -70,7 +70,7 @@ left() ->  % {{{1
                                 _ ->
                                     lists:map(fun(#db_task{name=N}) ->
                                                       [
-                                                       "Subtask: ",N, #br{}
+                                                       "Subtask: ",wf:html_encode(N), #br{}
                                                       ]
                                               end, Children)
                             end,
@@ -162,7 +162,7 @@ event(add_file) ->  % {{{1
     Task = wf:session(current_task),
     NTask = Task#db_task{name= TaskName , due=Due, text=Text},
     wf:session(current_task, NTask),
-    wf:redirect("/files");
+    wf:redirect("/files/?from=task");
 event(save) ->  % {{{1
     TaskName = wf:to_binary(wf:q(name)),
     Due = wf:q(due),
