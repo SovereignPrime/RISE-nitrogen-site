@@ -52,19 +52,19 @@ left() ->  % {{{1
             render_task_tree()
     ]}.
 
-update_task_tree() ->
+update_task_tree() ->  % {{{1
     update_task_tree(false).
 
-update_task_tree(Archive) ->
+update_task_tree(Archive) ->  % {{{1
     wf:update(tasks, render_task_tree(Archive)).
 
-render_task_tree() ->
+render_task_tree() ->  % {{{1
     render_task_tree(false).
 
-render_task_tree(Archive) ->
+render_task_tree(Archive) ->  % {{{1
     render_task_tree(undefined, Archive, true).
 
-render_task_tree(ParentId, Archive, First) ->
+render_task_tree(ParentId, Archive, First) ->  % {{{1
     Body = case db:get_tasks(ParentId, Archive) of
         {ok, []} ->
              [];
@@ -88,13 +88,13 @@ render_task_tree(ParentId, Archive, First) ->
             Body
     end.
 
-md5(undefined) ->
+md5(undefined) ->  % {{{1
     md5("");
-md5(Data) ->
+md5(Data) ->  % {{{1
     MD5 = crypto:hash(md5, Data),
     lists:flatten([io_lib:format("~2.16.0b", [B]) || <<B>> <= MD5]).
 
-render_subtask(#db_task{name=Task, due=Due, id=Id}, Archive) ->
+render_subtask(#db_task{name=Task, due=Due, id=Id}, Archive) ->  % {{{1
     ThisTaskIdMd5 = md5(Id),
     {Expander, Subtree} = case render_task_tree(Id, Archive, false) of
         [] -> {#span{style="width:10px;display:inline-block"}, []};
@@ -122,7 +122,7 @@ render_subtask(#db_task{name=Task, due=Due, id=Id}, Archive) ->
 render_tasks() ->  % {{{1
     render_task_tree().
 
-expand_to_task(Taskid) ->
+expand_to_task(Taskid) ->  % {{{1
     case db:get_task(Taskid) of
         {ok, [#db_task{parent=undefined}]} ->
             ok;
@@ -133,7 +133,7 @@ expand_to_task(Taskid) ->
             ok
     end.
 
-expand_task(Taskid) ->
+expand_task(Taskid) ->  % {{{1
     Hashed = md5(Taskid),
     wf:wire(["$(\".expander[data-parent='",Hashed,"']\").addClass('icon-caret-down').removeClass('icon-caret-right')"]),
     wf:wire(["$(\".list[data-list='",Hashed,"']\").show();"]).
