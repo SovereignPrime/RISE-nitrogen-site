@@ -139,11 +139,16 @@ expand_task(Taskid) ->  % {{{1
     wf:wire(["$(\".list[data-list='",Hashed,"']\").show();"]).
 
 body() ->  % {{{1
-    #db_task{id=Id, name=Name, due=Due, text=Text, parent=Parent, status=Status}=Task = wf:session_default(current_task, #db_task{text=""}),
-    #panel{id=body, class="span8", body=
-           [
-            render_task(Task)
-            ]}.
+    case wf:session(current_task) of
+        #db_task{id=Id, name=Name, due=Due, text=Text, parent=Parent, status=Status}=Task -> 
+            #panel{id=body, class="span8", body=
+                   [
+                    render_task(Task)
+                   ]};
+        undefined ->
+            #panel{id=body, class="span8", body=[]}
+    end.
+
 
 render_task(#db_task{id=Id, name=Name, due=Due, text=Text, parent=Parent, status=Status}=Task) ->  % {{{1
     {ok, Involved} = db:get_involved(Id),
