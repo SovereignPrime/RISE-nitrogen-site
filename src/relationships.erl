@@ -110,7 +110,7 @@ contact_render(#db_contact{id=Id,  % {{{1
         #panel{class='row-fluid', body=[
             #panel{class=span10, body=[
                 #h2{body=[
-                    "<i class='icon-message'></i> Updates"
+                    "<i class='icon-message'></i> Messages"
                 ]}  
             ]},
             #panel{class=span2, body="Show All", style="text-align:right"}
