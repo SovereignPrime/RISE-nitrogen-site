@@ -70,7 +70,7 @@ render_contact_list(Users) ->  % {{{1
 body() ->   % {{{1
     {ok, Contact} = db:get_contact(wf:session(current_contact_id)),
     wf:session(current_contact, Contact),
-    #panel{id=contact_panel, class="span8", body=contact_render(Contact)}.
+    #panel{id=contact_panel, class="span8 scrollable", body=contact_render(Contact)}.
 
 contact_render(#db_contact{id=Id,  % {{{1
                            name=Name,

@@ -87,7 +87,8 @@ a.current:hover {
     border: 1px #000 solid;
 }
 .scrollable {
-    overflow: auto;
+    overflow-y: auto;
+    overflow-x: hidden;
     height: inherit;
 }
 
