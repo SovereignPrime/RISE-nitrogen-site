@@ -15,7 +15,15 @@
 reflect() -> record_info(fields, file_row).
 
 -spec render_element(#file_row{}) -> body().
-render_element(Record = #file_row{fid=FID, id=Id, name=Name, type=Type, size=Size, for=For, date=Date, status=Status}) ->  % {{{1
+%% Rendrer filerow  {{{1
+render_element(Record = #file_row{fid=FID,
+                                  id=Id,
+                                  name=Name,
+                                  type=Type,
+                                  size=Size,
+                                  for=For,
+                                  date=Date,
+                                  status=Status}) ->
     FType = case Type of
         "." ++ T ->
             string:to_upper(T);
@@ -28,6 +36,8 @@ render_element(Record = #file_row{fid=FID, id=Id, name=Name, type=Type, size=Siz
                                           if Status == downloading ->
                                                  db:mark_downloaded(wf:to_list(FID)),
                                                  {downloaded, 100, U};
+                                             Status == uploaded ->
+                                                 {seeding, 100, U};
                                              true ->
                                                  {Status, 100, U}
                                           end;

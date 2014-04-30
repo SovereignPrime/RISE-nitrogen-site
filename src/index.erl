@@ -43,6 +43,7 @@ render_left(Updates) -> % {{{1
     Render = [ #update_preview{id=Id,
                                icon=Enc,
                                from=From,
+                               to=To,
                                age="Age",
                                subject=Subject,
                                text=Text,
@@ -50,6 +51,7 @@ render_left(Updates) -> % {{{1
                                archive=(Status == archive)} || 
                #message{hash=Id,
                         from=From,
+                        to=To,
                         subject=Subject,
                         text=Text,
                         enc=Enc,
@@ -60,14 +62,15 @@ body() -> % {{{1
     body(false).
 
 body(Archive) -> % {{{1
-    case db:get_updates(Archive) of
-        {ok, []} -> 
-            #panel{id=body, class="span9 scrollable", body=[]};
-        {ok, [ #message{subject=Subject} | _Updates ]} -> 
-            #panel{id=body,
-                   class="span9 scrollable",
-                   body=render_body(wf:session_default(current_subject, Subject), Archive)}
-    end.
+    #panel{id=body,
+           class="span9 scrollable",
+           body=case wf:session(current_subject) of
+                    undefined ->
+                        [];
+                    Subject ->
+                        render_body(Subject, Archive)
+                end
+          }.
 
 render_body(Subject, Archive) -> % {{{1
     wf:session(current_subject, Subject),
