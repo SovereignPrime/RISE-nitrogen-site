@@ -190,6 +190,7 @@ render_task(#db_task{id=Id, name=Name, due=Due, text=Text, parent=Parent, status
                                 ]}
                         ]}
                 ]},
+        #br{},
         #panel{ class="row-fluid", body=[
                 #panel{ class="span12", body=TextF}
                 ]},
@@ -209,6 +210,7 @@ render_task(#db_task{id=Id, name=Name, due=Due, text=Text, parent=Parent, status
                         end, Attachments)
                     ]
         end,
+        #br{},
         [
          #update_element{collapse=true, from=From, to=To, text=Text, uid=Id, subject=Subject, enc=Enc, status=Status} || #message{hash=Id, enc=Enc, to=To, subject=Subject, from=From, text=Text, status=Status} <- sugar:sort_by_timestamp(Updates)
         ] 
