@@ -25,7 +25,6 @@ render_element(#update_preview{id=Id,
                                flag=Flag,
                                archive=Archive}) when Icon==3; Icon==5 -> 
     FromName = get_name(From),
-    io:format("~p~n", [To]),
     ToName = get_name(To),
 
     {Text, Attachments, Timestamp} = case Icon of
@@ -122,12 +121,8 @@ render_element(#update_preview{id=Id,
                                text=Data,
                                flag=Flag,
                                archive=Archive}) when Icon==4 ->  
-    FromName = case db:get_contact_by_address(From) of
-                   {ok, #db_contact{name=FN}} ->
-                       FN;
-                   {ok, none} ->
-                       wf:to_list(From)
-               end,
+    FromName = get_name(From),
+    ToName = get_name(To),
 
     #task_packet{text=Text, time=Timestamp} = binary_to_term(Data),
     TD = bm_types:timestamp() - Timestamp,
@@ -151,9 +146,20 @@ render_element(#update_preview{id=Id,
 
                                           ]},
                               #panel{class='span7 no-padding',
-                                     text=[FromName]},
+                                     body=[
+                                           "<b>From: </b>",
+                                           FromName
+                                          ]},
                               #panel{class='span4 cell-right no-padding',
                                      body=[sugar:format_timedelta(TD)]}
+                             ]},
+                 #panel{class="row-fluid no-padding",
+                        body=[
+                              #panel{class='span7 offset1 no-padding',
+                                     body=[
+                                           "<b>To: </b>",
+                                           ToName
+                                          ]}
                              ]},
                  case Subject of 
                      undefined -> "";
