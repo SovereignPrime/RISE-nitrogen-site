@@ -371,7 +371,13 @@ get_expense_tasks(EId) ->  % {{{1
 %%%
 %% Updates routines
 %%%
-
+get_update(Id) ->   % {{{1
+    transaction(fun() ->
+                S = mnesia:read(sent, Id),
+                R = mnesia:read(incoming, Id),
+                [U] = S ++ R,
+                U
+            end).
 get_updates(false) ->  % {{{1
     transaction(fun() ->
                         mnesia:select(incoming, [{#message{status='$1', enc='$2', subject='$3', _='_'}, [{'and', {'/=', '$1', archive}, {'/=', '$2', 6}}, {'/=', '$3', <<"Update223322">>}], ['$_']}])

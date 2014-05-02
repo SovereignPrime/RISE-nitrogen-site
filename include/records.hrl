@@ -5,6 +5,7 @@
 -record(update_preview, {?ELEMENT_BASE(element_update_preview),
                          icon,
                          from,
+                         to,
                          age,
                          subject,
                          flag=true,

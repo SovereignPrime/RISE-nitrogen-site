@@ -96,11 +96,11 @@ md5(Data) ->  % {{{1
 
 render_subtask(#db_task{name=Task, due=Due, id=Id}, Archive) ->  % {{{1
     ThisTaskIdMd5 = md5(Id),
-    {Expander, Subtree} = case render_task_tree(Id, Archive, false) of
+    {Expander, Subtree} = case render_task_tree(Id, Archive, true) of
         [] -> {#span{style="width:10px;display:inline-block"}, []};
         Tree -> 
             Sublistid = Tree#list.id,
-            {#expander{target=Sublistid, data_fields=[{parent,ThisTaskIdMd5}], start=closed},Tree}
+            {#expander{target=Sublistid, data_fields=[{parent,ThisTaskIdMd5}], start=open},Tree}
     end,
     
     #listitem{body=[
