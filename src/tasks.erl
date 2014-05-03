@@ -73,7 +73,7 @@ render_task_tree(ParentId, Archive, First) ->  % {{{1
                id=wf:temp_id(),
                numbered=false,
                data_fields=[{list, md5(ParentId)}],
-               style=["padding-left: 10px; ",?WF_IF(First,"","display:none;")],
+               style=["padding-left: 10px; "],
                body=[render_subtask(T, Archive) || T <- Tasks]
             };
         {ok, [], undefined} ->
@@ -100,7 +100,7 @@ render_subtask(#db_task{name=Task, due=Due, id=Id}, Archive) ->  % {{{1
         [] -> {#span{style="width:10px;display:inline-block"}, []};
         Tree -> 
             Sublistid = Tree#list.id,
-            {#expander{target=Sublistid, data_fields=[{parent,ThisTaskIdMd5}], start=closed},Tree}
+            {#expander{target=Sublistid, data_fields=[{parent,ThisTaskIdMd5}], start=open},Tree}
     end,
     
     #listitem{body=[
