@@ -61,8 +61,9 @@ render_element(#update_preview{id=Id,
                                              body=["<i class='icon-refresh'></i>"]}
                               end,
                               #panel{class='span7 no-padding',
+                                     style="overflow: hidden; word-wrap:break-word;",
                                      body=[
-                                           "<b>From: </b>",
+                                           "<b>From:</b> ",
                                            FromName
                                           ]},
                               #panel{class='span4 cell-right no-padding',
@@ -70,9 +71,10 @@ render_element(#update_preview{id=Id,
                              ]},
                  #panel{class="row-fluid no-padding",
                         body=[
-                              #panel{class='span7 offset1 no-padding',
+                              #panel{class='span11 offset1 no-padding',
+                                     style="overflow: hidden; word-wrap:break-word;",
                                      body=[
-                                           "<b>To: </b>",
+                                           "<b>To:</b> ",
                                            ToName
                                           ]}
                              ]},
