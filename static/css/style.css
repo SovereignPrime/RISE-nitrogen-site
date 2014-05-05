@@ -16,6 +16,7 @@ a, a:hover, a:active {
 
 .dropdown {
     background-color: #fff;
+    -webkit-appearance:none;
 	color: #000;
     border: 0px #fff solid;
 }
