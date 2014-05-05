@@ -17,4 +17,4 @@ reflect() -> record_info(fields, progressbar).
 render_element(_Record = #progressbar{id=Id, bg=BG, color=Color, progress=Progress, width=W, border_color=Border}) ->
     #panel{ id=Id, 
             class="progress", 
-            body=[#panel{ class="bar", style=wf:f("width:~p%;background-color:#000;background-image:none;",[Progress])}]}.
+            body=[#panel{ class="bar", style=wf:f("width:~s%;background-color:#000;background-image:none;",[Progress])}]}.

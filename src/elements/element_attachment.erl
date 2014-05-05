@@ -51,9 +51,17 @@ render_element(Record=#attachment{id=I,
                                   filename=File,
                                   size=Size,
                                   time=Time,
-                                  status=downloading}) -> % {{{1
+                                  status=downloading}=Attachment) -> % {{{1
     {Y, M, D} = Time,
     DateS = io_lib:format("~p-~p-~p", [Y, M, D]),
+    {ok, Pid} = wf:comet(fun() ->
+                                 receive 
+                                     update ->
+                                         wf:update(I, render_element(Attachment)),
+                                         wf:flush()
+                                 end
+                         end),
+    timer:send_after(1000, Pid, update),
     #panel{id=I, class="row-fluid", body=[
             #panel{class="span5", body=File},
             #panel{class="span1", body=wf:to_list(Size)},

@@ -23,7 +23,7 @@ render_element(Record = #file_row{fid=FID,
                                   size=Size,
                                   for=For,
                                   date=Date,
-                                  status=Status}) ->
+                                  status=Status}=File) ->
     FType = case Type of
         "." ++ T ->
             string:to_upper(T);
@@ -42,12 +42,22 @@ render_element(Record = #file_row{fid=FID,
                                                  {Status, 100, U}
                                           end;
                                [#torrent{ all_time_uploaded=U, left=Left, total=Total}] ->
+                                        {ok, Pid} = wf:comet(fun() ->
+                                                                     receive 
+                                                                         update ->
+                                                                             wf:replace(Id, render_element(File)),
+                                                                             wf:flush()
+                                                                     end
+                                                             end),
+                                        timer:send_after(1000, Pid, update),
                                    {downloading, ((Total - Left)  * 100 div Total), U};
                                _ ->
                                    {Status, 0, 0}
                            end,
     Check =  sets:is_element(FID, wf:session_default(attached_files, sets:new())),
-    #tablerow{ cells=[
+    io:format("Id: ~p~n", [Id]),
+
+    #tablerow{id=Id, cells=[
             #tablecell{body=[
                             #checkbox{id=check,  postback={check, FID ,Check}, checked=Check}
                     ], class=""},
