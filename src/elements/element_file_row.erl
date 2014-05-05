@@ -49,7 +49,7 @@ render_element(Record = #file_row{fid=FID,
                                                                              wf:flush()
                                                                      end
                                                              end),
-                                        timer:send_after(1000, Pid, update),
+                                        timer:send_after(10000, Pid, update),
                                    {downloading, ((Total - Left)  * 100 div Total), U};
                                _ ->
                                    {Status, 0, 0}

@@ -61,7 +61,7 @@ render_element(Record=#attachment{id=I,
                                          wf:flush()
                                  end
                          end),
-    timer:send_after(1000, Pid, update),
+    timer:send_after(10000, Pid, update),
     #panel{id=I, class="row-fluid", body=[
             #panel{class="span5", body=File},
             #panel{class="span1", body=wf:to_list(Size)},
