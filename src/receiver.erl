@@ -101,7 +101,12 @@ handle_cast(_Msg, State) ->  % {{{1
 %%--------------------------------------------------------------------
 handle_info({msg, Hash}, State) ->  % {{{1
     io:format("~p~n", [Hash]),
-    {ok, #message{from=From, to=To, subject=Subject, text=Text, enc=Enc} = Message}= bitmessage:get_message(Hash),
+    {ok, #message{from=From,
+                  to=To,
+                  subject=Subject,
+                  text=Text,
+                  enc=Enc} = Message}= bitmessage:get_message(Hash),
+
     FID = get_or_request_contact(From, From, To),
     {ok, #db_contact{id=ToID}} = db:get_contact_by_address(To),
     apply_message(Message, FID, ToID),
