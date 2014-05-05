@@ -201,5 +201,6 @@ get_name(UID) ->
         {ok, #db_contact{name=FN}} ->
             FN;
         {ok, none} ->
-            wf:to_list(UID)
+            "Anonymous"
+            %wf:to_list(UID)
     end.
