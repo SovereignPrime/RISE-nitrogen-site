@@ -346,7 +346,6 @@ incoming() -> %{{{1
         status ->
             wf:update(connection, connection_status()),
             wf:flush()
-            %(wf:page_module()):incoming(),
     end,
 	?MODULE:incoming().
 

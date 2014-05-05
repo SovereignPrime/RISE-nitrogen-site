@@ -78,5 +78,4 @@ event({download, #attachment{id=I, fid=Id} = Attachment}) -> % {{{1
     {ok, [ File ]} = db:get_files([Id]),
     common:get_torrent(Id), 
     db:save(File#db_file{status=downloading}),
-    io:format("~p~n", [I]),
     wf:replace(I, Attachment#attachment{status=downloading}).

@@ -100,7 +100,7 @@ handle_cast(_Msg, State) ->  % {{{1
 %% @end
 %%--------------------------------------------------------------------
 handle_info({msg, Hash}, State) ->  % {{{1
-    io:format("~p~n", [Hash]),
+    io:format("Receiver: ~p~n", [Hash]),
     {ok, #message{from=From,
                   to=To,
                   subject=Subject,
