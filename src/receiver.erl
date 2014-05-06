@@ -1,5 +1,6 @@
 -module(receiver).
 
+-behaviour(bitmessage).
 -behaviour(gen_server).
 -include_lib("bitmessage/include/bm.hrl").
 -include("db.hrl").
@@ -8,7 +9,8 @@
 %% API
 -export([  % {{{1
     start_link/0,
-    register_receiver/1
+    register_receiver/1,
+    received/1
     ]). % }}}
 
 %% gen_server callbacks
@@ -37,6 +39,9 @@ start_link() ->  % {{{1
 
 register_receiver(Pid) ->  % {{{1
     gen_server:cast(?MODULE, {register, Pid}).
+
+received(Hash) ->
+    gen_server:cast(?MODULE, {msg, Hash}).
 %%%===================================================================
 %%% gen_server callbacks
 %%%===================================================================
@@ -53,7 +58,7 @@ register_receiver(Pid) ->  % {{{1
 %% @end
 %%--------------------------------------------------------------------
 init([]) ->  % {{{1
-    bitmessage:register_receiver(self()),
+    bitmessage:start_link(?MODULE),
     {ok, #state{}}.
 
 %%--------------------------------------------------------------------
@@ -86,6 +91,19 @@ handle_call(_Request, _From, State) ->  % {{{1
 %%--------------------------------------------------------------------
 handle_cast({register, Pid}, State) ->  % {{{1
     {noreply, State#state{pid=Pid}};
+handle_cast({msg, Hash}, State) ->  % {{{1
+    io:format("Receiver: ~p~n", [Hash]),
+    {ok, #message{from=From,
+                  to=To,
+                  subject=Subject,
+                  text=Text,
+                  enc=Enc} = Message}= bitmessage:get_message(Hash),
+
+    FID = get_or_request_contact(From, From, To),
+    {ok, #db_contact{id=ToID}} = db:get_contact_by_address(To),
+    apply_message(Message, FID, ToID),
+    State#state.pid ! update,
+    {noreply, State};
 handle_cast(_Msg, State) ->  % {{{1
     {noreply, State}.
 
@@ -99,19 +117,6 @@ handle_cast(_Msg, State) ->  % {{{1
 %%                                   {stop, Reason, State}
 %% @end
 %%--------------------------------------------------------------------
-handle_info({msg, Hash}, State) ->  % {{{1
-    io:format("Receiver: ~p~n", [Hash]),
-    {ok, #message{from=From,
-                  to=To,
-                  subject=Subject,
-                  text=Text,
-                  enc=Enc} = Message}= bitmessage:get_message(Hash),
-
-    FID = get_or_request_contact(From, From, To),
-    {ok, #db_contact{id=ToID}} = db:get_contact_by_address(To),
-    apply_message(Message, FID, ToID),
-    State#state.pid ! update,
-    {noreply, State};
 handle_info(_Info, State) ->  % {{{1
     {noreply, State}.
 
@@ -143,9 +148,11 @@ code_change(_OldVsn, State, _Extra) ->  % {{{1
 %%%===================================================================
 %%% Internal functions
 %%%===================================================================
+
 %%%
-%%% Technical messages (not visible for users
+%%% Technical messages (not visible for users  {{{1
 %%%
+
 % Get vCard % {{{1
 apply_message(#message{from=BMF,
                        to=BMT,
@@ -231,7 +238,7 @@ apply_message(#message{from=BMF,
 % }}}
 
 %%%
-%% Informational messages
+%% Informational messages  {{{1
 %%%
 
 % Message {{{1
