@@ -15,58 +15,72 @@
 reflect() -> record_info(fields, vcard).
 
 -spec render_element(#vcard{}) -> body().
-render_element(#vcard{id=Id, photo=Photo, name=Name, email=Email, phone=Phone, address=Address, groups=Groups}) ->
+render_element(#vcard{id=Id,
+                      photo=Photo,
+                      name=Name,
+                      email=Email,
+                      phone=Phone,
+                      address=Address,
+                      groups=Groups}) ->
     Photo2 = ?WF_IF(Photo=="undefined.png","/img/nophoto.png","/photo/" ++ Photo),
     {ok, AGroups} = db:get_groups(),
     #panel{id=Id, class="vcard row-fluid", body=[
             #panel{class="span2", body=[
-                    #image{id=img_vcard, image=Photo2, class="image-polaroid", actions=[
-                            #event{type=click, actions=[
-                                    #event{target=upload_vcard,  actions=#show{}},
-                                    #event{actions=#hide{}}
-                                    ]}
+                    #image{id=img_vcard,
+                           image=Photo2,
+                           class="image-polaroid",
+                           actions=[
+                            #event{type=click,
+                                   actions=[
+                                            #event{target=upload_vcard,
+                                                   actions=#show{}},
+                                            #event{actions=#hide{}}
+                                           ]}
                             ]},
-                    #span{id=upload_vcard, body=
-                          #upload{tag={photo, Id}, show_button=false, droppable=true, droppable_text="Drag and drop photo", style="width:100%;height:100%", delegate=?MODULE}, 
+                    #span{id=upload_vcard,
+                          body= #upload{tag={photo, Id},
+                                        show_button=false,
+                                        droppable=true,
+                                        droppable_text="Drag and drop photo",
+                                        style="width:100%;height:100%",
+                                        delegate=?MODULE}, 
                           actions=#hide{}} 
                     ]},
-            #panel{class="span9", body=[
-                    #panel{class="row-fluid", body=[
-                            #h1{class="", body=
-                                #inplace_textbox{text=Name, tag={name, Id}}
-                               },% " <i class='clearfix icon-edit icon-large'></i>",
+            #panel{class="span9",
+                   body=[
+                    #panel{class="row-fluid",
+                           body=[
+                            #h1{class="",
+                                body= #inplace_textbox{text=Name,
+                                                       tag={name, Id}}
+                               },
                             #panel{body= [ "e-mail: ",
-                                          #inplace_textbox{class="inline", tag={ email, Id}, text=  Email, validators=#is_email{text="You provided wrong e-mail address"}}
+                                          #inplace_textbox{class="inline",
+                                                           tag={ email, Id},
+                                                           text=  Email,
+                                                           validators=#is_email{text="You provided wrong e-mail address"}}
                                          ]},
                             #panel{body= [
                                     "tel.: ",
-                                    #inplace_textbox{class="inline", text=Phone, tag={phone, Id}}
+                                    #inplace_textbox{class="inline",
+                                                     text=Phone,
+                                                     tag={phone, Id}}
                                     ]},
                             #panel{body= [
                                           "RISE Id: ",
-                                    #inplace_textbox{class="inline", text=Address, tag={address, Id}}
+                                          #inplace_textbox{class="inline",
+                                                           text=Address,
+                                                           tag={address, Id}}
                                     ]},
                             #panel{body= [ [#span{class="label", text=G}, " "] || G <- Groups]}
                             ]}
 
                     ]},
-            #panel{class="span1", body=[
-                    #link{class="btn btn-link", body = "<i class='icon-envelope icon-large'></i>", postback={write_to, Address }},
-                    %#panel{class="btn-group", body=[
-                    %        #link{class="btn btn-link dropdown-toggle", body = "<i class='icon-group icon-large'></i>",
-                    %         new=false, data_fields=[{toggle, "dropdown"}]},
-                    %        #list{numbered=false, class="dropdown-menu pull-right",
-                    %              body=lists:map(fun(#db_group{id=GID, name=GName}) ->
-                    %                        #listitem{body=[
-                    %                                #checkbox{id=wf:to_list( GID ), text=GName, postback={checked, Address, GID}, checked=false}
-                    %                                ]}
-                    %                                
-                    %                                %#link{body=[
-                    %                                %        "<i class='icon-list-alt icon-large'></i> Archive"
-                    %                                %        ], postback={archive, Address}, new=false}]}
-                    %                end, AGroups)
-                    %             }
-                    %]},
+            #panel{class="span1",
+                   body=[
+                         #link{class="btn btn-link",
+                               body = "<i class='icon-envelope icon-large'></i>",
+                               postback={write_to, Address }},
             #panel{class="btn-group", body=[
                     #link{ class="btn btn-link dropdown-toggle", body=[
                             "<i class='icon-reorder icon-large'></i>"
@@ -74,13 +88,10 @@ render_element(#vcard{id=Id, photo=Photo, name=Name, email=Email, phone=Phone, a
                     #list{numbered=false, class="dropdown-menu pull-right",
                           body=[
                             #listitem{body=[
-                                    #link{body=[
-                                            "<i class='icon-list-alt icon-large'></i> Archive"
-                                            ], postback={archive, Address}, new=false}]}
-                       %     #listitem{body=[
-                       %             #link{body=[
-                       %                     "<i class='icon-save icon-large'></i> Backup user"
-                       %                     ], postback={backup, Address}, new=false}]}
+                                            #link{body=[
+                                                        "<i class='icon-list-alt icon-large'></i> Archive"
+                                                       ], postback={archive, Address},
+                                                  new=false}]}
                                     ]}
                             ]}
                     ]}

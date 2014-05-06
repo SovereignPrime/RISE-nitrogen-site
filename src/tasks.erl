@@ -160,14 +160,41 @@ render_task(#db_task{id=Id, name=Name, due=Due, text=Text, parent=Parent, status
     end, 
     TextF = re:replace(Text, "\r*\n", "<br>", [{return, list}, noteol, global]), 
     {ok, Updates} = db:get_task_history(Id),
-    io:format("Upd: ~p~n", [Updates]),
+    Dropdown = #dropdown{
+                  options=[
+                           #option{value="new",
+                                   text="New"},
+                           #option{value="accepted",
+                                   text="Accepted"},
+                           #option{value="done",
+                                   text="Done"}
+                          ]},
 
     [
         #panel{ class="row-fluid", body=[
                 #panel{ class="span11", body=[
                         #h1{text=Name},
-                        "Status: ", Status, #br{},
-                        "Due: ", Due , #br{},
+                        #panel{class="row-fluid", 
+                               style="min-height:15px;",
+                               body=[
+                                     #panel{ class="span1", 
+                                             style="min-height:15px;",
+                                             body="Status: "},
+
+                                     #inplace{id=status, 
+                                              style="min-height:15px;",
+                                              class="span10",
+                                              tag=status,
+                                              text=wf:to_list(Status),
+                                              view=#span{},
+                                              edit=Dropdown
+                                             }
+                                    ]},
+                        #panel{class="row-fluid", 
+                               body=[
+                                     #panel{ class="span1", body="Due: "},
+                                     #panel{ class="span3", body=Due}
+                                     ]},
                         #br{},
                         "My role - ", My, #br{},
                         lists:map(fun({Name, Role, _}) ->
@@ -269,8 +296,19 @@ event(show) ->  % {{{1
 event(Click) ->  % {{{1
     io:format("~p~n",[Click]).
 
-drop_event({task, Id}, { subtask, PId }) when PId =:= Id->
+inplace_event(status, Val) ->  % {{{1
+    Task = wf:session(current_task),
+    NTask = Task#db_task{status=wf:to_atom(Val)},
+    wf:session(current_task, NTask),
+    db:save(NTask),
+    Val;
+
+inplace_event(_, V) ->  % {{{1
+    V.
+
+drop_event({task, Id}, { subtask, PId }) when PId =:= Id->  % {{{1
     ok;
+
 drop_event({task, Id}, { subtask, PId }) when PId /= Id->  % {{{1
     error_logger:info_msg("Taskid: ~p~nSubtask: ~p",[Id, PId]),
     case db:get_task(PId) of
@@ -288,6 +326,7 @@ drop_event({task, Id}, { subtask, PId }) when PId /= Id->  % {{{1
                     event({task_chosen, Id})
             end
     end;
+
 drop_event({task, Id}, task_root) ->  % {{{1
     PId = wf:session(left_parent_id),
     db:save_subtask(Id, PId, bm_types:timestamp()),
