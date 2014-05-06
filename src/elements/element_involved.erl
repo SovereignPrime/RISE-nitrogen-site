@@ -28,6 +28,8 @@ render_element(_Record = #involved{person = Person, role = Text}) ->
                             ],
                               options=[
                             #option{text="Responsible", value="responsible"},
+                            #option{text="Consulted", value="consulted"},
+                            #option{text="Informed", value="informed"},
                             #option{text="Accountable", value="accountable"}
                             ]}
 
