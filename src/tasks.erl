@@ -282,7 +282,6 @@ drop_event({task, Id}, { subtask, PId }) when PId /= Id->  % {{{1
                     ok;
                 _ ->
                     db:save_subtask(Id, PId, bm_types:timestamp()),
-                    %db:save_task_tree(Id, PId),
                     common:send_task_tree(Id, PId, bm_types:timestamp()),
                     update_task_tree(),
                     expand_to_task(Id),
@@ -291,11 +290,10 @@ drop_event({task, Id}, { subtask, PId }) when PId /= Id->  % {{{1
     end;
 drop_event({task, Id}, task_root) ->  % {{{1
     PId = wf:session(left_parent_id),
-    common:send_task_tree(Id, PId, bm_types:timestamp()),
-    %db:delete_task_tree(Id, PId),
     db:save_subtask(Id, PId, bm_types:timestamp()),
+    common:send_task_tree(Id, PId, bm_types:timestamp()),
     update_task_tree().
 
 incoming() ->  % {{{1
-    render_tasks(),
+    wf:update(tasks, render_tasks()),
     wf:flush().
