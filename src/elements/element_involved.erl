@@ -21,8 +21,10 @@ render_element(_Record = #involved{person = Person, role = Text}) ->
                             ]},
                     #textbox_autocomplete{id=person, tag=contact, next=responsible, class="span11", text = Person, delegate=common}
                     ]},
-            #panel{class="dropdown span3", body=[
-                    #dropdown{id=responsible, value=Text, class="span12", data_fields=[
+            #panel{class="dropdown span3 input-append", 
+                   style="border: #000 1px solid",
+                   body=[
+                    #dropdown{id=responsible, style="border-right: #fff 0 solid;", value=Text, class="span11", data_fields=[
                             {provide, "typeahead"}, 
                             {source, Users}
                             ],
@@ -31,7 +33,9 @@ render_element(_Record = #involved{person = Person, role = Text}) ->
                             #option{text="Consulted", value="consulted"},
                             #option{text="Informed", value="informed"},
                             #option{text="Accountable", value="accountable"}
-                            ]}
-
+                            ]},
+                    #span{ class="add-on",
+                           style="background-color: #fff; border: #fff 0px solid;",
+                           body="<i class='icon-caret-down'></i>"}
                     ]}
             ]}.

@@ -16,8 +16,8 @@ a, a:hover, a:active {
 
 .dropdown {
     background-color: #fff;
-    -webkit-appearance:none;
 	color: #000;
+    -webkit-appearance:none;
     border: 0px #fff solid;
 }
 
@@ -139,8 +139,10 @@ a.current:hover {
     width: 30px;
 }
 select.wfid_responsible {
-    border: #000 1px solid !important;
+    sborder: #000 1px solid !important;
+    background-color: transparent;
     height: 30px;
+    line-height: 20px !important;
 }
 .previous>a, .next>a{
     border: 0px #000 solid !important;
@@ -227,15 +229,11 @@ img.wfid_img_vcard {
 /* Work in progress, but this at least fixes the inconsistent heights */
 .addable-row .dropdown {
 	height: 32px;
-	/*position:relative;
-	left:-6px;*/
 }
 
 .addable-row .button {
 	height:32px;
 	width:32px;
-	/*position:relative;
-	left:-12px;*/
 }
 
 
