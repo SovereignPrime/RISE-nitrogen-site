@@ -282,6 +282,8 @@ event(restore) -> %{{{1
     wf:wire(#script{script="$('.modal').modal('show')"});
 event({unfold, #update_element{id=Id, uid=Uid, enc=Enc}=Update}) -> % {{{1
     case Enc of
+        T when T==1; T==2 ->
+            Attachments = [];
         3 -> 
             {ok,Attachments} = db:get_attachments(#db_update{id=Uid});
         4 ->

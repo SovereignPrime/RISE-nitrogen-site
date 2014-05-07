@@ -27,11 +27,14 @@ format_timedelta(TD) ->
 sort_by_timestamp(Updates) ->
     lists:sort(fun(#message{text=A}, #message{text=B}) ->
                        F = fun(E) -> 
-                                   case binary_to_term(E) of
-                                       #message_packet{time=Z} ->
-                                           Z;
-                                       #task_packet{time=Z} ->
-                                           Z
+                                   try binary_to_term(E) of
+                                           #message_packet{time=Z} ->
+                                               Z;
+                                           #task_packet{time=Z} ->
+                                               Z
+                                    catch 
+                                       error:_P ->
+                                           bm_types:timestamp()
                                    end
                            end,
                        F(A) > F( B )

@@ -23,11 +23,13 @@ render_element(#update_preview{id=Id,
                                subject=Subject,
                                text=Data,
                                flag=Flag,
-                               archive=Archive}) when Icon==3; Icon==5 -> 
+                               archive=Archive}) when Icon==1; Icon==2; Icon==3; Icon==5 -> 
     FromName = get_name(From),
     ToName = get_name(To),
 
     {Text, Attachments, Timestamp} = case Icon of
+               T when T==1; T==2 ->
+                     {Data, [], bm_types:timestamp()};
                3 ->
                    #message_packet{text=T,
                                    attachments=A,
@@ -53,6 +55,9 @@ render_element(#update_preview{id=Id,
                  #panel{class="row-fluid no-padding",
                         body=[
                               case Icon of
+                                  T when T==1; T==2 ->
+                                        #panel{class="span1 no-padding",
+                                               body=["<i class='icon-envelope'></i>"]};
                                   3 ->
                                       #panel{class='span1 no-padding',
                                              body=["<i class='icon-message'></i>"]};
