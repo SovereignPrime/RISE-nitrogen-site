@@ -138,10 +138,10 @@ a.current:hover {
     height: 30px;
     width: 30px;
 }
-select.wfid_responsible {
+select {
     sborder: #000 1px solid !important;
     background-color: transparent;
-    height: 30px;
+    height: 30px !important; 
     line-height: 20px !important;
 }
 .previous>a, .next>a{

@@ -165,16 +165,7 @@ render_task(#db_task{id=Id, name=Name, due=Due, text=Text, parent=Parent, status
     end, 
     TextF = re:replace(Text, "\r*\n", "<br>", [{return, list}, noteol, global]), 
     {ok, Updates} = db:get_task_history(Id),
-    Dropdown = #dropdown{
-                  options=[
-                           #option{value="new",
-                                   text="New"},
-                           #option{value="accepted",
-                                   text="Accepted"},
-                           #option{value="done",
-                                   text="Done"}
-                          ]},
-
+    Dropdown = #dropdown{options=db:task_status_list(), value=Status},
     [
         #panel{ class="row-fluid", body=[
                 #panel{ class="span11", body=[
@@ -282,7 +273,7 @@ event({task_chosen, Id}) ->  % {{{1
     highlight_selected(Id);
 event({edit, Id}) ->  % {{{1
     Task = wf:session(current_task),
-    wf:session(current_task, Task#db_task{status=changed}),
+    wf:session(current_task, Task),
     wf:redirect("/edit_task");
 event(hide) ->  % {{{1
     wf:wire(body, [#remove_class{class="span8"}, #add_class{class="span12"}]),
@@ -303,7 +294,7 @@ event(Click) ->  % {{{1
 
 inplace_event(status, Val) ->  % {{{1
     Task = wf:session(current_task),
-    NTask = Task#db_task{status=wf:to_atom(Val)},
+    NTask = Task#db_task{status=db:sanitize_task_status(Val)},
     wf:session(current_task, NTask),
     db:save(NTask),
     Val;
