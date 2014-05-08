@@ -83,7 +83,7 @@ render_task_tree(ParentId, Archive, First) ->  % {{{1
     case First of
         true ->
             #droppable{tag=task_root, accept_groups=[task_groups], style="", body=[
-                #panel{body=["Task Root",Body]}
+                #panel{body=["Tasks",Body]}
             ]};
         false ->
             Body
@@ -95,8 +95,10 @@ md5(Data) ->  % {{{1
     MD5 = crypto:hash(md5, Data),
     lists:flatten([io_lib:format("~2.16.0b", [B]) || <<B>> <= MD5]).
 
-render_subtask(#db_task{name=Task, due=Due, id=Id}, Archive) ->  % {{{1
+render_subtask(Task = #db_task{name=Name, due=Due, id=Id}, Archive) ->  % {{{1
     ThisTaskIdMd5 = md5(Id),
+    {ok, Attachments} = db:get_attachments(Task),
+    HasAttachments = length(Attachments) >= 1,
     {Expander, Subtree} = case render_task_tree(Id, Archive, false) of
         [] -> {#span{style="width:10px;display:inline-block"}, []};
         Tree -> 
@@ -111,7 +113,9 @@ render_subtask(#db_task{name=Task, due=Due, id=Id}, Archive) ->  % {{{1
                     Expander,
                     #link{postback={task_chosen, Id}, data_fields=[{link, ThisTaskIdMd5}], body=[
                         #image{style="width:16px; height:16px", image="/img/tasks.svg"},
-                        wf:html_encode(Task),
+                        wf:html_encode(Name),
+                        ?WF_IF(HasAttachments, "<i class='icon-paperclip'></i>"),
+
                         #span{style="font-size:0.9em",body=[" (",?WF_IF(Due,["Due: ",Due],"No due date"),")"]}
                     ]}
                ]}
