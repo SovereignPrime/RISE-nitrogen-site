@@ -15,36 +15,37 @@ icon() -> #image{image="/img/tasks.svg", class="icon", style="height: 32px;"}.
 
 
 buttons(main) ->  % {{{1
-    #list{numbered=false, class="nav nav-pills", style="display:inline-block",
-          body=[
-%                #listitem{body=[
-%
-%                                %#panel{ class='span2', body="<i class='icon-user'></i> All accounts"},
-%                               ]},
-                #listitem{body=[
-                    #button{
-                        id=hide_show,
-                        class="btn btn-link",
-                        body="<i class='icon-angle-left'></i> Hide tasks",
-                        click=[
-                            #hide{trigger=hide_show,target=tasks}, 
-                            #event{postback=hide}
-                        ]
-                    }
-               ]},
-                #listitem{body=[
-                                common:render_filters()
-                               ]},
-%                #listitem{body=[
-%                                %#panel{ class='span2', body="<i class='icon-sort'></i> Sort"},
-%                               ]},
-                #listitem{body=[
-                                #link{id=archive, body="<i class='icon-list-alt'></i> Archive", postback={show_archive, true}}
-                               ]},
-                #listitem{body=[
-                                common:settings_menu()
-                               ]}
-                    ]}.
+    #list{numbered=false, class="nav nav-pills", style="display:inline-block", body=[
+        #listitem{body=[
+            %#panel{ class='span2', body="<i class='icon-user'></i> All accounts"},
+        ]},
+        #listitem{body=[
+            #button{
+                id=hide_show,
+                class="btn btn-link",
+                body="<i class='icon-angle-left'></i> Hide tasks",
+                click=[
+                    #hide{trigger=hide_show,target=tasks}, 
+                    #event{postback=hide}
+                ]
+            }
+       ]},
+        #listitem{body=[
+            common:render_filters()
+        ]},
+        %#listitem{body=[
+        %    #panel{ class='span2', body="<i class='icon-sort'></i> Sort"},
+        %]},
+        #listitem{body=[
+            #link{id=archive, body="<i class='icon-list-alt'></i> Archive", postback={show_archive, true}}
+        ]},
+        #listitem{body=[
+            common:settings_menu()
+        ]},
+        #listitem{body=[
+            common:render_help()
+        ]}
+    ]}.
 
 left() ->  % {{{1
     CId = wf:session(current_task_id),

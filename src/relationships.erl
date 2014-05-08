@@ -15,24 +15,26 @@ title() -> "Hello from relationships.erl!".
 icon() -> "<i class='icon-user icon-2x'></i>".
 
 buttons(main) ->  % {{{1
-    #list{numbered=false, class="nav nav-pills", style="display:inline-block;",
-        body=[
-            #listitem{body=[
-                            #link{style="display:inline-block;text-align:right;",  body="<i class='icon-envelope-alt'></i> Email connect", postback=invite}
-                           ]},
-            #listitem{body=[
-                            common:render_filters()
-                           ]},
-%            #listitem{body=[
-%                            %#panel{ class='span2', body="<i class='icon-sort'></i> Sort"},
-%                           ]},
-            #listitem{body=[
-                            #link{id=archive, body="<i class='icon-list-alt'></i> Archive", postback={show_archive, true}}
-                            ]},
-            #listitem{body=[
-                            common:settings_menu()
-                            ]}
-                    ]}.
+    #list{numbered=false, class="nav nav-pills", style="display:inline-block;", body=[
+        #listitem{body=[
+            #link{style="display:inline-block;text-align:right;",  body="<i class='icon-envelope-alt'></i> Email connect", postback=invite}
+        ]},
+        #listitem{body=[
+            common:render_filters()
+        ]},
+        %%#listitem{body=[
+        %%    %#panel{ class='span2', body="<i class='icon-sort'></i> Sort"},
+        %%]},
+        #listitem{body=[
+            #link{id=archive, body="<i class='icon-list-alt'></i> Archive", postback={show_archive, true}}
+        ]},
+        #listitem{body=[
+            common:settings_menu()
+        ]}
+        #listitem{body=[
+            common:render_help()
+        ]}
+    ]}.
 
 left() ->  % {{{1
     wf:session(current_group_id, all),

@@ -180,6 +180,17 @@ render_filters() -> %{{{1
                     end, Filters)
                  }
             ]}.
+
+render_help() ->
+    #db_contact{address=RISEid} = wf:user(),
+    #panel{ class='btn-group', body=[
+        #link{class="btn dropdown-toggle btn-link", body="<i class='icon-question'></i> Help", data_fields=[{toggle, "dropdown"}], url="#", new=false},
+        #list{numbered=false, class="dropdown-menu",body=[
+            #listitem{text=["Your RISE ID: ",RISEid]},
+            #listitem{text=["For support: support@sovereignprime.com"]}
+        ]}
+    ]}.
+	
 settings_menu() -> %{{{1
     #panel{ class="btn-group", body=[
             #link{class="btn dropdown-toggle btn-link", body="<i class='icon-gear'></i> Settings", data_fields=[{toggle, "dropdown"}], url="#", new=false},
