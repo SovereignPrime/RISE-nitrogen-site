@@ -354,29 +354,29 @@ get_children(UID, Time) ->
                 end). 
 
 task_status_list() ->
-	[{new, "New"},
-	 {accepted, "Accepted"},
-	 {in_progress, "In Progress"},
-	 {complete, "Complete"},
-	 {archive, "Archived"}].
+    [{new, "New"},
+     {accepted, "Accepted"},
+     {in_progress, "In Progress"},
+     {complete, "Complete"},
+     {archive, "Archived"}].
 
 nice_task_status_name(changed) ->
-	"Changed";
+    "Changed";
 nice_task_status_name(Status) ->
-	proplists:get_value(Status, task_status_list()).
+    proplists:get_value(Status, task_status_list()).
 
 sanitize_task_status(Status) when is_list(Status) ->
-	try 
-		S = list_to_existing_atom(Status),
-		{S, _} = lists:keyfind(S, 1, task_status_list()),
-		S
-	catch
-		Class:Error ->
-			error_logger:warning_msg("Invalid task status: ~p~nStacktrace: ~p",[Status, erlang:get_stacktrace()]),
-			new %% if task status is a fail, generate error message and use new
-	end.
+    try 
+        S = list_to_existing_atom(Status),
+        {S, _} = lists:keyfind(S, 1, task_status_list()),
+        S
+    catch
+        Class:Error ->
+            error_logger:warning_msg("Invalid task status: ~p~nStacktrace: ~p",[Status, erlang:get_stacktrace()]),
+            new %% if task status is a fail, generate error message and use new
+    end.
 
-	
+    
 
 %%%
 %% Expense routines

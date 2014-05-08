@@ -113,11 +113,14 @@ render_subtask(Task = #db_task{name=Name, due=Due, id=Id}, Archive) ->  % {{{1
                     Expander,
                     #link{postback={task_chosen, Id}, data_fields=[{link, ThisTaskIdMd5}], body=[
                         #image{style="width:16px; height:16px", image="/img/tasks.svg"},
-                        wf:html_encode(Name),
-                        ?WF_IF(HasAttachments, "<i class='icon-paperclip'></i>"),
+                        #span{text=Name},
+                        "&nbsp;",
+                        ?WF_IF(HasAttachments, "<i title='This task has files attached' class='icon-paperclip'></i>"),
 
-                        #span{style="font-size:0.9em",body=[" (",?WF_IF(Due,["Due: ",Due],"No due date"),")"]}
-                    ]}
+                        #span{style="font-size:0.8em",body=[" (",?WF_IF(Due,["Due: ",Due],"No due date"),")"]}
+                    ]},
+                    "&nbsp;",
+                    #link{body="<i class='icon-plus'></i>", title="Add New Sub-Task", postback={add, Id}}
                ]}
             ]}
         ]},
@@ -271,6 +274,9 @@ event({task_chosen, Id}) ->  % {{{1
     wf:update(body, render_task(Task)),
     expand_task(Id),
     highlight_selected(Id);
+event({add, ParentId}) -> % {{{1
+    wf:session(current_task, #db_task{parent=ParentId}),
+    wf:redirect("/edit_task");
 event({edit, Id}) ->  % {{{1
     Task = wf:session(current_task),
     wf:session(current_task, Task),
