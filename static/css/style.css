@@ -253,3 +253,14 @@ img.wfid_img_vcard {
 .current .icon-message {
 	background: url(/img/message16w.png);
 }
+
+.update-participant-list {
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space:nowrap;
+	font-size:0.9em;
+}
+
+.update-age {
+	font-size:0.8em;
+}

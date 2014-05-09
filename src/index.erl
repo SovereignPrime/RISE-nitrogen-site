@@ -43,6 +43,8 @@ left(Archive) -> % {{{1
     end.
 
 render_left(Updates) -> % {{{1
+    SortedUpdates = sugar:sort_by_timestamp(Updates),
+    GroupedUpdates = group_updates(SortedUpdates),
     Render = [ #update_preview{id=Id,
                                icon=Enc,
                                from=From,
@@ -58,15 +60,47 @@ render_left(Updates) -> % {{{1
                         subject=Subject,
                         text=Text,
                         enc=Enc,
-                        status=Status} <- sugar:sort_by_timestamp(Updates)],
-    #panel{id=left,class="span3 scrollable", body=Render}.
+                        status=Status} <- GroupedUpdates],
+    #panel{id=left,class="span4 scrollable", body=Render}.
+
+group_updates(List) ->
+    group_updates(List, []).
+
+group_updates([], Acc) -> Acc;
+group_updates([U | Rest], Acc0) ->
+    Acc = case subject_exists_in_updates(U#message.subject, Acc0) of
+        true -> add_participants(U, Acc0);
+        false -> Acc0 ++ [U]
+    end,
+    group_updates(Rest, Acc).
+
+add_participants(Update, Messages) ->
+    lists:map(fun
+                  (M) when M#message.subject==Update#message.subject ->
+                    M#message{
+                      from=maybe_wrap_list(M#message.from) ++ [Update#message.from],
+                      to=maybe_wrap_list(M#message.to) ++ [Update#message.to]
+                    };
+                  (M) -> M
+              end, Messages).
+                     
+maybe_wrap_list(AddressList) when is_list(AddressList) ->
+    AddressList;
+maybe_wrap_list(Address) when is_binary(Address) ->
+    [Address].
+
+subject_exists_in_updates(Subject, Messages) ->
+    case [X || X <- Messages, X#message.subject==Subject] of
+        [] -> false;
+        [X] -> true
+    end.
 
 body() -> % {{{1
     body(false).
 
 body(Archive) -> % {{{1
     #panel{id=body,
-           class="span9 scrollable",
+           class="span8 scrollable",
            body=case wf:session(current_subject) of
                     undefined ->
                         [];

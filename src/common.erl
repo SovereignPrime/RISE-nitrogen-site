@@ -434,3 +434,13 @@ restore(FID) -> %{{{1
     {ok, [Me]} = db:get_my_accounts(),
     wf:user(Me).
 
+remove_duplicates(List) ->
+	remove_duplicates(List, []).
+
+remove_duplicates([], Acc) ->
+	Acc;
+remove_duplicates([H|T], Acc) ->
+    case lists:member(H, Acc) of
+        true -> remove_duplicates(T, Acc);
+        false -> remove_duplicates(T, Acc ++ [H])
+    end.
