@@ -473,12 +473,28 @@ get_contact(Id) ->  % {{{1
 get_contact_by_address(Address) ->  % {{{1
     transaction(fun() ->
                 case mnesia:index_read(db_contact, Address, #db_contact.address) of
-                    [U] when U#db_contact.status /= archive ->
-                        U;
-                     _ ->
+                    L when length(L)>=1 ->
+                        case coalesce_best_contact(L, false) of
+                            none -> coalesce_best_contact(L, true);
+                            U -> U
+                        end;
+                    _ ->
                         none
                 end
         end).
+
+-spec coalesce_best_contact([#db_contact{}], boolean()) -> none | #db_contact{}.
+%% @doc Returns the first contact it comes across that has an actual name, and
+%% whether or not it's marked as Archived
+coalesce_best_contact([User], Archive) when (User#db_contact.status==archive)==Archive ->
+    User;
+coalesce_best_contact([User | Rest], Archive) when (User#db_contact.status==archive)==Archive ->
+    case User#db_contact.name of
+        "unknown" -> coalesce_best_contact(Rest, Archive);
+        "" -> coalesce_best_contact(Rest, Archive);
+        _ -> User
+    end.
+
 
 get_involved(Id) ->  % {{{1
     transaction(fun() ->
