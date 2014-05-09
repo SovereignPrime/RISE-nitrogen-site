@@ -13,29 +13,36 @@
 -spec reflect() -> [atom()].
 reflect() -> record_info(fields, update_element).
 
+name_from_address(Address) ->
+    case db:get_contact_by_address(Address) of
+        {ok, #db_contact{name=FN}} -> FN;
+        {ok, none} -> wf:to_list(Address)
+    end.
+
 -spec render_element(#update_element{}) -> body().
 %% Render collapsed update {{{1
 render_element(#update_element{id=Id,
                                from=From,
+                               to=To,
                                text=Data,
                                age=Age,
                                collapse=true,
                                enc=Enc,
                                status=Status}=Record) ->
-    FromName = case db:get_contact_by_address(From) of
-                   {ok, #db_contact{name=FN}} ->
-                       FN;
-                   {ok, none} ->
-                       wf:to_list(From)
-               end,
+    FromName = name_from_address(From),
+    ToName = name_from_address(To),
     {Text, Attachments, Timestamp} = decode_enc(Enc, Data, true),
     TD = bm_types:timestamp() - Timestamp,
         #panel{id=Id, class="row-fluid", body=[
 
-                #panel{class="span2",
-                       body="<i class='icon-chevron-down'></i> " ++ FromName},
+                #panel{class="span4",
+                       body=[
+                            "<i class='icon-chevron-down'></i> ",
+                            FromName,
+                            " <i class='icon-arrow-right'></i> ",
+                            ToName]},
 
-                #panel{class="span8", body=io_lib:format("~100s", [Text])},
+                #panel{class="span6", body=io_lib:format("~100s", [Text])},
                 #panel{class="span2", body=[
                                             sugar:format_timedelta(TD),
                                             format_status(Status)

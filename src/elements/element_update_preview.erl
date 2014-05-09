@@ -7,7 +7,8 @@
 -include("db.hrl").
 -export([
          reflect/0,
-         render_element/1
+         render_element/1,
+         render_icon/1
         ]).
 
 -spec reflect() -> [atom()].
@@ -54,17 +55,8 @@ render_element(#update_preview{id=Id,
            body=[
                  #panel{class="row-fluid no-padding",
                         body=[
-                              case Icon of
-                                  T when T==1; T==2 ->
-                                        #panel{class="span1 no-padding",
-                                               body=["<i class='icon-envelope'></i>"]};
-                                  3 ->
-                                      #panel{class='span1 no-padding',
-                                             body=["<i class='icon-message'></i>"]};
-                                  5 ->
-                                      #panel{class='span1 no-padding',
-                                             body=["<i class='icon-refresh'></i>"]}
-                              end,
+
+                              #panel{class="span1 no-padding",body=render_icon(Icon)},
                               #panel{class='span7 no-padding',
                                      style="overflow: hidden; word-wrap:break-word;",
                                      body=[
@@ -145,13 +137,7 @@ render_element(#update_preview{id=Id,
            body=[
                  #panel{class="row-fluid no-padding",
                         body=[
-                              #panel{class='span1 no-padding',
-                                     body=[
-                                           #image{image="/img/tasks.svg",
-                                                  class="icon",
-                                                  style="height:16px;vertical-align:middle;"}
-
-                                          ]},
+                              #panel{class="span1 no-padding",body=render_icon(Icon)},
                               #panel{class='span7 no-padding',
                                      body=[
                                            "<b>From: </b>",
@@ -202,6 +188,19 @@ render_element(#update_preview{id=Id,
                 ],
            actions=#event{type=click,
                           postback={selected, Id, Subject, Archive}}}.
+
+
+render_icon(Icon) when Icon==1; Icon==2 ->
+    "<i class='icon-envelope'></i>";
+render_icon(3) ->
+    "<i class='icon-envelope'></i>";
+render_icon(4) ->
+   #image{image="/img/tasks.svg",
+          class="icon",
+          style="height:16px;vertical-align:middle;"
+   };
+render_icon(5) ->
+    "<i class='icon-refresh'></i>".
 
 get_name(UID) ->
     case db:get_contact_by_address(UID) of

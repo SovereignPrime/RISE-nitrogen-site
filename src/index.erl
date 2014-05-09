@@ -78,8 +78,10 @@ body(Archive) -> % {{{1
 render_body(Subject, Archive) -> % {{{1
     wf:session(current_subject, Subject),
     {ok, Updates} = db:get_updates_by_subject(Subject, Archive),
+    Type = (hd(Updates))#message.enc,
+    Icon = element_update_preview:render_icon(Type),
     [
-     #h1{html_encode=false, text="<i class='icon-message'></i> " ++ Subject},
+     #h1{body=[Icon," ",wf:html_encode(Subject)]},
      [
       #update_element{collapse=true,
                       from=From,
