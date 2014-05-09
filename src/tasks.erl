@@ -149,6 +149,7 @@ expand_task(Taskid) ->  % {{{1
 body() ->  % {{{1
     case wf:session(current_task) of
         #db_task{id=Id, name=Name, due=Due, text=Text, parent=Parent, status=Status}=Task -> 
+            highlight_selected(Id),
             #panel{id=body, class="span8", body=
                    [
                     render_task(Task)
@@ -249,8 +250,8 @@ render_task(#db_task{id=Id, name=Name, due=Due, text=Text, parent=Parent, status
 
 highlight_selected(Id) ->
     Md5 = md5(Id),
-    wf:wire(#remove_class{target=".wfid_tasks a", class=current}),
-    wf:wire(#add_class{target=".wfid_tasks a[data-link=\"" ++ Md5 ++ "\"]", class=current}).
+    wf:defer(#remove_class{target=".wfid_tasks a", class=current}),
+    wf:defer(#add_class{target=".wfid_tasks a[data-link=\"" ++ Md5 ++ "\"]", class=current}).
 
 event({archive, #db_task{id=_Id, parent=_Parent} = Rec}) ->  % {{{1
     {ok, NTask} = db:archive(Rec),
