@@ -292,28 +292,44 @@ get_tasks_by_user(UID) ->  % {{{1
                     end)
         end).
 
+archive_op(true) -> '==';
+archive_op(false) -> '/='.
 
 get_tasks(Parent) when not is_boolean(Parent) ->  % {{{1
+    get_tasks(Parent, false);
+get_tasks(Archive) ->  % {{{1
+    ArchOp = archive_op(Archive),
     transaction(fun() ->
-                        %Parents = mnesia:index_read(db_task_tree, Parent, #db_task_tree.parent),
-                mnesia:select(db_task, [{#db_task{parent=Parent, status='$1', _='_'}, [{'/=', '$1', archive}], ['$_']}])
-            end);
-get_tasks(false) ->  % {{{1
-    transaction(fun() ->
-                mnesia:select(db_task, [{#db_task{status='$1', _='_'}, [{'/=', '$1', 'archive'}], ['$_']}])
-            end);
-get_tasks(true) ->  % {{{1
-    transaction(fun() ->
-                mnesia:select(db_task, [{#db_task{status='$1', _='_'}, [{'==', '$1', 'archive'}], ['$_']}])
+                mnesia:select(db_task, [{#db_task{status='$1', _='_'}, [{ArchOp, '$1', 'archive'}], ['$_']}])
             end).
-get_tasks(Parent, false) ->  % {{{1
+
+get_tasks(Parent, Archive) ->  % {{{1
+    ArchOp = archive_op(Archive),
     transaction(fun() ->
-                mnesia:select(db_task, [{#db_task{parent=Parent, status='$1', _='_'}, [{'/=', '$1', 'archive'}], ['$_']}])
-            end);
-get_tasks(Parent, true) ->  % {{{1
-    transaction(fun() ->
-                mnesia:select(db_task, [{#db_task{status='$1', _='_'}, [{'==', '$1', 'archive'}], ['$_']}])
+                mnesia:select(db_task, [{#db_task{parent=Parent, status='$1', _='_'}, [{ArchOp, '$1', 'archive'}], ['$_']}])
             end).
+
+get_tasks_due_today(Archive) ->
+    Today = sugar:date_format(date()),
+    error_logger:info_msg("searching: ~p",[Today]),
+    ArchOp = archive_op(Archive),
+    transaction(fun() ->
+                mnesia:select(db_task, [{#db_task{status='$1', due=Today, _='_'}, [{ArchOp, '$1', 'archive'}], ['$_']}])
+                end).
+   
+get_tasks_no_deadline(Archive) ->
+    ArchOp = archive_op(Archive),
+    transaction(fun() ->
+                mnesia:select(db_task, [{#db_task{status='$1', due="", _='_'}, [{ArchOp, '$1', 'archive'}], ['$_']}])
+                end).
+
+get_orphan_tasks(Archive) ->
+    {ok, Tasks} = get_tasks(Archive),
+    Taskids = [T#db_task.id || T <- Tasks],
+    Orphans = [T || T <- Tasks,
+                  T#db_task.parent=/=undefined,
+                  not(lists:member(T#db_task.parent, Taskids))],
+    {ok, Orphans}.
 
 get_tasks_by_subject(Subject, false) ->  % {{{1
     transaction(fun() ->

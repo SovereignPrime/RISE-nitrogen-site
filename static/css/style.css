@@ -264,3 +264,22 @@ img.wfid_img_vcard {
 .update-age {
 	font-size:0.8em;
 }
+
+a.task-tree-button {
+	border:solid 1px white;
+	text-align:center;
+	line-height:32px;
+	display: inline-block;
+	margin-bottom:10px;
+}
+
+a.task-tree-button-selected {
+	border:solid 1px black;
+	color: white;
+	background: black;
+}
+
+a.task-tree-button:hover {
+	border:solid 1px black;
+}
+

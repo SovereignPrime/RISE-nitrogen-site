@@ -61,12 +61,7 @@ render_element(#update_element{id=Id,
                                collapse=false,
                                enc=Enc,
                                status=Status}=Record) ->
-    FromName = case db:get_contact_by_address(From) of
-                   {ok, #db_contact{name=FN}} ->
-                       FN;
-                   {ok, none} ->
-                       wf:to_list(From)
-               end,
+    FromName = name_from_address(From),
     {Text, Attachments, Timestamp} = decode_enc(Enc, Data, false),
     TD = bm_types:timestamp() - Timestamp,
     #panel{id=Id, body=[

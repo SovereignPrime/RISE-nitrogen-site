@@ -53,6 +53,22 @@ left() ->  % {{{1
             render_task_tree()
     ]}.
 
+
+render_task_tree_buttons(Selected) ->
+    Buttons = [
+        {"Hierarchy", task_tree},
+        {"Due Today", tasks_today},
+        {"Due Soon", tasks_soon},
+        {"No Deadline", tasks_no_deadline}
+    ],
+    lists:map(fun({Label, Postback}) ->
+        #link{
+           class=[span3, 'task-tree-button', ?WF_IF(Postback==Selected, 'task-tree-button-selected', 'task-tree-button-unselected')],
+           text=Label,
+           postback={change_mode, Postback}
+        }
+    end, Buttons).
+
 update_task_tree() ->  % {{{1
     update_task_tree(false).
 
@@ -63,7 +79,16 @@ render_task_tree() ->  % {{{1
     render_task_tree(false).
 
 render_task_tree(Archive) ->  % {{{1
-    render_task_tree(undefined, Archive, true).
+    Mode = wf:session_default(task_tree_mode, task_tree),
+    Buttons = render_task_tree_buttons(Mode),
+    Tree = case Mode of
+        task_tree ->
+            render_task_tree(undefined, Archive, true);
+        _ ->
+            render_task_list(Mode, Archive)
+    end,
+    highlight_selected(),
+    [Buttons, Tree].
 
 render_task_tree(ParentId, Archive, First) ->  % {{{1
     Body = case db:get_tasks(ParentId, Archive) of
@@ -97,8 +122,6 @@ md5(Data) ->  % {{{1
 
 render_subtask(Task = #db_task{name=Name, due=Due, id=Id}, Archive) ->  % {{{1
     ThisTaskIdMd5 = md5(Id),
-    {ok, Attachments} = db:get_attachments(Task),
-    HasAttachments = length(Attachments) >= 1,
     {Expander, Subtree} = case render_task_tree(Id, Archive, false) of
         [] -> {#span{style="width:10px;display:inline-block"}, []};
         Tree -> 
@@ -111,24 +134,35 @@ render_subtask(Task = #db_task{name=Name, due=Due, id=Id}, Archive) ->  % {{{1
             #draggable{tag={task, Id}, group=task_groups, clone=false, distance=20, options=[{delay, 300}], body=[
                 #panel{style="display:block", body=[
                     Expander,
-                    #link{postback={task_chosen, Id}, data_fields=[{link, ThisTaskIdMd5}], body=[
-                        #image{style="width:16px; height:16px", image="/img/tasks.svg"},
-                        #span{text=Name},
-                        "&nbsp;",
-                        ?WF_IF(HasAttachments, "<i title='This task has files attached' class='icon-paperclip'></i>"),
-
-                        #span{style="font-size:0.8em",body=[" (",?WF_IF(Due,["Due: ",Due],"No due date"),")"]}
-                    ]},
-                    "&nbsp;",
-                    #link{body="<i class='icon-plus'></i>", title="Add New Sub-Task", postback={add, Id}}
+                    render_task_link(Task)
                ]}
             ]}
         ]},
         Subtree
     ]}.
- 
-render_tasks() ->  % {{{1
-    render_task_tree().
+
+render_task_link(Task = #db_task{name=Name, due=Due, id=Id}) ->
+    HasAttachments = does_task_have_attachments(Task),
+    render_task_link(Id, Name, HasAttachments, Due).
+
+render_task_link(Id, Name, HasAttachments, Due) ->
+    ThisTaskIdMd5 = md5(Id),
+    [
+        #link{postback={task_chosen, Id}, data_fields=[{link, ThisTaskIdMd5}], body=[
+            #image{style="width:16px; height:16px", image="/img/tasks.svg"},
+            #span{text=Name},
+            "&nbsp;",
+            ?WF_IF(HasAttachments, "<i title='This task has files attached' class='icon-paperclip'></i>"),
+
+            #span{style="font-size:0.8em",body=[" (",?WF_IF(Due,["Due: ",Due],"No due date"),")"]}
+        ]},
+        "&nbsp;",
+        #link{body="<i class='icon-plus'></i>", title="Add New Sub-Task", postback={add, Id}}
+    ].
+
+does_task_have_attachments(Task) ->
+    {ok, Attachments} = db:get_attachments(Task),
+    _HasAttachments = length(Attachments) >= 1.
 
 expand_to_task(Taskid) ->  % {{{1
     case db:get_task(Taskid) of
@@ -145,6 +179,34 @@ expand_task(Taskid) ->  % {{{1
     Hashed = md5(Taskid),
     wf:wire(["$(\".expander[data-parent='",Hashed,"']\").addClass('icon-caret-down').removeClass('icon-caret-right')"]),
     wf:wire(["$(\".list[data-list='",Hashed,"']\").show();"]).
+
+render_task_list(Mode, Archive) ->
+    Function = case Mode of
+        tasks_today -> fun db:get_tasks_due_today/1;
+        tasks_soon -> fun ?MODULE:get_tasks_sorted_by_date/1;
+        tasks_no_deadline -> fun db:get_tasks_no_deadline/1
+    end,
+    {ok, Tasks} = Function(Archive),
+    #list{
+       numbered=false,
+       data_fields=[{list, md5(undefined)}],
+       style=["padding-left: 10px; "],
+       body=[render_flat_task(T, Archive) || T <- Tasks]
+    }.
+
+get_tasks_sorted_by_date(Archive) ->
+    {ok, Tasks} = db:get_tasks(Archive),
+    {ok, lists:sort(fun compare_task_date/2, Tasks)}.
+
+compare_task_date(#db_task{due=""}, _) ->
+    false;
+compare_task_date(_, #db_task{due=""}) ->
+    true;
+compare_task_date(#db_task{due=A}, #db_task{due=B}) ->
+    A =< B.
+
+render_flat_task(Task, Archive) ->
+    #listitem{body=render_task_link(Task)}.
 
 body() ->  % {{{1
     case wf:session(current_task) of
@@ -248,11 +310,20 @@ render_task(#db_task{id=Id, name=Name, due=Due, text=Text, parent=Parent, status
         ] 
     ]. 
 
+highlight_selected() ->
+    case wf:session(current_task) of
+        #db_task{id=Id} -> highlight_selected(Id);
+        _ -> ok
+    end.
+
 highlight_selected(Id) ->
     Md5 = md5(Id),
     wf:defer(#remove_class{target=".wfid_tasks a", class=current}),
     wf:defer(#add_class{target=".wfid_tasks a[data-link=\"" ++ Md5 ++ "\"]", class=current}).
 
+event({change_mode, Mode}) ->
+    wf:session(task_tree_mode, Mode),
+    update_task_tree();
 event({archive, #db_task{id=_Id, parent=_Parent} = Rec}) ->  % {{{1
     {ok, NTask} = db:archive(Rec),
     common:send_messages(NTask),
@@ -337,5 +408,5 @@ drop_event({task, Id}, task_root) ->  % {{{1
     update_task_tree().
 
 incoming() ->  % {{{1
-    wf:update(tasks, render_tasks()),
+    wf:update(tasks, render_task_tree()),
     wf:flush().
