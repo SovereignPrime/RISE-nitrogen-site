@@ -6,7 +6,8 @@
 date_format(Str) when is_list(Str)->
     Str;
 date_format({Y, M, D}) ->
-    io_lib:format("~p-~p-~p", [Y, M, D]).
+	%% might be worth replacing with qdate:to_string()
+   	lists:flatten(io_lib:format("~4..0w-~2..0w-~2..0w", [Y, M, D])).
 
 format_file_size(S) when S > 1000 * 1000 * 1000 ->
     wf:f("~.2fG", [ S  / bm_types:pow(1024, 3)]);

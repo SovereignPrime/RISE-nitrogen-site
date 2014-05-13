@@ -23,18 +23,21 @@ buttons(main) ->
         end,
         #listitem{body=[
             %#panel{ class='span2', body="<i class='icon-user'></i> All accounts"},
-                       ]},
+        ]},
         #listitem{body=[
             common:render_filters()
-                       ]},
+        ]},
         #listitem{body=[
             %#panel{ class='span2', body="<i class='icon-sort'></i> Sort"},
-                       ]},
+        ]},
         #listitem{body=[
             #link{id=archive, body="<i class='icon-list-alt'></i> Archive", postback={show_archive, true}}
-                       ]},
+        ]},
         #listitem{body=[
             common:settings_menu()
+        ]},
+        #listitem{body=[
+            common:render_help()
         ]}
     ]}.
 
