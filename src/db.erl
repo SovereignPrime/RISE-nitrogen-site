@@ -82,6 +82,7 @@ delete(Type, Id) ->  % {{{1
                 mnesia:delete({Type, Id})
         end).
 
+
 archive(Rec) when is_record(Rec, db_task) ->  % {{{1
     transaction(fun() ->
                 R = Rec#db_task{status=archive},
@@ -291,28 +292,44 @@ get_tasks_by_user(UID) ->  % {{{1
                     end)
         end).
 
+archive_op(true) -> '==';
+archive_op(false) -> '/='.
 
 get_tasks(Parent) when not is_boolean(Parent) ->  % {{{1
+    get_tasks(Parent, false);
+get_tasks(Archive) ->  % {{{1
+    ArchOp = archive_op(Archive),
     transaction(fun() ->
-                        %Parents = mnesia:index_read(db_task_tree, Parent, #db_task_tree.parent),
-                mnesia:select(db_task, [{#db_task{parent=Parent, status='$1', _='_'}, [{'/=', '$1', archive}], ['$_']}])
-            end);
-get_tasks(false) ->  % {{{1
-    transaction(fun() ->
-                mnesia:select(db_task, [{#db_task{status='$1', _='_'}, [{'/=', '$1', 'archive'}], ['$_']}])
-            end);
-get_tasks(true) ->  % {{{1
-    transaction(fun() ->
-                mnesia:select(db_task, [{#db_task{status='$1', _='_'}, [{'==', '$1', 'archive'}], ['$_']}])
+                mnesia:select(db_task, [{#db_task{status='$1', _='_'}, [{ArchOp, '$1', 'archive'}], ['$_']}])
             end).
-get_tasks(Parent, false) ->  % {{{1
+
+get_tasks(Parent, Archive) ->  % {{{1
+    ArchOp = archive_op(Archive),
     transaction(fun() ->
-                mnesia:select(db_task, [{#db_task{parent=Parent, status='$1', _='_'}, [{'/=', '$1', 'archive'}], ['$_']}])
-            end);
-get_tasks(Parent, true) ->  % {{{1
-    transaction(fun() ->
-                mnesia:select(db_task, [{#db_task{status='$1', _='_'}, [{'==', '$1', 'archive'}], ['$_']}])
+                mnesia:select(db_task, [{#db_task{parent=Parent, status='$1', _='_'}, [{ArchOp, '$1', 'archive'}], ['$_']}])
             end).
+
+get_tasks_due_today(Archive) ->
+    Today = sugar:date_format(date()),
+    error_logger:info_msg("searching: ~p",[Today]),
+    ArchOp = archive_op(Archive),
+    transaction(fun() ->
+                mnesia:select(db_task, [{#db_task{status='$1', due=Today, _='_'}, [{ArchOp, '$1', 'archive'}], ['$_']}])
+                end).
+   
+get_tasks_no_deadline(Archive) ->
+    ArchOp = archive_op(Archive),
+    transaction(fun() ->
+                mnesia:select(db_task, [{#db_task{status='$1', due="", _='_'}, [{ArchOp, '$1', 'archive'}], ['$_']}])
+                end).
+
+get_orphan_tasks(Archive) ->
+    {ok, Tasks} = get_tasks(Archive),
+    Taskids = [T#db_task.id || T <- Tasks],
+    Orphans = [T || T <- Tasks,
+                  T#db_task.parent=/=undefined,
+                  not(lists:member(T#db_task.parent, Taskids))],
+    {ok, Orphans}.
 
 get_tasks_by_subject(Subject, false) ->  % {{{1
     transaction(fun() ->
@@ -351,6 +368,31 @@ get_children(UID, Time) ->
                                             end
                                     end, [], CSS)
                 end). 
+
+task_status_list() ->
+    [{new, "New"},
+     {accepted, "Accepted"},
+     {in_progress, "In Progress"},
+     {complete, "Complete"},
+     {archive, "Archived"}].
+
+nice_task_status_name(changed) ->
+    "Changed";
+nice_task_status_name(Status) ->
+    proplists:get_value(Status, task_status_list()).
+
+sanitize_task_status(Status) when is_list(Status) ->
+    try 
+        S = list_to_existing_atom(Status),
+        {S, _} = lists:keyfind(S, 1, task_status_list()),
+        S
+    catch
+        Class:Error ->
+            error_logger:warning_msg("Invalid task status: ~p~nStacktrace: ~p",[Status, erlang:get_stacktrace()]),
+            new %% if task status is a fail, generate error message and use new
+    end.
+
+    
 
 %%%
 %% Expense routines
@@ -447,12 +489,28 @@ get_contact(Id) ->  % {{{1
 get_contact_by_address(Address) ->  % {{{1
     transaction(fun() ->
                 case mnesia:index_read(db_contact, Address, #db_contact.address) of
-                    [U] when U#db_contact.status /= archive ->
-                        U;
-                     _ ->
+                    L when length(L)>=1 ->
+                        case coalesce_best_contact(L, false) of
+                            none -> coalesce_best_contact(L, true);
+                            U -> U
+                        end;
+                    _ ->
                         none
                 end
         end).
+
+-spec coalesce_best_contact([#db_contact{}], boolean()) -> none | #db_contact{}.
+%% @doc Returns the first contact it comes across that has an actual name, and
+%% whether or not it's marked as Archived
+coalesce_best_contact([User], Archive) when (User#db_contact.status==archive)==Archive ->
+    User;
+coalesce_best_contact([User | Rest], Archive) when (User#db_contact.status==archive)==Archive ->
+    case User#db_contact.name of
+        "unknown" -> coalesce_best_contact(Rest, Archive);
+        "" -> coalesce_best_contact(Rest, Archive);
+        _ -> User
+    end.
+
 
 get_involved(Id) ->  % {{{1
     transaction(fun() ->

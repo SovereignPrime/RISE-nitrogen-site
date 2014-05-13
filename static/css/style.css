@@ -138,10 +138,10 @@ a.current:hover {
     height: 30px;
     width: 30px;
 }
-select.wfid_responsible {
+select {
     sborder: #000 1px solid !important;
     background-color: transparent;
-    height: 30px;
+    height: 30px !important; 
     line-height: 20px !important;
 }
 .previous>a, .next>a{
@@ -253,3 +253,33 @@ img.wfid_img_vcard {
 .current .icon-message {
 	background: url(/img/message16w.png);
 }
+
+.update-participant-list {
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space:nowrap;
+	font-size:0.9em;
+}
+
+.update-age {
+	font-size:0.8em;
+}
+
+a.task-tree-button {
+	border:solid 1px white;
+	text-align:center;
+	line-height:32px;
+	display: inline-block;
+	margin-bottom:10px;
+}
+
+a.task-tree-button-selected {
+	border:solid 1px black;
+	color: white;
+	background: black;
+}
+
+a.task-tree-button:hover {
+	border:solid 1px black;
+}
+

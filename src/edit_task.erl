@@ -73,8 +73,7 @@ left() ->  % {{{1
                                                        "Subtask: ",wf:html_encode(N), #br{}
                                                       ]
                                               end, Children)
-                            end,
-                            #link{url="/tasks", body="<i class='icon-th-large'></i> Edit/View task tree"}, #br{}
+                            end
                             ]}
                     ]},
             #panel{id=files, class="row-fluid", body=[
@@ -85,7 +84,8 @@ left() ->  % {{{1
 
 body() ->  % {{{1
 	fix_addable_rows(),
-    #db_task{id=Id, name=Name, due=Due, text=Text} = wf:session(current_task),
+	Statuses = db:task_status_list(),
+    #db_task{id=Id, name=Name, due=Due, text=Text, status=Status} = wf:session(current_task),
     #db_contact{id=MID, name=Me} = wf:user(),
     wf:session(<<"Me">>, MID),
     #panel{ class="span9", body=[
@@ -98,12 +98,20 @@ body() ->  % {{{1
             ]}
         ]},
         #panel{ class="row-fluid", body=[
-            #panel{ class="input-prepend span12", body=[
+            #panel{ class="input-prepend span9 duedate-wrapper", body=[
                 #span{ class="add-on", body=[
-                    #span{html_encode=false, text="<i class='icon-calendar'></i>"}
+                    #span{body="<i class='icon-calendar'></i>"}
                 ]},
                 #datepicker_textbox{id=due,  next=due, text=Due, class="span9"}
-            ]}
+            ]},
+			#panel{ class="input-prepend span3 status-wrapper", body=[
+                #span{ class="add-on", body=[
+                    #span{body="<i class='icon-fire'></i>"}
+                ]},
+				Status,
+				#dropdown{id=status, value=Status, options=Statuses, class=span9},
+				#span{class='add-on', body="<i class='icon-caret-down'></i>"}
+			]}
         ]},
         #addable_row{id=roles, body= #involved{person=Me, role=accountable}},
         add_existing_rows(Id),
@@ -128,7 +136,9 @@ fix_addable_rows() ->
         "var differential = plus_right - reference_right;",
         "var current_width = $(\".addable-row > .span11\").width();",
         "var new_width = current_width - differential;",
-		"$(\".addable-row > .span11\").width(new_width);"
+		"$(\".addable-row > .span11\").width(new_width);",
+		"var duedate_width = $(\".addable-row > .span11 > .row-fluid > .span9\").width();",
+		"$(\".duedate-wrapper\").width(duedate_width+2);"
     ],
     wf:defer(Str).
 
@@ -162,6 +172,7 @@ event(save) ->  % {{{1
     TaskName = wf:to_binary(wf:q(name)),
     Due = wf:q(due),
     Text = wf:to_binary(wf:q(text)),
+	Status = db:sanitize_task_status(wf:q(status)),
     #db_task{id=Id} = Task = wf:session(current_task),
     UID = case Id of
         undefined ->
@@ -169,7 +180,7 @@ event(save) ->  % {{{1
         I ->
             I
     end,
-    NTask = Task#db_task{name= TaskName , id=UID, due=Due, text=Text},
+    NTask = Task#db_task{name= TaskName , id=UID, due=Due, text=Text, status=Status},
     db:save(NTask),
     wf:session(current_task, NTask),
     db:save_attachments(wf:session(current_task), wf:session_default(attached_files, sets:new())),

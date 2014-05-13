@@ -15,42 +15,59 @@ icon() -> #image{image="/img/tasks.svg", class="icon", style="height: 32px;"}.
 
 
 buttons(main) ->  % {{{1
-    #list{numbered=false, class="nav nav-pills", style="display:inline-block",
-          body=[
-%                #listitem{body=[
-%
-%                                %#panel{ class='span2', body="<i class='icon-user'></i> All accounts"},
-%                               ]},
-                #listitem{body=[
-                    #button{
-                        id=hide_show,
-                        class="btn btn-link",
-                        body="<i class='icon-angle-left'></i> Hide tasks",
-                        click=[
-                            #hide{trigger=hide_show,target=tasks}, 
-                            #event{postback=hide}
-                        ]
-                    }
-               ]},
-                #listitem{body=[
-                                common:render_filters()
-                               ]},
-%                #listitem{body=[
-%                                %#panel{ class='span2', body="<i class='icon-sort'></i> Sort"},
-%                               ]},
-                #listitem{body=[
-                                #link{id=archive, body="<i class='icon-list-alt'></i> Archive", postback={show_archive, true}}
-                               ]},
-                #listitem{body=[
-                                common:settings_menu()
-                               ]}
-                    ]}.
+    #list{numbered=false, class="nav nav-pills", style="display:inline-block", body=[
+        #listitem{body=[
+            %#panel{ class='span2', body="<i class='icon-user'></i> All accounts"},
+        ]},
+        #listitem{body=[
+            #button{
+                id=hide_show,
+                class="btn btn-link",
+                body="<i class='icon-angle-left'></i> Hide tasks",
+                click=[
+                    #hide{trigger=hide_show,target=tasks}, 
+                    #event{postback=hide}
+                ]
+            }
+       ]},
+        #listitem{body=[
+            common:render_filters()
+        ]},
+        %#listitem{body=[
+        %    #panel{ class='span2', body="<i class='icon-sort'></i> Sort"},
+        %]},
+        #listitem{body=[
+            #link{id=archive, body="<i class='icon-list-alt'></i> Archive", postback={show_archive, true}}
+        ]},
+        #listitem{body=[
+            common:settings_menu()
+        ]},
+        #listitem{body=[
+            common:render_help()
+        ]}
+    ]}.
 
 left() ->  % {{{1
     CId = wf:session(current_task_id),
     #panel{id=tasks, class="span4", body=[
             render_task_tree()
     ]}.
+
+
+render_task_tree_buttons(Selected) ->
+    Buttons = [
+        {"Hierarchy", task_tree},
+        {"Due Today", tasks_today},
+        {"Due Soon", tasks_soon},
+        {"No Deadline", tasks_no_deadline}
+    ],
+    lists:map(fun({Label, Postback}) ->
+        #link{
+           class=[span3, 'task-tree-button', ?WF_IF(Postback==Selected, 'task-tree-button-selected', 'task-tree-button-unselected')],
+           text=Label,
+           postback={change_mode, Postback}
+        }
+    end, Buttons).
 
 update_task_tree() ->  % {{{1
     update_task_tree(false).
@@ -62,7 +79,16 @@ render_task_tree() ->  % {{{1
     render_task_tree(false).
 
 render_task_tree(Archive) ->  % {{{1
-    render_task_tree(undefined, Archive, true).
+    Mode = wf:session_default(task_tree_mode, task_tree),
+    Buttons = render_task_tree_buttons(Mode),
+    Tree = case Mode of
+        task_tree ->
+            render_task_tree(undefined, Archive, true);
+        _ ->
+            render_task_list(Mode, Archive)
+    end,
+    highlight_selected(),
+    [Buttons, Tree].
 
 render_task_tree(ParentId, Archive, First) ->  % {{{1
     Body = case db:get_tasks(ParentId, Archive) of
@@ -82,7 +108,7 @@ render_task_tree(ParentId, Archive, First) ->  % {{{1
     case First of
         true ->
             #droppable{tag=task_root, accept_groups=[task_groups], style="", body=[
-                #panel{body=["Task Root",Body]}
+                #panel{body=["Tasks",Body]}
             ]};
         false ->
             Body
@@ -94,7 +120,7 @@ md5(Data) ->  % {{{1
     MD5 = crypto:hash(md5, Data),
     lists:flatten([io_lib:format("~2.16.0b", [B]) || <<B>> <= MD5]).
 
-render_subtask(#db_task{name=Task, due=Due, id=Id}, Archive) ->  % {{{1
+render_subtask(Task = #db_task{name=Name, due=Due, id=Id}, Archive) ->  % {{{1
     ThisTaskIdMd5 = md5(Id),
     {Expander, Subtree} = case render_task_tree(Id, Archive, false) of
         [] -> {#span{style="width:10px;display:inline-block"}, []};
@@ -108,19 +134,35 @@ render_subtask(#db_task{name=Task, due=Due, id=Id}, Archive) ->  % {{{1
             #draggable{tag={task, Id}, group=task_groups, clone=false, distance=20, options=[{delay, 300}], body=[
                 #panel{style="display:block", body=[
                     Expander,
-                    #link{postback={task_chosen, Id}, data_fields=[{link, ThisTaskIdMd5}], body=[
-                        #image{style="width:16px; height:16px", image="/img/tasks.svg"},
-                        wf:html_encode(Task),
-                        #span{style="font-size:0.9em",body=[" (",?WF_IF(Due,["Due: ",Due],"No due date"),")"]}
-                    ]}
+                    render_task_link(Task)
                ]}
             ]}
         ]},
         Subtree
     ]}.
- 
-render_tasks() ->  % {{{1
-    render_task_tree().
+
+render_task_link(Task = #db_task{name=Name, due=Due, id=Id}) ->
+    HasAttachments = does_task_have_attachments(Task),
+    render_task_link(Id, Name, HasAttachments, Due).
+
+render_task_link(Id, Name, HasAttachments, Due) ->
+    ThisTaskIdMd5 = md5(Id),
+    [
+        #link{postback={task_chosen, Id}, data_fields=[{link, ThisTaskIdMd5}], body=[
+            #image{style="width:16px; height:16px", image="/img/tasks.svg"},
+            #span{text=Name},
+            "&nbsp;",
+            ?WF_IF(HasAttachments, "<i title='This task has files attached' class='icon-paperclip'></i>"),
+
+            #span{style="font-size:0.8em",body=[" (",?WF_IF(Due,["Due: ",Due],"No due date"),")"]}
+        ]},
+        "&nbsp;",
+        #link{body="<i class='icon-plus'></i>", title="Add New Sub-Task", postback={add, Id}}
+    ].
+
+does_task_have_attachments(Task) ->
+    {ok, Attachments} = db:get_attachments(Task),
+    _HasAttachments = length(Attachments) >= 1.
 
 expand_to_task(Taskid) ->  % {{{1
     case db:get_task(Taskid) of
@@ -138,9 +180,38 @@ expand_task(Taskid) ->  % {{{1
     wf:wire(["$(\".expander[data-parent='",Hashed,"']\").addClass('icon-caret-down').removeClass('icon-caret-right')"]),
     wf:wire(["$(\".list[data-list='",Hashed,"']\").show();"]).
 
+render_task_list(Mode, Archive) ->
+    Function = case Mode of
+        tasks_today -> fun db:get_tasks_due_today/1;
+        tasks_soon -> fun ?MODULE:get_tasks_sorted_by_date/1;
+        tasks_no_deadline -> fun db:get_tasks_no_deadline/1
+    end,
+    {ok, Tasks} = Function(Archive),
+    #list{
+       numbered=false,
+       data_fields=[{list, md5(undefined)}],
+       style=["padding-left: 10px; "],
+       body=[render_flat_task(T, Archive) || T <- Tasks]
+    }.
+
+get_tasks_sorted_by_date(Archive) ->
+    {ok, Tasks} = db:get_tasks(Archive),
+    {ok, lists:sort(fun compare_task_date/2, Tasks)}.
+
+compare_task_date(#db_task{due=""}, _) ->
+    false;
+compare_task_date(_, #db_task{due=""}) ->
+    true;
+compare_task_date(#db_task{due=A}, #db_task{due=B}) ->
+    A =< B.
+
+render_flat_task(Task, Archive) ->
+    #listitem{body=render_task_link(Task)}.
+
 body() ->  % {{{1
     case wf:session(current_task) of
         #db_task{id=Id, name=Name, due=Due, text=Text, parent=Parent, status=Status}=Task -> 
+            highlight_selected(Id),
             #panel{id=body, class="span8", body=
                    [
                     render_task(Task)
@@ -160,16 +231,7 @@ render_task(#db_task{id=Id, name=Name, due=Due, text=Text, parent=Parent, status
     end, 
     TextF = re:replace(Text, "\r*\n", "<br>", [{return, list}, noteol, global]), 
     {ok, Updates} = db:get_task_history(Id),
-    Dropdown = #dropdown{
-                  options=[
-                           #option{value="new",
-                                   text="New"},
-                           #option{value="accepted",
-                                   text="Accepted"},
-                           #option{value="done",
-                                   text="Done"}
-                          ]},
-
+    Dropdown = #dropdown{options=db:task_status_list(), value=Status},
     [
         #panel{ class="row-fluid", body=[
                 #panel{ class="span11", body=[
@@ -248,11 +310,20 @@ render_task(#db_task{id=Id, name=Name, due=Due, text=Text, parent=Parent, status
         ] 
     ]. 
 
+highlight_selected() ->
+    case wf:session(current_task) of
+        #db_task{id=Id} -> highlight_selected(Id);
+        _ -> ok
+    end.
+
 highlight_selected(Id) ->
     Md5 = md5(Id),
-    wf:wire(#remove_class{target=".wfid_tasks a", class=current}),
-    wf:wire(#add_class{target=".wfid_tasks a[data-link=\"" ++ Md5 ++ "\"]", class=current}).
+    wf:defer(#remove_class{target=".wfid_tasks a", class=current}),
+    wf:defer(#add_class{target=".wfid_tasks a[data-link=\"" ++ Md5 ++ "\"]", class=current}).
 
+event({change_mode, Mode}) ->
+    wf:session(task_tree_mode, Mode),
+    update_task_tree();
 event({archive, #db_task{id=_Id, parent=_Parent} = Rec}) ->  % {{{1
     {ok, NTask} = db:archive(Rec),
     common:send_messages(NTask),
@@ -275,9 +346,12 @@ event({task_chosen, Id}) ->  % {{{1
     wf:update(body, render_task(Task)),
     expand_task(Id),
     highlight_selected(Id);
+event({add, ParentId}) -> % {{{1
+    wf:session(current_task, #db_task{parent=ParentId}),
+    wf:redirect("/edit_task");
 event({edit, Id}) ->  % {{{1
     Task = wf:session(current_task),
-    wf:session(current_task, Task#db_task{status=changed}),
+    wf:session(current_task, Task),
     wf:redirect("/edit_task");
 event(hide) ->  % {{{1
     wf:wire(body, [#remove_class{class="span8"}, #add_class{class="span12"}]),
@@ -298,7 +372,7 @@ event(Click) ->  % {{{1
 
 inplace_event(status, Val) ->  % {{{1
     Task = wf:session(current_task),
-    NTask = Task#db_task{status=wf:to_atom(Val)},
+    NTask = Task#db_task{status=db:sanitize_task_status(Val)},
     wf:session(current_task, NTask),
     db:save(NTask),
     Val;
@@ -334,5 +408,5 @@ drop_event({task, Id}, task_root) ->  % {{{1
     update_task_tree().
 
 incoming() ->  % {{{1
-    wf:update(tasks, render_tasks()),
+    wf:update(tasks, render_task_tree()),
     wf:flush().
