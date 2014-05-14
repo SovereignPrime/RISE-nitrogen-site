@@ -30,14 +30,25 @@ render_element(#update_preview{id=Id,
                T when T==1; T==2 ->
                      {Data, [], bm_types:timestamp()};
                3 ->
-                   #message_packet{text=T,
-                                   attachments=A,
-                                   time=TS} = binary_to_term(Data),
+                   try
+                       #message_packet{text=T,
+                                       attachments=A,
+                                       time=TS} = binary_to_term(Data, []),
+                       {T, A, TS}
+                   catch
+                       error:badarg ->
+                           {"Decoding error", [], bm_types:timestamp()}
+                   end;
 
-                   {T, A, TS};
+
                5 ->
-                   #update_packet{text=T, time=TS} = binary_to_term(Data),
-                   {T, [], TS}
+                   try
+                       #update_packet{text=T, time=TS} = binary_to_term(Data, []),
+                       {T, [], TS}
+                   catch
+                       error:badarg ->
+                           {"Decoding error", [], bm_types:timestamp()}
+                   end
            end,
     TD = bm_types:timestamp() - Timestamp,
     CurrentSession = wf:session(current_subject),
@@ -106,7 +117,13 @@ render_element(#update_preview{id=Id,
                                flag=Flag,
                                archive=Archive}) when Icon==4 ->  
 
-    #task_packet{text=Text, time=Timestamp} = binary_to_term(Data),
+    #task_packet{text=Text,
+                 time=Timestamp} = try
+                                       binary_to_term(Data)
+                                   catch
+                                       error:badarg ->
+                                           {"Decoding error", [], bm_types:timestamp()}
+                                   end,
     TD = bm_types:timestamp() - Timestamp,
     CurrentSession = wf:session(current_subject),
     CurrentId = wf:session(current_update_id),

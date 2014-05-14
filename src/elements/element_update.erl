@@ -157,8 +157,13 @@ format_status(Status) ->  % {{{1
     " " ++ wf:to_list(Status).
 
 decode_enc(3, Data, _) ->  % {{{1
-    #message_packet{text=T, attachments=A, time=TS} = binary_to_term(Data),
-    {T, A, TS};
+    try
+        #message_packet{text=T, attachments=A, time=TS} = binary_to_term(Data),
+        {T, A, TS}
+    catch
+        error:badarg ->
+            {"Decoding error", [], bm_types:timestamp()}
+    end;
 decode_enc(4, Data, true) ->  % {{{1
     #task_packet{text=T, attachments=A, time=TS} = binary_to_term(Data),
     {T, A, TS};
