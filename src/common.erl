@@ -181,7 +181,7 @@ render_filters() -> %{{{1
                  }
             ]}.
 
-render_help() ->
+render_help() ->  % {{{1
     #db_contact{address=RISEid} = wf:user(),
     #panel{ class='btn-group', body=[
         #link{class="btn dropdown-toggle btn-link", body="<i class='icon-question'></i> Help", data_fields=[{toggle, "dropdown"}], url="#", new=false},
