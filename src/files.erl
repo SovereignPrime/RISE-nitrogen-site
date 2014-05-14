@@ -12,9 +12,9 @@ title() -> "Hello from relationships.erl!".
 
 icon() -> "<i class='icon-file-text-alt icon-2x'></i>".
 
-buttons(left) ->
+buttons(left) ->  % {{{1
     "";
-buttons(main) ->
+buttons(main) ->  % {{{1
     #list{numbered=false, class="nav nav-pills", style="display:inline-block;",body=[
         case wf:q(from) of
             "task" -> done_button("/edit_task","Add to Task");
@@ -41,14 +41,14 @@ buttons(main) ->
         ]}
     ]}.
 
-done_button(Url, Label) ->
+done_button(Url, Label) ->  % {{{1
     #listitem{body=[
         #link{class="btn btn-link", url=Url, new=false, body=[
             "<i class='icon-ok'></i>Done, ", Label
         ]}
     ]}.
 
-more_options_buttons() ->
+more_options_buttons() ->  % {{{1
     #listitem{class="dropdown", body=[
         #link{class="btn btn-link dropdown-toggle",data_fields=[{toggle, "dropdown"}], url="#", new=false, body=[
             "<i class='icon-reorder'></i> More options"
@@ -63,12 +63,12 @@ more_options_buttons() ->
     ]}.
 
 
-left() ->
+left() ->  % {{{1
     [].
 
-body() ->
+body() ->  % {{{1
     body(false).
-body(Archive) -> 
+body(Archive) ->   % {{{1
     {ok, Files} = db:get_files(Archive),
     #panel{id=body, body=[
         #table{ rows=[
@@ -94,24 +94,24 @@ body(Archive) ->
 
             ]}.    
 
-event(archive) ->
+event(archive) ->  % {{{1
     Files = sets:to_list(wf:session_default(attached_files, sets:new())),
     db:archive(Files),
     wf:replace(body, body(false));
-event({show_archive, true}) ->
+event({show_archive, true}) ->  % {{{1
     wf:replace(archive, #link{id=archive, body="<i class='icon-list-alt'></i> Actual", postback={show_archive, false}}),
     wf:replace(body, body(true));
-event({show_archive, false}) ->
+event({show_archive, false}) ->  % {{{1
     wf:replace(archive, #link{id=archive, body="<i class='icon-list-alt'></i> Archive", postback={show_archive, true}}),
     wf:replace(body, body(false));
-event({check, FID, true}) ->
+event({check, FID, true}) ->  % {{{1
     AF = wf:session_default(attached_files, sets:new()),
     wf:session(attached_files,  sets:del_element( FID, AF));
-event({check, FID, false}) ->
+event({check, FID, false}) ->  % {{{1
     AF = wf:session_default(attached_files, sets:new()),
     wf:session(attached_files,  sets:add_element( FID, AF));
-event(Click) ->
+event(Click) ->  % {{{1
     io:format("~p~n",[Click]).
 
-incoming() ->
+incoming() ->  % {{{1
     wf:replace(body, body()).
