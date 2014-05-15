@@ -23,19 +23,22 @@ start_link() ->
 
 init([]) ->
     {ok, BindAddress} = application:get_env(cowboy, bind_address),
-    {ok, Port} = application:get_env(cowboy, port),
+    %{ok, Port} = application:get_env(cowboy, port),
     {ok, ServerName} = application:get_env(cowboy, server_name),
     DocRoot = os:getenv("DOC_ROOT"),
     {ok, StaticPaths} = application:get_env(cowboy, static_paths),
 
-    io:format("Starting Cowboy Server (~s) on ~s:~p, root: '~s'~n",
-              [ServerName, BindAddress, Port, DocRoot]),
 
     Dispatch =  init_dispatch(DocRoot, StaticPaths),
-    {ok, _} = cowboy:start_http(http, 100, [{port, Port}], [
+    {ok, _} = cowboy:start_http(http, 100, [{port, 0}], [
                 {env, [{dispatch, Dispatch}]},
                 {max_keepalive, 50}
                 ]),
+    Port = ranch:get_port(http),
+
+    io:format("Starting Cowboy Server (~s) on ~s:~p, root: '~s'~n",
+              [ServerName, BindAddress, Port, DocRoot]),
+    os:putenv("RISE_HTTP_PORT", Port),
 
     {ok, { {one_for_one, 5, 10}, [{receiver, {receiver, start_link, []}, permanent, 2, worker, dynamic}]}}. 
 
