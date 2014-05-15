@@ -48,7 +48,7 @@ init([]) ->
         {win32, _} ->
             os:cmd(RootDir ++ "/bin/rise.exe");
         _ ->
-            ok
+            file:write_file("/tmp/rise.port", wf:to_list(Port))
     end,
 
     {ok, { {one_for_one, 5, 10}, [{receiver, {receiver, start_link, []}, permanent, 2, worker, dynamic}]}}. 
