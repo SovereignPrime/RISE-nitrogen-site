@@ -20,4 +20,5 @@ start(_StartType, _StartArgs) ->
     nitrogen_sup:start_link().
 
 stop(_State) ->
+    file:delete("/tmp/rise.port"),
     ok.
