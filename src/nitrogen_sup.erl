@@ -26,6 +26,7 @@ init([]) ->
     %{ok, Port} = application:get_env(cowboy, port),
     {ok, ServerName} = application:get_env(cowboy, server_name),
     DocRoot = os:getenv("DOC_ROOT"),
+    RootDir = os:getenv("ROOTDIR"),
     {ok, StaticPaths} = application:get_env(cowboy, static_paths),
 
 
@@ -38,7 +39,17 @@ init([]) ->
 
     io:format("Starting Cowboy Server (~s) on ~s:~p, root: '~s'~n",
               [ServerName, BindAddress, Port, DocRoot]),
-    os:putenv("RISE_HTTP_PORT", Port),
+    os:putenv("RISE_HTTP_PORT", wf:to_list(Port)),
+    os:cmd("export RISE_HTTP_PORT"),
+
+    case os:type() of
+        {unix, 'linux'} ->
+            os:cmd(RootDir ++ "/bin/rise_frontend");
+        {win32, _} ->
+            os:cmd(RootDir ++ "/bin/rise.exe");
+        _ ->
+            ok
+    end,
 
     {ok, { {one_for_one, 5, 10}, [{receiver, {receiver, start_link, []}, permanent, 2, worker, dynamic}]}}. 
 
