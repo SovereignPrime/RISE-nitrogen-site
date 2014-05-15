@@ -3,7 +3,6 @@
 -module (relationships).
 -compile(export_all).
 -include_lib("nitrogen_core/include/wf.hrl").
--include_lib("pat/include/pat.hrl").
 -include_lib("bitmessage/include/bm.hrl").
 -include("records.hrl").
 -include("db.hrl").
@@ -16,9 +15,9 @@ icon() -> "<i class='icon-user icon-2x'></i>".
 
 buttons(main) ->  % {{{1
     #list{numbered=false, class="nav nav-pills", style="display:inline-block;", body=[
-        #listitem{body=[
-            #link{style="display:inline-block;text-align:right;",  body="<i class='icon-envelope-alt'></i> Email connect", postback=invite}
-        ]},
+       % #listitem{body=[
+       %     #link{style="display:inline-block;text-align:right;",  body="<i class='icon-envelope-alt'></i> Email connect", postback=invite}
+       % ]},
         #listitem{body=[
             common:render_filters()
         ]},
@@ -157,20 +156,20 @@ event(invite) ->  % {{{1
                                             ]}),
     wf:wire(#script{script="$('.modal').modal('show')"});
 
-event({invite, Server, REmail}) -> % {{{1
-    Login = wf:q(mail),
-    Passwd = wf:q(passwd),
-    Con = pat:connect({wf:to_binary( Server ), 25}, [{user, wf:to_binary( Login )}, {password, wf:to_binary(Passwd)}, {timeout, 60000}]),
-    {ok, Text} = file:read_file("invitation.tpl"),
-    wf:wire(#script{script="$('.modal').modal('hide')"}),
-    error_logger:info_msg("Rec: ~p~n", [ Server]),
-    Err = pat:send(Con, #email{sender=wf:to_binary(Login), 
-                         recipients=[wf:to_binary( "<" ++ wf:to_list( REmail ) ++ ">" )], 
-                         headers=[{<<"content-type">>, <<"text/html">>}], 
-                         subject= <<"Invitation to RISE">>, 
-                         message= <<(wf:to_binary(Login))/binary, Text/binary>>}),
-    error_logger:info_msg("Email sending result: ~p~n", [Err]),
-    wf:remove(".modal");
+%event({invite, Server, REmail}) -> % {{{1
+%    Login = wf:q(mail),
+%    Passwd = wf:q(passwd),
+%    Con = pat:connect({wf:to_binary( Server ), 25}, [{user, wf:to_binary( Login )}, {password, wf:to_binary(Passwd)}, {timeout, 60000}]),
+%    {ok, Text} = file:read_file("invitation.tpl"),
+%    wf:wire(#script{script="$('.modal').modal('hide')"}),
+%    error_logger:info_msg("Rec: ~p~n", [ Server]),
+%    Err = pat:send(Con, #email{sender=wf:to_binary(Login), 
+%                         recipients=[wf:to_binary( "<" ++ wf:to_list( REmail ) ++ ">" )], 
+%                         headers=[{<<"content-type">>, <<"text/html">>}], 
+%                         subject= <<"Invitation to RISE">>, 
+%                         message= <<(wf:to_binary(Login))/binary, Text/binary>>}),
+%    error_logger:info_msg("Email sending result: ~p~n", [Err]),
+%    wf:remove(".modal");
 
 event(cancel) ->  % {{{1
     wf:wire(#script{script="$('.modal').modal('hide')"}),

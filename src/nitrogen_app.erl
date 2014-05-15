@@ -16,7 +16,7 @@ start(_StartType, _StartArgs) ->
     application:start(bitmessage),
     etorrent:start_app(),
     application:start(eminer),
-    pat:start(),
+    % pat:start(),
     nitrogen_sup:start_link().
 
 stop(_State) ->
