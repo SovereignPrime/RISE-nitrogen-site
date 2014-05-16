@@ -46,7 +46,8 @@ init([]) ->  % {{{1
             os:cmd("export RISE_HTTP_PORT"),
             os:cmd(RootDir ++ "/bin/rise_frontend");
         {win32, _} ->
-            os:cmd(RootDir ++ "/bin/rise.exe");
+            Tmp = os:getenv("TMP"),
+            file:write_file(TMP ++ "\\rise.port", wf:to_list(Port))
         _ ->
             file:write_file("/tmp/rise.port", wf:to_list(Port))
     end,
