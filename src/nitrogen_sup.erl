@@ -40,10 +40,10 @@ init([]) ->  % {{{1
     io:format("Starting Cowboy Server (~s) on ~s:~p, root: '~s'~n",
               [ServerName, BindAddress, Port, DocRoot]),
     os:putenv("RISE_HTTP_PORT", wf:to_list(Port)),
-    os:cmd("export RISE_HTTP_PORT"),
 
     case os:type() of
         {unix, 'linux'} ->
+            os:cmd("export RISE_HTTP_PORT"),
             os:cmd(RootDir ++ "/bin/rise_frontend");
         {win32, _} ->
             os:cmd(RootDir ++ "/bin/rise.exe");
@@ -83,7 +83,7 @@ init_dispatch(DocRoot,StaticPaths) ->  % {{{1
     cowboy_router:compile(Dispatch).
 
 
-localized_dir_file(DocRoot,Path) ->
+localized_dir_file(DocRoot,Path) ->  % {{{1
     NewPath = case hd(Path) of
         $/ -> DocRoot ++ Path;
         _ -> DocRoot ++ "/" ++ Path
@@ -100,7 +100,7 @@ localized_dir_file(DocRoot,Path) ->
     end.
 
 %% Ensure the paths start with /, and if a path ends with /, then add "[...]" to it
-reformat_path(Path) ->
+reformat_path(Path) ->  % {{{1
     Path2 = case hd(Path) of
         $/ -> Path;
         $\ -> Path;
