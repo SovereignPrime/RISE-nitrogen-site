@@ -21,7 +21,7 @@ start_link() ->
 %% Supervisor callbacks
 %% ===================================================================
 
-init([]) ->
+init([]) ->  % {{{1
     {ok, BindAddress} = application:get_env(cowboy, bind_address),
     %{ok, Port} = application:get_env(cowboy, port),
     {ok, ServerName} = application:get_env(cowboy, server_name),
@@ -53,7 +53,7 @@ init([]) ->
 
     {ok, { {one_for_one, 5, 10}, [{receiver, {receiver, start_link, []}, permanent, 2, worker, dynamic}]}}. 
 
-init_dispatch(DocRoot,StaticPaths) ->
+init_dispatch(DocRoot,StaticPaths) ->  % {{{1
     Handler = cowboy_static,
     StaticDispatches = lists:map(fun(Dir) ->
         Path = reformat_path(Dir),
