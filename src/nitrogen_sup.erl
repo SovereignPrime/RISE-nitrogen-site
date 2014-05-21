@@ -42,9 +42,6 @@ init([]) ->  % {{{1
     os:putenv("RISE_HTTP_PORT", wf:to_list(Port)),
 
     case os:type() of
-        {unix, 'linux'} ->
-            os:cmd("export RISE_HTTP_PORT"),
-            os:cmd(RootDir ++ "/bin/rise_frontend");
         {win32, _} ->
             TMP = os:getenv("TMP"),
             file:write_file(TMP ++ "\\rise.port", wf:to_list(Port));
