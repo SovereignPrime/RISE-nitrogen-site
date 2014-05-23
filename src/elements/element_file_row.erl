@@ -67,7 +67,6 @@ render_element(Record = #file_row{fid=FID,
             #tablecell{text=For, class=""},
             #tablecell{text=Linked, class=""},
             #tablecell{text=sugar:date_format(Date), class=""},
-            #tablecell{text=sugar:format_file_size(Uploaded), class=""},
             case Stat of
                 downloading ->
                     #tablecell{body=#progressbar{progress=wf:to_list(Percent),
@@ -95,7 +94,8 @@ render_element(Record = #file_row{fid=FID,
                                        style="text-align:center;",
                                        actions=#event{type=click,
                                                       postback={download, Record},
-                                                      delegate=element_attachment}}}
+                                                      delegate=element_attachment}
+                                      }}
                     ]
             end
             ]}.

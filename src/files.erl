@@ -82,8 +82,6 @@ body(Archive) ->   % {{{1
                         #tableheader{text="From/To", class=""},
                         #tableheader{text="Linked message", class=""},
                         #tableheader{text="Date", class=""},
-                        #tableheader{text="Uploaded size", class=""},
-                        %#tableheader{text="Peer", class=""},
                         #tableheader{text="Status", class=""}
                         ]},
                 lists:map(fun(#db_file{id=Id, path=Name, size=Size, type=Type,user=For, date=Date, status=Status} ) ->
