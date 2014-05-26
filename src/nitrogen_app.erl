@@ -8,7 +8,7 @@
 
 start(_StartType, _StartArgs) ->
     application:load(mnesia),
-    case os:tyoe() of
+    case os:type() of
         {win32, _} ->
             application:set_env(mnesia, dir, os:getenv("APPDATA") ++ "/RISE/data");
         {unix, linux} ->
