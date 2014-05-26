@@ -7,6 +7,15 @@
 %% ===================================================================
 
 start(_StartType, _StartArgs) ->
+    application:load(mnesia),
+    case os:tyoe() of
+        {win32, _} ->
+            application:set_env(mnesia, dir, os:getenv("APPDATA") ++ "/RISE/data");
+        {unix, linux} ->
+            application:set_env(mnesia, dir, os:getenv("HOME") ++ "/.config/RISE/data");
+        _ ->
+            application:set_env(mnesia, dir, os:getenv("HOME") ++ "/Library/RISE/data")
+    end,
     application:start(mnesia),
     application:start(mimetypes),
     application:start(crypto),
@@ -16,7 +25,6 @@ start(_StartType, _StartArgs) ->
     application:start(bitmessage),
     etorrent:start_app(),
     application:start(eminer),
-    % pat:start(),
     nitrogen_sup:start_link().
 
 stop(_State) ->
