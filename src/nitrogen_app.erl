@@ -8,14 +8,19 @@
 
 start(_StartType, _StartArgs) ->
     application:load(mnesia),
-    case os:type() of
+    application:load(etorrent_core),
+    RiseDir = case os:type() of
         {win32, _} ->
-            application:set_env(mnesia, dir, os:getenv("APPDATA") ++ "/RISE/data");
+            os:getenv("APPDATA") ++ "/RISE";
         {unix, linux} ->
-            application:set_env(mnesia, dir, os:getenv("HOME") ++ "/.config/RISE/data");
+                      os:getenv("HOME") ++ "/.config/RISE";
         _ ->
-            application:set_env(mnesia, dir, os:getenv("HOME") ++ "/Library/RISE/data")
+            os:getenv("HOME") ++ "/Library/RISE"
     end,
+    application:set_env(mnesia, dir, RiseDir ++ "/data"),
+    application:set_env(etorrent_core, download_dir, RiseDir ++ "/scratch"),
+    application:set_env(etorrent_core, dir, RiseDir ++ "/scratch"),
+    application:set_env(etorrent_core, fast_resume_file, RiseDir ++ "/fast_resume_state.dets"),
     application:start(mnesia),
     application:start(mimetypes),
     application:start(crypto),
