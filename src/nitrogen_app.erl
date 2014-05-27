@@ -18,6 +18,11 @@ start(_StartType, _StartArgs) ->
         _ ->
             os:getenv("HOME") ++ "/Library/RISE"
     end,
+    file:make_dir(RiseDir),
+    file:make_dir(RiseDir ++ "/data"),
+    file:make_dir(RiseDir ++ "/scratch"),
+    file:make_dir(RiseDir ++ "/log"),
+    file:make_dir(RiseDir ++ "/log/sasl"),
     application:set_env(mnesia, dir, RiseDir ++ "/data"),
     application:set_env(etorrent_core, download_dir, RiseDir ++ "/scratch"),
     application:set_env(etorrent_core, dir, RiseDir ++ "/scratch"),
