@@ -8,6 +8,7 @@
 
 start(_StartType, _StartArgs) ->
     application:load(mnesia),
+    application:load(lager),
     application:load(etorrent_core),
     RiseDir = case os:type() of
         {win32, _} ->
