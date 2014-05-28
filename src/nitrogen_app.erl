@@ -27,6 +27,7 @@ start(_StartType, _StartArgs) ->
     application:set_env(etorrent_core, download_dir, RiseDir ++ "/scratch"),
     application:set_env(etorrent_core, dir, RiseDir ++ "/scratch"),
     application:set_env(etorrent_core, fast_resume_file, RiseDir ++ "/fast_resume_state.dets"),
+    application:set_env(etorrent_core, dht_state, RiseDir ++ "/dht_state.dets"),
     application:set_env(sasl, sasl_error_logger, {file, RiseDir ++ "/log/sasl/sasl-error.log"}),
     application:set_env(lager, handlers,[
                                          {lager_file_backend,
