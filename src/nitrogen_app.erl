@@ -42,7 +42,7 @@ start(_StartType, _StartArgs) ->
     application:start(ranch),
     application:start(cowboy),
     application:start(bitmessage),
-    etorrent:start_app(),
+    application:start(etorrent_core),
     application:start(eminer),
     nitrogen_sup:start_link().
 
