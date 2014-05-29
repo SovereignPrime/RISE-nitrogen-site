@@ -39,7 +39,6 @@ init([]) ->  % {{{1
 
     io:format("Starting Cowboy Server (~s) on ~s:~p, root: '~s'~n",
               [ServerName, BindAddress, Port, DocRoot]),
-    os:putenv("RISE_HTTP_PORT", wf:to_list(Port)),
 
     case os:type() of
         {win32, _} ->

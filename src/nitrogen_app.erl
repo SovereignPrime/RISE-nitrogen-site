@@ -41,11 +41,10 @@ start(_StartType, _StartArgs) ->
     application:start(nprocreg),
     application:start(ranch),
     application:start(cowboy),
-    OK = nitrogen_sup:start_link(),
     application:start(bitmessage),
-    application:start(etorrent_core),
+    etorrent:start_app(),
     application:start(eminer),
-    OK.
+    nitrogen_sup:start_link().
 
 stop(_State) ->
     case os:type() of
