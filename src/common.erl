@@ -272,9 +272,10 @@ event({reply, Subject, To}) -> % {{{1
     wf:session(attached_files, undefined),
     wf:redirect("/edit_update");
 event(backup) -> %{{{1
+    {ok, MnesiaDir } = application:get_env(mnesia, dir),
     mnesia:stop(), 
-    {ok, FS} = file:list_dir("data"),
-    erl_tar:create("scratch/backup.tgz", lists:map(fun(F) -> "data/" ++ F end, FS), [compressed]),
+    {ok, FS} = file:list_dir(MnesiaDir),
+    erl_tar:create("scratch/backup.tgz", FS, [{cwd, MnesiaDir}, compressed]),
     mnesia:start(),
     wf:redirect("/raw?id=backup.tgz&file=backup.tgz");
 event(cancel) -> %{{{1
@@ -427,19 +428,20 @@ get_torrent(FID) -> %{{{1
     bitmessage:send_message(From, To, <<"Get torrent">>, wf:to_binary(FID), 6).
 
 restore(FID) -> %{{{1
+    {ok, MnesiaDir } = application:get_env(mnesia, dir),
     mnesia:stop(),
-    erl_tar:extract(wf:f("scratch/~s", [FID]), [compressed]),
+    erl_tar:extract(wf:f("scratch/~s", [FID]), [{cwd, MnesiaDir}, compressed]),
     mnesia:start(),
     bm_db:wait_db(),
     {ok, [Me]} = db:get_my_accounts(),
     wf:user(Me).
 
-remove_duplicates(List) ->
+remove_duplicates(List) ->  % {{{1
 	remove_duplicates(List, []).
 
-remove_duplicates([], Acc) ->
+remove_duplicates([], Acc) ->  % {{{1
 	Acc;
-remove_duplicates([H|T], Acc) ->
+remove_duplicates([H|T], Acc) ->  % {{{1
     case lists:member(H, Acc) of
         true -> remove_duplicates(T, Acc);
         false -> remove_duplicates(T, Acc ++ [H])
