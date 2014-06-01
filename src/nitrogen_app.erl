@@ -47,11 +47,4 @@ start(_StartType, _StartArgs) ->
     nitrogen_sup:start_link().
 
 stop(_State) ->
-    case os:type() of
-        {win32, _} ->
-            TMP = os:getenv("TMP"),
-            file:delete(TMP ++ "\\rise.port");
-        _ ->
-            file:delete("/tmp/rise.port")
-    end,
     ok.

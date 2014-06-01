@@ -275,7 +275,7 @@ event(backup) -> %{{{1
     {ok, MnesiaDir } = application:get_env(mnesia, dir),
     mnesia:stop(), 
     {ok, FS} = file:list_dir(MnesiaDir),
-    erl_tar:create("scratch/backup.tgz", FS, [{cwd, MnesiaDir}, compressed]),
+    erl_tar:create("scratch/backup.tgz", lists:map(fun(F) -> "./" ++ F end, FS), [{cwd, MnesiaDir}, compressed]),
     mnesia:start(),
     wf:redirect("/raw?id=backup.tgz&file=backup.tgz");
 event(cancel) -> %{{{1
