@@ -283,3 +283,19 @@ a.task-tree-button:hover {
 	border:solid 1px black;
 }
 
+/* Override bootstrap default */
+span.label {
+	background: #000;
+}
+
+.droppable.relationship-group {
+	line-height:28px;
+}
+
+.droppable > span.btn-group > a.dropdown-toggle {
+	display:none;
+}
+
+.droppable:hover > span.btn-group > a.dropdown-toggle {
+	display: inline-block;
+}

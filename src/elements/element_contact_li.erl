@@ -16,8 +16,8 @@ reflect() -> record_info(fields, contact_li).
 -spec render_element(#contact_li{}) -> body().
 render_element(_Record = #contact_li{uid=Id, name=Name, checked=Checked}) ->
     #draggable{tag={contact, Id}, group=contacts, clone=false, body=[
-            #listitem{class="clearfix", body=[
-                    #checkbox{id=wf:f("cb~p",[Id]), class="pull-left", style="margin-right: 15px;",  postback={check_contact, Id}, checked=Checked},
-                    #span{text=Name, actions=#event{type=click, postback={contact, Id}}}
-                    ]}
-            ]}.
+        #listitem{class="clearfix", body=[
+            #checkbox{id=wf:f("cb~p",[Id]), class="pull-left", style="margin-right: 15px;",  postback={check_contact, Id}, checked=Checked},
+            #span{text=Name, actions=#event{type=click, postback={contact, Id}}}
+        ]}
+    ]}.

@@ -18,27 +18,33 @@ reflect() -> record_info(fields, group_item).
 -spec render_element(#group_item{}) -> body().
 render_element(_Record = #group_item{gid=Id, name=Name, sub=Sub, archive=Archive}) ->
     #listitem{class="", body=[
-            #draggable{tag={group, Id, Archive}, group=groups, clone=false, body=[
-                    case Sub of
-                        [] ->
-                            render_group(Id, Name, "", Archive);
-                        _ ->
-                            [
+        #draggable{
+            tag={group, Id, Archive},
+            group=groups,
+            distance=20,
+            options=[{delay, 300}],
+            clone=false,
+            body=[
+                case Sub of
+                    [] ->
+                        render_group(Id, Name, "", Archive);
+                    _ ->
+                        [
                             render_group(Id, Name," <i class='icon-caret-down'></i>", Archive),
-                                                                #list{numbered=false,style='margin-left:15px;',
-                                      body=[
-
-                                        lists:map(fun(#db_group{id=I, name=N, subgroups=S}) ->
-                                                    #group_item{gid=I, name=N, sub=S, archive=Archive}
-                                            end, Sub)
-                                        ]}
-                                ]
-                    end
-                    ]}]}.
+                            #list{numbered=false,style='margin-left:15px;',body=[
+                                lists:map(fun(#db_group{id=I, name=N, subgroups=S}) ->
+                                    #group_item{gid=I, name=N, sub=S, archive=Archive}
+                                end, Sub)
+                            ]}
+                        ]
+                end
+        ]}
+    ]}.
 
 render_group(Id, Name, Icon, Archive) ->
-    #span{id=wf:f("group~p", [Id]), body=[
-            #droppable{ tag={subgroup, Id}, accept_groups=[groups, contacts], body=[
+    #span{id=wf:f("group~p", [Id]), style="position:relative", body=[
+        #panel{style="position:absolute; left:-12px; height:15px;top:2px;", body=Icon},
+        #droppable{ tag={subgroup, Id}, class='relationship-group', accept_groups=[groups, contacts], body=[
                     #span{id=wf:f("group_view~p", [Id]),  text=Name, actions=[
                             #event{type=click, postback={group, Id, Archive}}
                             ]},
@@ -52,7 +58,7 @@ render_group(Id, Name, Icon, Archive) ->
                             ], actions=#hide{}},
                     #span{class="btn-group",  body=[
                             #link{class="btn  btn-link dropdown-toggle",data_fields=[{toggle, "dropdown"}], body=[
-                                    "<i class='icon-tasks'></i>"
+                                    "<i class='icon-ellipsis-vertical'></i>"
                                     ], url="#", new=false},
                             #list{numbered=false, class="dropdown-menu",
                                   body=[
@@ -70,8 +76,7 @@ render_group(Id, Name, Icon, Archive) ->
                                                         ]}, new=false}
                                             ]}
                                     ]}
-                            ]},
-                    Icon
+                            ]}
                     ]}]}.
 
 event({save, Id, Archive}) ->
