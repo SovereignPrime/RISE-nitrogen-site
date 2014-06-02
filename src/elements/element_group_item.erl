@@ -44,7 +44,7 @@ render_element(_Record = #group_item{gid=Id, name=Name, sub=Sub, archive=Archive
 render_group(Id, Name, Icon, Archive) ->
     #span{id=wf:f("group~p", [Id]), style="position:relative", body=[
         #panel{style="position:absolute; left:-12px; height:15px;top:2px;", body=Icon},
-        #droppable{ tag={subgroup, Id}, class='relationship-group', accept_groups=[groups, contacts], body=[
+        #droppable{ style="position:relative;padding-right:8px", tag={subgroup, Id}, class='relationship-group', accept_groups=[groups, contacts], body=[
                     #span{id=wf:f("group_view~p", [Id]),  text=Name, actions=[
                             #event{type=click, postback={group, Id, Archive}}
                             ]},
@@ -56,7 +56,7 @@ render_group(Id, Name, Icon, Archive) ->
                                         #event{target=wf:f("group_edit~p", [Id]),  actions=#hide{}}
                                         ]}}
                             ], actions=#hide{}},
-                    #span{class="btn-group",  body=[
+                    #span{class="btn-group", style="position:absolute; right:-12px; top:0", body=[
                             #link{class="btn  btn-link dropdown-toggle",data_fields=[{toggle, "dropdown"}], body=[
                                     "<i class='icon-ellipsis-vertical'></i>"
                                     ], url="#", new=false},
