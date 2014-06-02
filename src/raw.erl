@@ -10,6 +10,7 @@ main() ->
     Id = wf:q(id),
     wf:header("Content-type", "octet/binary"),
     wf:header("Content-Disposition",wf:f("attachment; filename=~s", [File])),
-    {ok, F} = file:read_file(wf:f("scratch/~s", [Id])),
+    {ok, FD} = application:get_env(etorrent_core, dir),
+    {ok, F} = file:read_file(wf:f("~s/~s", [FD, Id])),
     F.
 

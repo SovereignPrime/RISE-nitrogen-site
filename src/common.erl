@@ -275,7 +275,8 @@ event(backup) -> %{{{1
     {ok, MnesiaDir } = application:get_env(mnesia, dir),
     mnesia:stop(), 
     {ok, FS} = file:list_dir(MnesiaDir),
-    erl_tar:create("scratch/backup.tgz", lists:map(fun(F) -> "./" ++ F end, FS), [{cwd, MnesiaDir}, compressed]),
+    {ok, FD} = application:get_env(etorrent_core, dir),
+    erl_tar:create(wf:f("~s/backup.tgz", [FD]), lists:map(fun(F) -> "./" ++ F end, FS), [{cwd, MnesiaDir}, compressed]),
     mnesia:start(),
     wf:redirect("/raw?id=backup.tgz&file=backup.tgz");
 event(cancel) -> %{{{1
