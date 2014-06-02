@@ -274,9 +274,12 @@ event({reply, Subject, To}) -> % {{{1
 event(backup) -> %{{{1
     {ok, MnesiaDir } = application:get_env(mnesia, dir),
     mnesia:stop(), 
+    {ok, CWD} = file:get_cwd(),
+    file:set_cwd(MnesiaDir),
     {ok, FS} = file:list_dir(MnesiaDir),
     {ok, FD} = application:get_env(etorrent_core, dir),
-    erl_tar:create(wf:f("~s/backup.tgz", [FD]), lists:map(fun(F) -> "./" ++ F end, FS), [{cwd, MnesiaDir}, compressed]),
+    erl_tar:create(wf:f("~s/backup.tgz", [FD]), lists:map(fun(F) -> "./" ++ F end, FS), [compressed]),
+    file:set_cwd(CWD),
     mnesia:start(),
     wf:redirect("/raw?id=backup.tgz&file=backup.tgz");
 event(cancel) -> %{{{1
@@ -432,7 +435,8 @@ get_torrent(FID) -> %{{{1
 restore(FID) -> %{{{1
     {ok, MnesiaDir } = application:get_env(mnesia, dir),
     mnesia:stop(),
-    erl_tar:extract(wf:f("scratch/~s", [FID]), [{cwd, MnesiaDir}, compressed]),
+    {ok, Scratch} = application:get_env(etorrent_core, dir),
+    erl_tar:extract(wf:f("~s/~s", [Scratch, FID]), [{cwd, MnesiaDir}, compressed]),
     mnesia:start(),
     bm_db:wait_db(),
     {ok, [Me]} = db:get_my_accounts(),
