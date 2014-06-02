@@ -134,17 +134,25 @@ render_body(Subject, Archive) -> % {{{1
      ] 
     ].
 
+replace_left() -> % {{{1
+    replace_left(left()).
+
+replace_left(Body) -> % {{{1
+    wf:wire("scrolltop_temp = objs('left').scrollTop()"),
+    wf:replace(left, Body),
+    wf:wire("objs('left').scrollTop(scrolltop_temp)").
+
 event({selected, Id, Subject, Archive}) -> % {{{1
     wf:session(current_subject, Subject),
     wf:session(current_update_id, Id),
-    wf:replace(left, left(Archive)),
+    replace_left(left(Archive)),
     wf:update(body, render_body(Subject, Archive)),
     wf:wire("$(\".update-preview\").has(\"input[type=checkbox]:checked\").addClass(\"related-message\");"),
     wf:wire("$(\".update-preview\").has(\"input[type=checkbox]:not(:checked)\").removeClass(\"related-message\");");
 
 event({archive, E, Rec}) -> % {{{1
     {ok, #message{subject=Subject}} = db:archive(#message{hash=Rec}),
-    wf:replace(left, left()),
+    replace_left(),
     wf:update(body, render_body(Subject, false));
 
 event({show_archive, true}) -> % {{{1
@@ -152,16 +160,16 @@ event({show_archive, true}) -> % {{{1
     {ok, Updates} = db:get_updates(true),
     #db_contact{id=My} = wf:user(),
     {ok, Tasks} = db:get_tasks(true),
-    wf:replace(left, render_left(Updates)),
+    replace_left(render_left(Updates)),
     wf:replace(body, body(true));
 
 event({show_archive, false}) -> % {{{1
     wf:replace(archive, #link{id=archive, body="<i class='icon-list-alt'></i> Archive", postback={show_archive, true}}),
-    wf:replace(left, left()),
+    replace_left(),
     wf:replace(body, body());
 
 event(Click) -> % {{{1
     io:format("Event ~p in ~p~n", [Click, ?MODULE]).
 
 incoming() -> % {{{1
-    wf:replace(left, left()).
+    replace_left().
