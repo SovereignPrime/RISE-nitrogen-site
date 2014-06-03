@@ -10,7 +10,7 @@
 
 main() -> common:main().
 
-title() -> "Welcome to Nitrogen".
+title() -> "Welcome to RISE".
 
 icon() -> "<i class='icon-globe icon-2x' style='margin-top:-5px;'></i>".
 

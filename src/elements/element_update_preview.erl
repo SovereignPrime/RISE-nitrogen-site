@@ -25,6 +25,7 @@ render_element(#update_preview{id=Id,
                                subject=Subject,
                                text=Data,
                                flag=Flag,
+                               status=Status,
                                archive=Archive}) when Icon==1; Icon==2; Icon==3; Icon==5 -> 
     {Text, Attachments, Timestamp} = case Icon of
                T when T==1; T==2 ->
@@ -51,7 +52,6 @@ render_element(#update_preview{id=Id,
                    end
            end,
     TD = bm_types:timestamp() - Timestamp,
-    CurrentSession = wf:session(current_subject),
     CurrentId = wf:session(current_update_id),
     Class = if Id == CurrentId ->
            "current";
@@ -59,7 +59,7 @@ render_element(#update_preview{id=Id,
            ""
     end,
 
-    #panel{class=['update-preview',Class],
+    #panel{class=['update-preview',clickable,Class],
            style="line-height:18px;margin-top:18px;",
            body=[
                  #panel{class="row-fluid no-padding",
@@ -85,13 +85,9 @@ render_element(#update_preview{id=Id,
                         body=[
                               if Flag == true ->
                                      [
-                                      if  CurrentSession == Subject ->
-                                              #panel{class='span1',
-                                                     body=["<input type='checkbox' checked>"]};
-                                          true ->
-                                              #panel{class='span1',
-                                                     body=["<input type='checkbox'>"]}
-                                      end,
+                                      #panel{class='span1', body=[
+                                        render_unread_icon(Status)
+                                      ]},
                                       #panel{class='span11 shorten-text',
                                              style="-webkit-line-clamp:2;",
                                              text=[Text]}
@@ -115,6 +111,7 @@ render_element(#update_preview{id=Id,
                                subject=Subject,
                                text=Data,
                                flag=Flag,
+                               status=Status,
                                archive=Archive}) when Icon==4 ->  
 
     #task_packet{text=Text,
@@ -125,7 +122,6 @@ render_element(#update_preview{id=Id,
                                            {"Decoding error", [], bm_types:timestamp()}
                                    end,
     TD = bm_types:timestamp() - Timestamp,
-    CurrentSession = wf:session(current_subject),
     CurrentId = wf:session(current_update_id),
     Class = if Id == CurrentId ->
            "current";
@@ -157,13 +153,9 @@ render_element(#update_preview{id=Id,
                         body=[
                               if Flag == true ->
                                      [
-                                      if  CurrentSession == Subject ->
-                                              #panel{class='span1',
-                                                     body=["<input type='checkbox' checked>"]};
-                                          true ->
-                                              #panel{class='span1',
-                                                     body=["<input type='checkbox'>"]}
-                                      end,
+                                      #panel{class='span1',style="text-align:center", body=[
+                                        render_unread_icon(Status)
+                                      ]},
                                       #panel{class='span11 shorten-text',
                                              style="-webkit-line-clamp:2; height:2.7em;",
                                              text=[Text]}
@@ -178,6 +170,11 @@ render_element(#update_preview{id=Id,
            actions=#event{type=click,
                           postback={selected, Id, Subject, Archive}}}.
 
+
+render_unread_icon(unread) ->
+    "<i class='icon-square'></i>";
+render_unread_icon(_) ->
+    "".
 
 render_icon(Icon) when Icon==1; Icon==2 ->
     "<i class='icon-envelope'></i>";

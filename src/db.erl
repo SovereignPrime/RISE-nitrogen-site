@@ -462,6 +462,10 @@ get_unread_updates() ->  % {{{1
                 mnesia:select(incoming, [{#message{status=unread, enc='$1', subject='$2', _='_'}, [{'/=', '$1', 6}, {'/=', '$2', <<"Update223322">>}], ['$_']}])
         end).
 
+get_unread_ids() -> % {{{1
+	Ms = get_unread_updates(),
+	[M#message.hash || M <- Ms].
+
 set_read(Id) ->  % {{{1
     transaction(fun() ->
                  case  mnesia:wread({ incoming, Id }) of
