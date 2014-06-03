@@ -195,8 +195,10 @@ apply_message(#message{from=BMF,
                        text=Data,
                        enc=6}, FID, ToID) ->
     [Id, Torrent] = binary:split(Data, <<";">>, [trim]),
-    Path = wf:f("~s.torrent", [Id]),
-    file:write_file("scratch/" ++ Path, Torrent);
+    {ok, FD} = application:get_env(etorrent_core, dir),
+    Path = wf:f("~s/~s.torrent", [FD, Id]),
+    
+    file:write_file(Path, Torrent);
 
 % Task tree  {{{1
 apply_message(#message{from=BMF,
