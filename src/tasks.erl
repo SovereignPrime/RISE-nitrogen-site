@@ -117,7 +117,7 @@ render_task_tree(ParentId, Archive, First) ->  % {{{1
 md5(undefined) ->  % {{{1
     md5("");
 md5(Data) ->  % {{{1
-    MD5 = crypto:hash(md5, Data),
+    MD5 = crypto:hash(sha, Data),
     lists:flatten([io_lib:format("~2.16.0b", [B]) || <<B>> <= MD5]).
 
 render_subtask(Task = #db_task{name=Name, due=Due, id=Id}, Archive) ->  % {{{1

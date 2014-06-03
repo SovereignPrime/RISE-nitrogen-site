@@ -69,21 +69,23 @@ left() ->  % {{{1
 body() ->  % {{{1
     body(false).
 body(Archive) ->   % {{{1
-    {ok, Files} = db:get_files(Archive),
+    {ok, Files0} = db:get_files(Archive),
+    Sortby = wf:state_default(sortby, #db_file.path),
+    Files = lists:sort(fun(A,B) -> element(Sortby, A) =< element(Sortby, B) end, Files0),
     #panel{id=body, body=[
         #table{ rows=[
                 #tablerow{ cells=[
-                        #tablecell{body=[
+                        #tablecell{class="", body=[
                                 %#checkbox{id=check_all,  postback=check_all, checked=false, delegate=common}
-                                ], class=""},
-                        #tableheader{text="File name", class=""},
-                        #tableheader{text="Type", class=""},
-                        #tableheader{text="Size", class=""},
-                        #tableheader{text="From/To", class=""},
-                        #tableheader{text="Linked message", class=""},
-                        #tableheader{text="Date", class=""},
-                        #tableheader{text="Status", class=""}
                         ]},
+                        sortheader("File name", #db_file.path),
+                        sortheader("Type", #db_file.type),
+                        sortheader("Size", #db_file.size),
+                        sortheader("From/To", #db_file.user),
+                        #tableheader{text="Linked Message"},
+                        sortheader("Date", #db_file.date),
+                        sortheader("Status", #db_file.status)
+                ]},
                 lists:map(fun(#db_file{id=Id, path=Name, size=Size, type=Type,user=For, date=Date, status=Status} ) ->
                             {ok, #db_contact{name=U}} = db:get_contact(For),
                             #file_row{fid=Id, name=Name, size=Size, type=Type, for=U, date=Date, status=Status}
@@ -92,14 +94,22 @@ body(Archive) ->   % {{{1
 
             ]}.    
 
+sortheader(Label, Sortby) -> % {{{1
+    #tableheader{body=[
+        #link{text=Label, postback={sort, Sortby}}
+    ]}.
+
+
 event(archive) ->  % {{{1
     Files = sets:to_list(wf:session_default(attached_files, sets:new())),
     db:archive(Files),
     wf:replace(body, body(false));
 event({show_archive, true}) ->  % {{{1
+    wf:state(archive, true),
     wf:replace(archive, #link{id=archive, body="<i class='icon-list-alt'></i> Actual", postback={show_archive, false}}),
     wf:replace(body, body(true));
 event({show_archive, false}) ->  % {{{1
+    wf:state(archive, false),
     wf:replace(archive, #link{id=archive, body="<i class='icon-list-alt'></i> Archive", postback={show_archive, true}}),
     wf:replace(body, body(false));
 event({check, FID, true}) ->  % {{{1
@@ -108,6 +118,10 @@ event({check, FID, true}) ->  % {{{1
 event({check, FID, false}) ->  % {{{1
     AF = wf:session_default(attached_files, sets:new()),
     wf:session(attached_files,  sets:add_element( FID, AF));
+event({sort, Sortby}) -> % {{{1
+    wf:state(sortby, Sortby),
+    Archive = wf:state_default(archive, false),
+    wf:replace(body, body(Archive));
 event(Click) ->  % {{{1
     io:format("~p~n",[Click]).
 

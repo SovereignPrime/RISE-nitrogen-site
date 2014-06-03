@@ -183,28 +183,36 @@ render_filters() -> %{{{1
             ]}.
 
 render_help() ->  % {{{1
-    #db_contact{address=RISEid} = wf:user(),
     #panel{ class='btn-group', body=[
         #link{class="btn dropdown-toggle btn-link", body="<i class='icon-question'></i> Help", data_fields=[{toggle, "dropdown"}], url="#", new=false},
         #list{numbered=false, class="dropdown-menu",body=[
-            #listitem{text=["Your RISE ID: ",RISEid]},
-            #listitem{text=["For support: support@sovereignprime.com"]}
+            #listitem{body=[
+				#email_link{text="For support: support@sovereignprime.com", email="support@sovereignprime.com"}
+			]}
         ]}
     ]}.
 	
 settings_menu() -> %{{{1
     #panel{ class="btn-group", body=[
-            #link{class="btn dropdown-toggle btn-link", body="<i class='icon-gear'></i> Settings", data_fields=[{toggle, "dropdown"}], url="#", new=false},
-            #list{numbered=false, class="dropdown-menu",
-                  body=[
-                        #listitem{ class="", body=[
-                                                   #link{text="Backup user", postback=backup, delegate=?MODULE}
-                                                  ]},
-                        #listitem{ class="", body=[
-                                                   #link{text="Restore user", postback=restore, delegate=?MODULE}
-                                                  ]}
-                       ]}
-            ]}.
+		#link{class="btn dropdown-toggle btn-link", body="<i class='icon-gear'></i> My Profile", data_fields=[{toggle, "dropdown"}], url="#", new=false},
+		#list{numbered=false, class="dropdown-menu",body=[
+			#listitem{ class="", body=[
+				#link{text="View My Profile (and RISE ID)", postback=my_profile, delegate=?MODULE}
+			]},
+			#listitem{ class="", body=[
+				#link{text="Backup user", postback=backup, delegate=?MODULE}
+			]},
+			#listitem{ class="", body=[
+				#link{text="Restore user", postback=restore, delegate=?MODULE}
+			]}
+		]}
+	]}.
+
+event(my_profile) -> % {{{1
+	User = #db_contact{id=Id} = wf:user(),
+	wf:session(current_contact, User),
+	wf:session(current_contact_id,Id),
+	wf:redirect("/relationships");
 
 event(add_group) -> %{{{1
     {ok, Id} = db:next_id(db_group),
