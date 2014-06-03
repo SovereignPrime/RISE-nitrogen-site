@@ -271,6 +271,7 @@ a.task-tree-button {
 	line-height:32px;
 	display: inline-block;
 	margin-bottom:10px;
+	font-size:10pt;
 }
 
 a.task-tree-button-selected {

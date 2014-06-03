@@ -56,14 +56,17 @@ left() ->  % {{{1
 
 render_task_tree_buttons(Selected) ->
     Buttons = [
-        {"Hierarchy", task_tree},
-        {"Due Today", tasks_today},
-        {"Due Soon", tasks_soon},
-        {"No Deadline", tasks_no_deadline}
+    %%  { Label, postback, width }
+        {"Tree", task_tree, 2},
+        {"Today", tasks_today, 2},
+        {"Next", tasks_soon, 2},
+        {"No Deadline", tasks_no_deadline, 3},
+        {"Complete", tasks_complete, 3}
     ],
-    lists:map(fun({Label, Postback}) ->
+    lists:map(fun({Label, Postback, Size}) ->
+        SizeClass = wf:to_atom(["span",wf:to_list(Size)]),
         #link{
-           class=[span3, 'task-tree-button', ?WF_IF(Postback==Selected, 'task-tree-button-selected', 'task-tree-button-unselected')],
+           class=[SizeClass, 'task-tree-button', ?WF_IF(Postback==Selected, 'task-tree-button-selected', 'task-tree-button-unselected')],
            text=Label,
            postback={change_mode, Postback}
         }
@@ -154,10 +157,10 @@ render_task_link(Id, Name, HasAttachments, Due) ->
             "&nbsp;",
             ?WF_IF(HasAttachments, "<i title='This task has files attached' class='icon-paperclip'></i>"),
 
-            #span{style="font-size:0.8em",body=[" (",?WF_IF(Due,["Due: ",Due],"No due date"),")"]}
+            #span{style="font-size:0.8em; white-space:nowrap",body=[" (",?WF_IF(Due,["Due: ",Due],"No due date"),")"]}
         ]},
         "&nbsp;",
-        #link{body="<i class='icon-plus'></i>", title="Add New Sub-Task", postback={add, Id}}
+        #link{body="<i class='icon-plus' style='font-size:10px'></i>", title="Add New Sub-Task", postback={add, Id}}
     ].
 
 does_task_have_attachments(Task) ->
@@ -184,7 +187,8 @@ render_task_list(Mode, Archive) ->
     Function = case Mode of
         tasks_today -> fun db:get_tasks_due_today/1;
         tasks_soon -> fun ?MODULE:get_tasks_sorted_by_date/1;
-        tasks_no_deadline -> fun db:get_tasks_no_deadline/1
+        tasks_no_deadline -> fun db:get_tasks_no_deadline/1;
+        tasks_complete -> fun db:get_tasks_completed/1
     end,
     {ok, Tasks} = Function(Archive),
     #list{
@@ -342,7 +346,6 @@ event({task_chosen, Id}) ->  % {{{1
     Right = wf:session(right_parent_id),
     {ok, [ #db_task{parent=Par, status=S} = Task ]} = db:get_task(Id),
     wf:session(current_task, Task),
-    wf:session(current_task_id, Id),
     wf:update(body, render_task(Task)),
     expand_task(Id),
     highlight_selected(Id);

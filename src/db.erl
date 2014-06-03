@@ -323,6 +323,18 @@ get_tasks_no_deadline(Archive) ->
                 mnesia:select(db_task, [{#db_task{status='$1', due="", _='_'}, [{ArchOp, '$1', 'archive'}], ['$_']}])
                 end).
 
+get_tasks_completed(_Archive) ->
+    transaction(fun() ->
+                mnesia:select(db_task, [{#db_task{status=complete,  _='_'}, [], ['$_']}])
+                end).
+
+all_child_tasks_complete(Taskid) ->
+	{ok, Tasks} = get_tasks(Taskid, false),
+	lists:all(fun(Task) ->
+		Task#db_task.status=:=complete andalso
+			all_child_tasks_complete(Task#db_task.id)
+	end, Tasks).
+
 get_orphan_tasks(Archive) ->
     {ok, Tasks} = get_tasks(Archive),
     Taskids = [T#db_task.id || T <- Tasks],
