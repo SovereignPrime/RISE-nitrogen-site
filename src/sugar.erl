@@ -29,10 +29,12 @@ sort_by_timestamp(Updates) ->
     lists:sort(fun(#message{text=A}, #message{text=B}) ->
                        F = fun(E) -> 
                                    try binary_to_term(E) of
-                                           #message_packet{time=Z} ->
+                                           #message_packet{time=Z} when is_integer(Z) ->
                                                Z;
-                                           #task_packet{time=Z} ->
-                                               Z
+                                           #task_packet{time=Z} when is_integer(Z) ->
+                                               Z;
+                                           _ ->
+                                               bm_types:timestamp()
                                     catch 
                                        error:_P ->
                                            bm_types:timestamp()
