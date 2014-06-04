@@ -94,7 +94,7 @@ render_element(Record = #file_row{fid=FID,
                                        style="text-align:center;",
                                        actions=#event{type=click,
                                                       postback={download, Record},
-                                                      delegate=element_attachment}
+                                                      delegate=?MODULE}
                                       }}
                     ]
             end
