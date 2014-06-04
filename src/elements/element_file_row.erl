@@ -104,4 +104,6 @@ event({download, #file_row{id=I, fid=Id} = Attachment}) -> % {{{1
     {ok, [ File ]} = db:get_files([Id]),
     common:get_torrent(Id), 
     db:save(File#db_file{status=downloading}),
-    wf:replace(I, Attachment#file_row{status=downloading}).
+    wf:replace(I, Attachment#file_row{status=downloading});
+event(E) ->
+    error_logger:warning_msg("Wrong event ~p in ~p", [E, ?MODULE]).
