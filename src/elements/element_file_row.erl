@@ -7,7 +7,8 @@
 -include("torrent.hrl").
 -export([
     reflect/0,
-    render_element/1
+    render_element/1,
+    event/1
 ]).
 
 %% Move the following record definition to records.hrl:
