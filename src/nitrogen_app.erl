@@ -38,6 +38,7 @@ start(_StartType, _StartArgs) ->
                                            {RiseDir ++ "/log/debug.log", debug, 10485760, "$D0", 5}
                                           ]}
                                         ]),
+    application:set_env(lager, crash_log, RiseDir ++ "/log/crash.log"),
     application:start(mnesia),
     application:start(mimetypes),
     application:start(crypto),
