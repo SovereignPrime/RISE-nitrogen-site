@@ -116,7 +116,7 @@ render_element(#update_preview{id=Id,
 
     #task_packet{text=Text,
                  time=Timestamp} = try
-                                       binary_to_term(Data)
+                                       receiver:extract_task(Data)
                                    catch
                                        error:badarg ->
                                            {"Decoding error", [], bm_types:timestamp()}

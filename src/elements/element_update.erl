@@ -166,14 +166,14 @@ decode_enc(3, Data, Collapsed) ->  % {{{1
             {"Decoding error", [], bm_types:timestamp()}
     end;
 decode_enc(4, Data, _Collapsed=true) ->  % {{{1
-    #task_packet{text=T, attachments=A, time=TS} = binary_to_term(Data),
+    #task_packet{text=T, attachments=A, time=TS} = receiver:extract_task(Data),
     {wf:html_encode(T, whites), A, TS};
 decode_enc(4, Data, _Collapsed=false) ->  % {{{1
     #task_packet{text=T,
                  due=Due, 
                  involved=Involved,
                  attachments=A,
-                 time=TS} = binary_to_term(Data),
+                 time=TS} = receiver:extract_task(Data),
 
     Body = #panel{ class="", body= [ 
         #panel{ class="", 

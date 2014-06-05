@@ -32,18 +32,38 @@ install(Pid)->  % {{{1
     end.
 
 update() ->  % {{{1
+	LastUpdate = 2,
+	[update(N) || N <- lists:seq(1,LastUpdate)].
+
+update(1) -> % {{{1
     Fields = mnesia:table_info(db_task_tree, attributes),
+	Transform = fun({db_task_tree, T, P, V}) ->
+		#db_task_tree{task=T,
+				   	  parent=P,
+				      time=bm_types:timestamp(),
+				      visible=V}
+	end,
     case Fields of
         [task, parent,visible] ->
-            mnesia:transform_table(db_task_tree, fun({db_task_tree, T, P, V}) ->
-                                                         #db_task_tree{task=T,
-                                                                       parent=P,
-                                                                       time=bm_types:timestamp(),
-                                                                       visible=V}
-                                                 end, record_info(fields, db_task_tree));
+            mnesia:transform_table(db_task_tree, Transform, record_info(fields, db_task_tree));
         _ ->
             ok
-    end.
+    end;
+
+update(2) -> % {{{1
+	Fields = mnesia:table_info(db_task, attributes),
+	io:format("Fields: ~p",[Fields]),
+	Transform = fun({db_task, ID, Due, Name, Text, Parent, Status}) ->
+		io:format("Transforming Record~n"),
+		#db_task{id=ID, due=Due, name=Name, text=Text, parent=Parent, status=Status, changes=[]}
+	end,
+	case Fields of
+		[id, due, name, text, parent, status] ->
+			mnesia:transform_table(db_task, Transform, record_info(fields, db_task));
+		_ ->
+			ok
+	end.
+
 
 %%%
 %% Get new id fot Type
@@ -530,12 +550,20 @@ coalesce_best_contact([User | Rest], Archive) when (User#db_contact.status==arch
 get_involved(Id) ->  % {{{1
     transaction(fun() ->
                 R = mnesia:match_object(#db_contact_roles{type=db_task, tid=Id, _='_'}),
-                L = lists:map(fun(#db_contact_roles{role=Role, contact=Contact}) ->
-                            [ #db_contact{name=Name, email=Email}=C ] = mnesia:read(db_contact, Contact),
+                lists:map(fun(#db_contact_roles{role=Role, contact=Contact}) ->
+                            [ #db_contact{name=Name, email=_Email}=C ] = mnesia:read(db_contact, Contact),
                             {Name, Role, C}
-                    end, R)
+				end, R)
         end).
 
+get_involved_full(Id) -> % {{{1
+    transaction(fun() ->
+                R = mnesia:match_object(#db_contact_roles{type=db_task, tid=Id, _='_'}),
+                lists:map(fun(ContactRole = #db_contact_roles{contact=Contact}) ->
+                            [ #db_contact{name=Name}] = mnesia:read(db_contact, Contact),
+                            {ContactRole, Name}
+				end, R)
+        end).
 
 get_users(N) ->  % {{{1
     transaction(fun() ->

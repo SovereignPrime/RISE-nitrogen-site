@@ -10,7 +10,8 @@
 -export([  % {{{1
     start_link/0,
     register_receiver/1,
-    received/1
+    received/1,
+	extract_task/1
     ]). % }}}
 
 %% gen_server callbacks
@@ -284,7 +285,8 @@ apply_message(#message{from=BMF,
                  status=Status, 
                  time=Time,
                  attachments=AttachmentsE, 
-                 involved=Involved} = binary_to_term(Data),
+				 changes=Changes,
+                 involved=Involved} = extract_task(Data),
 
     Task = case db:get_task(Parent) of
                {ok, []} ->
@@ -294,14 +296,16 @@ apply_message(#message{from=BMF,
                             name=wf:to_list(Subject),
                             text=Text,
                             parent=P,
-                            status=Status};
+                            status=Status,
+						    changes=Changes};
                {ok, _} ->
                    #db_task{id=UID,
                             due=Due,
                             name=wf:to_list(Subject),
                             text=Text,
                             parent=Parent,
-                            status=Status}
+                            status=Status,
+						    changes=Changes}
            end,
     db:save(Task),
     db:clear_roles(db_task, UID),
@@ -342,6 +346,16 @@ get_or_request_contact(BM, From, To) ->  % {{{1
             #db_contact{id=CID} = Contact,
             CID
     end.
+
+extract_task(Data) when is_binary(Data) ->
+	extract_task(binary_to_term(Data));
+extract_task(Task) ->
+	case Task of
+		T = #task_packet{} -> T;
+		{task_packet, Id, Name, Due, Text, Parent, Status, Involved, Attachments, Time} ->
+			#task_packet{id=Id, name=Name, due=Due, text=Text, parent=Parent, status=Status,
+						 involved=Involved, attachments=Attachments, time=Time, changes=[]}
+	end.
 
 decode_attachments(A, BMF, BMT) ->  % {{{1
     AT = binary:split(A, <<";">>, [global, trim]),

@@ -396,7 +396,7 @@ send_messages(#db_update{subject=Subject, text=Text, from=FID, to=Contacts, date
     lists:foreach(fun(To) ->
                       bitmessage:send_message(From, wf:to_binary(To), wf:to_binary(Subject), MSG, 3)
                   end, Contacts);
-send_messages(#db_task{id=UID, name=Subject, text=Text, due=Date, parent=Parent, status=Status} = U) -> %{{{1
+send_messages(#db_task{id=UID, name=Subject, text=Text, due=Date, parent=Parent, status=Status, changes=Changes } = U) -> %{{{1
     {ok, Involved} = db:get_involved(UID),
     Contacts = [#role_packet{address=C, role=R} || {_, R, #db_contact{bitmessage=C}}  <- Involved],
     #db_contact{address=From} = wf:user(),
@@ -405,7 +405,7 @@ send_messages(#db_task{id=UID, name=Subject, text=Text, due=Date, parent=Parent,
                 bitmessage:send_message(From,
                                         wf:to_binary(To), 
                                         wf:to_binary(Subject), 
-                                        term_to_binary(#task_packet{id=UID, name=Subject, due=Date, text=Text, parent=Parent, status=Status, attachments=Attachments, involved=Contacts, time=bm_types:timestamp()}),
+                                        term_to_binary(#task_packet{id=UID, name=Subject, due=Date, text=Text, parent=Parent, status=Status, attachments=Attachments, involved=Contacts, time=bm_types:timestamp(), changes=Changes}),
                                         4);
             (_) ->
                 ok

@@ -31,7 +31,8 @@ sort_by_timestamp(Updates) ->
                                    try binary_to_term(E) of
                                            #message_packet{time=Z} ->
                                                Z;
-                                           #task_packet{time=Z} ->
+									       Task when element(1, Task) == task_packet ->
+											   #task_packet{time=Z} = receiver:extract_task(Task),
                                                Z
                                     catch 
                                        error:_P ->

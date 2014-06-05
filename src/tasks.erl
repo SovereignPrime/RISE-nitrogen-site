@@ -123,26 +123,30 @@ md5(Data) ->  % {{{1
     MD5 = crypto:hash(sha, Data),
     lists:flatten([io_lib:format("~2.16.0b", [B]) || <<B>> <= MD5]).
 
-render_subtask(Task = #db_task{name=Name, due=Due, id=Id}, Archive) ->  % {{{1
-    ThisTaskIdMd5 = md5(Id),
-    {Expander, Subtree} = case render_task_tree(Id, Archive, false) of
-        [] -> {#span{style="width:10px;display:inline-block"}, []};
-        Tree -> 
-            Sublistid = Tree#list.id,
-            {#expander{target=Sublistid, data_fields=[{parent,ThisTaskIdMd5}], start=open},Tree}
-    end,
-    
-    #listitem{body=[
-        #droppable{tag={subtask, Id}, accept_groups=[task_groups], body=[
-            #draggable{tag={task, Id}, group=task_groups, clone=false, distance=20, options=[{delay, 300}], body=[
-                #panel{style="display:block", body=[
-                    Expander,
-                    render_task_link(Task)
-               ]}
+render_subtask(Task = #db_task{name=Name, status=Status, due=Due, id=Id}, Archive) ->  % {{{1
+    case Status==complete andalso db:are_all_child_tasks_complete(Id) of
+        true -> [];
+        false ->
+            ThisTaskIdMd5 = md5(Id),
+            {Expander, Subtree} = case render_task_tree(Id, Archive, false) of
+                [] -> {#span{style="width:10px;display:inline-block"}, []};
+                Tree -> 
+                    Sublistid = Tree#list.id,
+                    {#expander{target=Sublistid, data_fields=[{parent,ThisTaskIdMd5}], start=open},Tree}
+            end,
+            
+            #listitem{body=[
+                #droppable{tag={subtask, Id}, accept_groups=[task_groups], body=[
+                    #draggable{tag={task, Id}, group=task_groups, clone=false, distance=20, options=[{delay, 300}], body=[
+                        #panel{style="display:block", body=[
+                            Expander,
+                            render_task_link(Task)
+                       ]}
+                    ]}
+                ]},
+                Subtree
             ]}
-        ]},
-        Subtree
-    ]}.
+    end.
 
 render_task_link(Task = #db_task{name=Name, due=Due, id=Id}) ->
     HasAttachments = does_task_have_attachments(Task),
@@ -155,12 +159,19 @@ render_task_link(Id, Name, HasAttachments, Due) ->
             #image{style="width:16px; height:16px", image="/img/tasks.svg"},
             #span{text=Name},
             "&nbsp;",
-            ?WF_IF(HasAttachments, "<i title='This task has files attached' class='icon-paperclip'></i>"),
+            ?WF_IF(HasAttachments, "<i title='This task has files attached' class='icon-paperclip'></i>")
 
-            #span{style="font-size:0.8em; white-space:nowrap",body=[" (",?WF_IF(Due,["Due: ",Due],"No due date"),")"]}
         ]},
-        "&nbsp;",
-        #link{body="<i class='icon-plus' style='font-size:10px'></i>", title="Add New Sub-Task", postback={add, Id}}
+        #span{style="font-size:0.8em; white-space:nowrap",body=[
+            " (",
+            ?WF_IF(Due,["Due: ",Due],"No due date"),
+            ")",
+            "&nbsp;",
+            #link{body="<i class='icon-plus' style='font-size:10px'></i>",
+                  title="Add New Sub-Task",
+                  postback={add, Id}
+            }
+        ]}
     ].
 
 does_task_have_attachments(Task) ->
@@ -215,6 +226,8 @@ render_flat_task(Task, Archive) ->
 body() ->  % {{{1
     case wf:session(current_task) of
         #db_task{id=Id, name=Name, due=Due, text=Text, parent=Parent, status=Status}=Task -> 
+            wf:state(current_task, Task),
+            wf:state(current_task_id, Id),
             highlight_selected(Id),
             #panel{id=body, class="span8", body=
                    [
@@ -225,94 +238,202 @@ body() ->  % {{{1
     end.
 
 
-render_task(#db_task{id=Id, name=Name, due=Due, text=Text, parent=Parent, status=Status}=Task) ->  % {{{1
-    {ok, Involved} = db:get_involved(Id),
-    {My, InvolvedN} = case lists:partition(fun({_, _, #db_contact{my=true}}) -> true; (_) -> false end, Involved) of 
-        {[{_,M, _}|_], I} ->  
-            {M, I};
-        {[], I} ->  
-            {no, I}
-    end, 
+render_task(#db_task{id=Id, name=Name, due=Due, text=Text, parent=Parent, status=Status, changes=Changes}=Task) ->  % {{{1
     TextF = re:replace(Text, "\r*\n", "<br>", [{return, list}, noteol, global]), 
     {ok, Updates} = db:get_task_history(Id),
-    Dropdown = #dropdown{options=db:task_status_list(), value=Status},
+    AllComplete = db:are_all_child_tasks_complete(Id),
+    IncompleteWarning = ?WF_IF(Status==complete andalso not(AllComplete), "<i class='icon-exclamation-sign' title=\"Task marked complete but has incomplete subtasks\"></i>"),
+    StatusDropdown = #dropdown{options=db:task_status_list(), value=Status},
     [
+        render_top_buttons(),
         #panel{ class="row-fluid", body=[
-                #panel{ class="span11", body=[
-                        #h1{text=Name},
-                        #panel{class="row-fluid", 
-                               style="min-height:15px;",
-                               body=[
-                                     #panel{ class="span1", 
-                                             style="min-height:15px;",
-                                             body="Status: "},
-
-                                     #inplace{id=status, 
-                                              style="min-height:15px;",
-                                              class="span10",
-                                              tag=status,
-                                              text=wf:to_list(Status),
-                                              view=#span{},
-                                              edit=Dropdown
-                                             }
-                                    ]},
-                        #panel{class="row-fluid", 
-                               body=[
-                                     #panel{ class="span1", body="Due: "},
-                                     #panel{ class="span3", body=Due}
-                                     ]},
-                        #br{},
-                        "My role - ", My, #br{},
-                        lists:map(fun({Name, Role, _}) ->
-                                    [ Name, " - ", Role, #br{}]
-                            end, InvolvedN) 
-                        ]},
-                #panel{ class="span1", body=[
-                        #panel{class="btn btn-link", body = #link{body=[
-                                    "<i class='icon-edit icon-large'></i><br>"      
-                                    ], postback={edit, Id}, new=false}
-                              },
-                        #br{},
-                        #panel{class="btn-group", body=[
-                                #link{ class="btn btn-link droppdown-toggle", body=[
-                                        "<i class='icon-reorder icon-large'></i>"
-                                        ], new=false, data_fields=[{toggle, "dropdown"}]},
-                                #list{numbered=false, class="dropdown-menu pull-right",
-                                      body=[
-                                        #listitem{body=[
-                                                #link{body=[
-                                                        "<i class='icon-list-alt icon-large'></i> Archive"
-                                                        ], postback={archive, Task}, new=false}]}
-                                        ]}
-
-                                ]}
-                        ]}
+            #panel{ class="span11", body=[
+                #h1{body=#inplace_textbox{id=name, tag=name, text=Name}},
+                #panel{class="row-fluid", style="min-height:15px;", body=[
+                     #panel{ class="span2", style="min-height:15px;", body=["Status: ", IncompleteWarning]},
+                     #inplace{id=status, 
+                              style="min-height:15px;",
+                              class="span6",
+                              tag=status,
+                              text=wf:to_list(Status),
+                              view=#span{},
+                              edit=StatusDropdown
+                     }
                 ]},
+                #panel{class="row-fluid", body=[
+                    #panel{ class="span2", body="Due: "},
+                    #inplace{id=due,
+                             style="min-height:15px;",
+                             class="span6",
+                             tag=due,
+                             text=Due,
+                             view=#span{},
+                             start_mode=view,
+                             edit=#datepicker_textbox{text=Due}
+                    }
+                ]},
+                render_roles(Id)
+            ]},
+            #panel{ class="span1", body=render_side_buttons(Id, Task)}
+        ]},
         #br{},
         #panel{ class="row-fluid", body=[
-                #panel{ class="span12", body=TextF}
-                ]},
-        case db:get_attachments(Task) of 
-            {ok, []} ->
-                [];
-            {ok, [], undefined} ->
-                [];
-            {ok, Attachments} ->
-                [
-                    #panel{class="row-fluid", body=[
-                            #panel{class="span6", body="<i class='icon-file-alt'></i> Attachment"},
-                            #panel{class="span2 offset4", body="<i class='icon-download-alt'></i> Download all"}
-                            ]},
-                    lists:map(fun(#db_file{path=Path, size=Size, date=Date, id=Id, status=State}) ->
-                                #attachment{fid=Id, filename=Path, size=Size, time=Date, status=State}
-                        end, Attachments)
-                    ]
-        end,
-        #br{},
-        [
-         #update_element{collapse=true, from=From, to=To, text=Text, uid=Id, subject=Subject, enc=Enc, status=Status} || #message{hash=Id, enc=Enc, to=To, subject=Subject, from=From, text=Text, status=Status} <- sugar:sort_by_timestamp(Updates)
-        ] 
+            #panel{ class="span10", body=[
+                #inplace_textarea{id=text,
+                                  class="span12",
+                                  tag=text,
+                                  html_encode=whites,
+                                  text=Text}
+            ]}
+        ]},
+        render_attachments(Task),
+        render_updates(Updates),
+        render_task_changes(Changes)
     ]. 
+
+get_involved_full() -> % {{{1
+    Id = wf:state(current_task_id),
+    get_involved_full(Id).
+
+get_involved_full(Id) -> % {{{1
+    case wf:state(involved) of
+        undefined ->
+            {ok, Inv} = db:get_involved_full(Id),
+            wf:state(involved, Inv),
+            {ok, Inv};
+        Inv ->
+            {ok, Inv}
+    end.
+
+
+render_roles(Id) -> % {{{1
+    {ok, Involved} = get_involved_full(Id),
+    [render_role_row(Inv) || Inv <- Involved].
+
+render_role_row({ContactRole, Name}) -> % {{{1
+    Rowid = wf:temp_id(),
+    Edit = #event{type=click, postback={edit_role, Rowid, {ContactRole, Name}}},
+    #panel{id=Rowid, class="row-fluid role-row", actions=Edit, body=[
+        #panel{class="span2", body=[ContactRole#db_contact_roles.role,":"]},
+        #panel{class="span6", body=Name}
+    ]}.
+
+render_role_edit_row(OriginalData = {ContactRole, Name}) -> % {{{1
+    Rowid = wf:temp_id(),
+    RoleFieldid = wf:temp_id(),
+    NameFieldid = wf:temp_id(),
+    #panel{id=Rowid, class="row-fluid", body=[
+        #panel{class=span2, body=[
+            element_involved:role_dropdown(RoleFieldid, ContactRole#db_contact_roles.role)
+        ]},
+        #panel{class=span4, body=[
+            #textbox_autocomplete{id=NameFieldid, tag=contact, class="span11", text=Name, delegate=common}
+        ]},
+        #panel{class=span2, body=[
+            #button{class="btn btn-link", body="<i class='icon-ok'></i>", postback={save_role, Rowid, OriginalData, RoleFieldid, NameFieldid}},
+            #button{class="btn btn-link", body="<i class='icon-remove'></i>", postback={cancel_role, Rowid, OriginalData}}
+        ]}
+    ]}.
+
+
+render_top_buttons() -> % {{{1
+    #panel{ id=top_buttons, class="row-fluid", style="display:none", body=[
+        #panel{ class="span4 offset4", body=[
+            #panel{class="row-fluid", style="border:1px solid black", body=[
+                #button{ class="btn btn-link span6", body="<i class='icon-remove'></i> Discard", postback=discard},
+                #button{ class="btn btn-link span6", body="<i class='icon-ok'></i> Save", postback=save}
+            ]}
+        ]}
+    ]}.
+
+render_side_buttons(Id, Task) -> % {{{1
+    [
+        #panel{class="btn btn-link", body = [
+            #link{postback={edit, Id}, new=false, body=[
+                "<i class='icon-edit icon-large'></i><br>"      
+            ]}
+        ]},
+        #br{},
+        #panel{class="btn-group", body=[
+            #link{new=false,
+                  data_fields=[{toggle, "dropdown"}],
+                  class="btn btn-link droppdown-toggle",
+                  body="<i class='icon-reorder icon-large'></i>"
+            },
+            #list{numbered=false, class="dropdown-menu pull-right", body=[
+                #listitem{body=[
+                    #link{postback={archive, Task}, new=false, body=[
+                        "<i class='icon-list-alt icon-large'></i> Archive"
+                    ]}
+                ]}
+            ]}
+        ]}
+    ].
+
+render_attachments(Task) ->
+    case db:get_attachments(Task) of 
+        {ok, []} ->
+            [];
+        {ok, [], undefined} ->
+            [];
+        {ok, Attachments} ->
+            [
+                #br{},
+                #panel{class="row-fluid", body=[
+                    #panel{class="span6", body="<i class='icon-file-alt'></i> Attachment"},
+                    #panel{class="span2 offset4", body="<i class='icon-download-alt'></i> Download all"}
+                ]},
+                lists:map(fun(#db_file{path=Path, size=Size, date=Date, id=Id, status=State}) ->
+                    #attachment{fid=Id, filename=Path, size=Size, time=Date, status=State}
+                end, Attachments)
+            ]
+    end.
+
+render_updates([]) -> [];
+render_updates(Updates) ->
+    [
+        #br{},
+        #panel{class="row-fluid", body=[
+            #panel{class="span6", body="<i class='icon-envelope'></i> Related Messages"}
+        ]},
+        [#update_element{
+           collapse=true,
+           from=From,
+           to=To,
+           text=Text,
+           uid=Id,
+           subject=Subject,
+           enc=Enc,
+           status=Status} || #message{hash=Id,
+                                      enc=Enc,
+                                      to=To,
+                                      subject=Subject,
+                                      from=From,
+                                      text=Text,
+                                      status=Status} <- sugar:sort_by_timestamp(Updates)]
+    ].
+
+render_task_changes([]) -> [];
+render_task_changes(Changes) ->
+    [
+        #br{},
+        #panel{class="row-fluid", body=[
+            #panel{class="span12", body="<i class='icon-time'></i> Change History"}
+        ]},
+        [render_task_change(C) || C <- Changes]
+    ].
+
+render_task_change(C) ->
+    Contact = case db:get_contact_by_address(C#db_task_change.address) of
+                  none -> "Anonymous";
+                  {ok, Co} -> Co#db_contact.name
+              end,
+    {Date, _} = C#db_task_change.datetime,
+    #panel{class="row-fluid", body=[
+        #panel{class="span2", text=sugar:date_format(Date)},
+        #panel{class="span2", text=Contact},
+        #panel{class="span6", text=["changed ",C#db_task_change.field," to ",C#db_task_change.new_value]}
+    ]}.
 
 highlight_selected() ->
     case wf:session(current_task) of
@@ -324,6 +445,8 @@ highlight_selected(Id) ->
     Md5 = md5(Id),
     wf:defer(#remove_class{target=".wfid_tasks a", class=current}),
     wf:defer(#add_class{target=".wfid_tasks a[data-link=\"" ++ Md5 ++ "\"]", class=current}).
+
+check_changing_task_status() -> ok.
 
 event({change_mode, Mode}) ->
     wf:session(task_tree_mode, Mode),
@@ -342,10 +465,13 @@ event({show_archive, false}) ->  % {{{1
     wf:replace(archive, #link{id=archive, body="<i class='icon-list-alt'></i> Archive", postback={show_archive, true}}),
     wf:update(subgroups, []);
 event({task_chosen, Id}) ->  % {{{1
-    wf:session(current_task_id, Id),
     Right = wf:session(right_parent_id),
     {ok, [ #db_task{parent=Par, status=S} = Task ]} = db:get_task(Id),
+    wf:session(current_task_id, Id),
     wf:session(current_task, Task),
+    wf:state(involved, undefined),
+    wf:state(current_task, Task),
+    wf:state(current_task_id, Id),
     wf:update(body, render_task(Task)),
     expand_task(Id),
     highlight_selected(Id);
@@ -356,6 +482,19 @@ event({edit, Id}) ->  % {{{1
     Task = wf:session(current_task),
     wf:session(current_task, Task),
     wf:redirect("/edit_task");
+event(save) -> % {{{1
+    Task = wf:state(current_task),
+    Involved = wf:state(involved),
+    Task2 = calculate_changes(Task),
+    db:save(Task2),
+    [db:save(ContactRole) || {ContactRole, _} <- Involved],
+    %common:send_messages(Task2),
+    update_task_tree(),
+    event({task_chosen, Task#db_task.id});
+event(discard) -> % {{{1
+    Task = wf:state(current_task),
+    event({task_chosen, Task#db_task.id});
+    
 event(hide) ->  % {{{1
     wf:wire(body, [#remove_class{class="span8"}, #add_class{class="span12"}]),
     wf:replace(hide_show, #button{id=hide_show, class="btn btn-link", body="Show task list <i class='icon-angle-right'></i>", 
@@ -370,24 +509,145 @@ event(show) ->  % {{{1
                                         #hide{trigger=hide_show,target=tasks}, 
                                         #event{postback=hide}
                                         ]}});
+event({edit_role, Rowid, OriginalData}) -> % {{{1
+    wf:replace(Rowid, render_role_edit_row(OriginalData));
+
+event({cancel_role, Rowid, OriginalData}) -> % {{{1
+    wf:replace(Rowid, render_role_row(OriginalData));
+
+event({save_role, Rowid, {OrigContactRole, _OrigName} = OriginalData, RoleFieldid, NameFieldid}) -> % {{{1
+    Name = wf:q(NameFieldid),
+    Role = wf:q(RoleFieldid),
+    {ok, #db_contact{id=Contactid}} = db:get_contacts_by_name(Name),
+    ContactRole = OrigContactRole#db_contact_roles{contact=Contactid, role=Role},
+    {ok, CurrentInvolved} = get_involved_full(),
+    %% In-place editing of the lists contents since there isn't a lists:replace function
+    NewInvolved = lists:map(fun(Data) ->
+                                    case Data of
+                                        OriginalData -> {ContactRole, Name};
+                                        _ -> Data
+                                    end
+                            end, CurrentInvolved),
+    wf:state(involved, NewInvolved),
+    maybe_show_top_buttons(),
+    wf:replace(Rowid, render_role_row({ContactRole, Name}));
+
 event(Click) ->  % {{{1
     io:format("~p~n",[Click]).
 
-inplace_event(status, Val) ->  % {{{1
-    Task = wf:session(current_task),
-    NTask = Task#db_task{status=db:sanitize_task_status(Val)},
-    wf:session(current_task, NTask),
-    db:save(NTask),
-    Val;
 
+-define(UPDATE_CURRENT(Field, Val),
+            update_current_task(fun(T) ->
+                T#db_task{Field=Val}
+            end)
+       ).
+
+inplace_textarea_event(text, Val) -> % {{{1
+    ?UPDATE_CURRENT(text, wf:to_binary(Val)),
+    Val.
+
+inplace_textbox_event(name, Val) -> % {{{1
+    ?UPDATE_CURRENT(name, wf:to_binary(Val)),
+    Val.
+
+inplace_event(status, Val) ->  % {{{1
+    NewStatus = db:sanitize_task_status(Val),
+    Taskid = wf:state(current_task_id),
+    Acceptable = NewStatus=/=complete orelse db:are_all_child_tasks_complete(Taskid),
+    case Acceptable of
+        true ->
+            ?UPDATE_CURRENT(status, db:sanitize_task_status(Val)),
+            Val;
+        false -> 
+            Task = wf:state(current_task),
+            Status = Task#db_task.status,
+            wf:wire(#alert{text="Sorry, you can not mark a task as complete until all its subtasks are also complete"}),
+            Status
+    end;
+
+inplace_event(due, Val) -> % {{{1
+    ?UPDATE_CURRENT(due, Val),
+    Val;
 inplace_event(_, V) ->  % {{{1
     V.
+
+update_current_task(Fun) -> % {{{1
+    Task = wf:state(current_task),
+    NewTask = Fun(Task),
+    maybe_show_top_buttons(NewTask),
+    wf:state(current_task, NewTask).
+
+maybe_show_top_buttons() -> % {{{1
+    CurrentTask = wf:state(current_task),
+    maybe_show_top_buttons(CurrentTask).
+
+maybe_show_top_buttons(CurrentTask) -> % {{{1
+    Taskid = wf:state(current_task_id),
+    {ok, [TaskFromDB]} = db:get_task(Taskid),
+    
+    {ok, InvolvedFromDB} = db:get_involved_full(Taskid),
+    NewInvolved = wf:state(involved),
+   
+
+    TaskChanged = TaskFromDB =/= CurrentTask,
+    InvolvedChanged = InvolvedFromDB =/= NewInvolved,
+
+    case TaskChanged orelse InvolvedChanged of
+        true -> wf:wire(top_buttons, #show{});
+        false -> wf:wire(top_buttons, #hide{})
+    end.
+
+calculate_changes(Task) -> % {{{1
+    Id = Task#db_task.id,
+    {ok, [TaskFromDB]} = db:get_task(Id),
+    Fields = record_info(fields, db_task),
+    #db_contact{address=Me} = wf:user(),
+    OriginalChanges = Task#db_task.changes,
+    NewChanges = lists:foldl(fun ({_, changes}, Acc) -> Acc;
+                                 ({_, id}, Acc) -> Acc;
+                                 ({Fieldnum, Field}, Acc) ->
+        case element(Fieldnum+1, Task) =:= element(Fieldnum+1, TaskFromDB) of
+            true -> Acc;
+            false ->
+                FieldValue = element(Fieldnum+1, Task),
+                NewValue = string:strip(lists:flatten(io_lib:format("~100s",[FieldValue]))),
+                IsShortened = wf:to_list(NewValue) =/= wf:to_list(FieldValue),
+                NewValue2 = ?WF_IF(IsShortened, NewValue ++ "...", NewValue),
+                Change = #db_task_change{
+                            address=Me,
+                            datetime=calendar:local_time(),
+                            field=Field,
+                            new_value=NewValue2
+                         },
+                [Change | Acc]
+        end
+    end, OriginalChanges, lists:zip(lists:seq(1, length(Fields)),Fields)),
+
+    Involved = wf:state(involved),
+    {ok, OriginalInvolved} = db:get_involved_full(Id),
+
+    NewChanges2 = case Involved =:= OriginalInvolved of
+                      true -> NewChanges;
+                      false -> [#db_task_change{
+                                   address=Me,
+                                   datetime=calendar:local_time(), 
+                                   field=involved,
+                                   new_value=summarize_involved()
+                                } | NewChanges]
+                  end,
+    Task#db_task{changes=NewChanges2}.
+
+summarize_involved() -> % {{{1
+    Involved = wf:state(involved),
+    InvolvedStrings = [(wf:to_list(CR#db_contact_roles.role) ++ ": " ++ wf:to_list(Name)) 
+                       || {CR, Name} <- Involved],
+    string:join(InvolvedStrings, ", ").
+
 
 drop_event({task, Id}, { subtask, PId }) when PId =:= Id->  % {{{1
     ok;
 
 drop_event({task, Id}, { subtask, PId }) when PId /= Id->  % {{{1
-    error_logger:info_msg("Taskid: ~p~nSubtask: ~p",[Id, PId]),
     case db:get_task(PId) of
         {ok, [#db_task{parent=Id}]} ->
             ok;
