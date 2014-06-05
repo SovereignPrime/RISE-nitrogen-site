@@ -33,19 +33,7 @@ render_element(#attachment{id=I,
                    actions=#event{type=click,
                                   postback={download, Attachment}, delegate=?MODULE}}
             ]};
-render_element(#attachment{id=I, fid=Id,
-                           filename=File,
-                           size=Size,
-                           time=Time,
-                           status=Status}) when Status==uploaded; Status==downloaded -> % {{{1
-    {Y, M, D} = Time,
-    DateS = io_lib:format("~p-~p-~p", [Y, M, D]),
-    #panel{id=I, class="row-fluid", body=[
-            #panel{class="span6", body=File},
-            #panel{class="span2", body=sugar:format_file_size(Size)},
-            #panel{class="span3", body=DateS},
-            #panel{class="span1", body="<i class='icon icon-save'></i>", style="text-align:center;", actions=#event{type=click, postback={save, File, Id}, delegate=?MODULE}}
-            ]};
+
 render_element(Record=#attachment{id=I,
                                   fid=Id,
                                   filename=File,
@@ -78,6 +66,20 @@ render_element(Record=#attachment{id=I,
                     end
                     ], style="text-align:center;"}
 
+            ]};
+
+render_element(#attachment{id=I, fid=Id,
+                           filename=File,
+                           size=Size,
+                           time=Time,
+                           status=Status}) -> % {{{1
+    {Y, M, D} = Time,
+    DateS = io_lib:format("~p-~p-~p", [Y, M, D]),
+    #panel{id=I, class="row-fluid", body=[
+            #panel{class="span6", body=File},
+            #panel{class="span2", body=sugar:format_file_size(Size)},
+            #panel{class="span3", body=DateS},
+            #panel{class="span1", body="<i class='icon icon-save'></i>", style="text-align:center;", actions=#event{type=click, postback={save, File, Id}, delegate=?MODULE}}
             ]}.
 
 event({save, File, Id}) -> % {{{1

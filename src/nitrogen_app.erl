@@ -8,6 +8,7 @@
 
 start(_StartType, _StartArgs) ->
     application:load(mnesia),
+    application:load(sasl),
     application:load(lager),
     application:load(etorrent_core),
     RiseDir = case os:type() of
@@ -27,6 +28,7 @@ start(_StartType, _StartArgs) ->
     application:set_env(etorrent_core, download_dir, RiseDir ++ "/scratch"),
     application:set_env(etorrent_core, dir, RiseDir ++ "/scratch"),
     application:set_env(etorrent_core, fast_resume_file, RiseDir ++ "/fast_resume_state.dets"),
+    application:set_env(etorrent_core, logger_dir, RiseDir ++ "/log"),
     application:set_env(simple_bridge, scratch_dir, RiseDir ++ "/scratch"),
     application:set_env(sasl, sasl_error_logger, {file, RiseDir ++ "/log/sasl/sasl-error.log"}),
     application:set_env(lager, handlers,[
@@ -36,6 +38,7 @@ start(_StartType, _StartArgs) ->
                                            {RiseDir ++ "/log/debug.log", debug, 10485760, "$D0", 5}
                                           ]}
                                         ]),
+    application:set_env(lager, crash_log, RiseDir ++ "/log/crash.log"),
     application:start(mnesia),
     application:start(mimetypes),
     application:start(crypto),

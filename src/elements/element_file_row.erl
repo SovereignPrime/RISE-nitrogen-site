@@ -7,7 +7,8 @@
 -include("torrent.hrl").
 -export([
     reflect/0,
-    render_element/1
+    render_element/1,
+    event/1
 ]).
 
 %% Move the following record definition to records.hrl:
@@ -94,7 +95,7 @@ render_element(Record = #file_row{fid=FID,
                                        style="text-align:center;",
                                        actions=#event{type=click,
                                                       postback={download, Record},
-                                                      delegate=element_attachment}
+                                                      delegate=?MODULE}
                                       }}
                     ]
             end
@@ -104,4 +105,6 @@ event({download, #file_row{id=I, fid=Id} = Attachment}) -> % {{{1
     {ok, [ File ]} = db:get_files([Id]),
     common:get_torrent(Id), 
     db:save(File#db_file{status=downloading}),
-    wf:replace(I, Attachment#file_row{status=downloading}).
+    wf:replace(I, Attachment#file_row{status=downloading});
+event(E) ->
+    error_logger:warning_msg("Wrong event ~p in ~p", [E, ?MODULE]).

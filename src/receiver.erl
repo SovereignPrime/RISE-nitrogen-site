@@ -41,7 +41,7 @@ start_link() ->  % {{{1
 register_receiver(Pid) ->  % {{{1
     gen_server:cast(?MODULE, {register, Pid}).
 
-received(Hash) ->
+received(Hash) ->  % {{{1
     gen_server:cast(?MODULE, {msg, Hash}).
 %%%===================================================================
 %%% gen_server callbacks
@@ -186,7 +186,8 @@ apply_message(#message{from=BMF,
                        subject= <<"Get torrent">>,
                        text=Data,
                        enc=6}, FID, ToID) ->
-    {ok,  F } = file:read_file("scratch/" ++ wf:to_list(Data) ++ ".torrent"),
+    {ok, FD} = application:get_env(etorrent_core, dir),
+    {ok,  F } = file:read_file(FD ++ "/" ++ wf:to_list(Data) ++ ".torrent"),
     bitmessage:send_message(BMT, BMF, <<"torrent">>, <<Data/bytes, ";", F/bytes>>, 6);
 
 % Torrent {{{1
@@ -196,8 +197,10 @@ apply_message(#message{from=BMF,
                        text=Data,
                        enc=6}, FID, ToID) ->
     [Id, Torrent] = binary:split(Data, <<";">>, [trim]),
-    Path = wf:f("~s.torrent", [Id]),
-    file:write_file("scratch/" ++ Path, Torrent);
+    {ok, FD} = application:get_env(etorrent_core, dir),
+    Path = wf:f("~s/~s.torrent", [FD, Id]),
+    
+    file:write_file(Path, Torrent);
 
 % Task tree  {{{1
 apply_message(#message{from=BMF,

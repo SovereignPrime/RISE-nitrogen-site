@@ -29,11 +29,19 @@ sort_by_timestamp(Updates) ->
     lists:sort(fun(#message{text=A}, #message{text=B}) ->
                        F = fun(E) -> 
                                    try binary_to_term(E) of
-                                           #message_packet{time=Z} ->
+                                           #message_packet{time=Z} when is_integer(Z) ->
                                                Z;
+										   %% This accommodates protocol
+										   %% oddness if packet is encoded with
+										   %% older version of RISE
 									       Task when element(1, Task) == task_packet ->
-											   #task_packet{time=Z} = receiver:extract_task(Task),
-                                               Z
+										       #task_packet{time=Z} = receiver:extract_task(Task),
+                                               case is_integer(Z) of
+												   true -> Z;
+												   false -> bm_types:timestamp()
+												end;
+                                           _ ->
+                                               bm_types:timestamp()
                                     catch 
                                        error:_P ->
                                            bm_types:timestamp()
