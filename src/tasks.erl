@@ -308,7 +308,14 @@ get_involved_full(Id) -> % {{{1
 
 render_roles(Id) -> % {{{1
     {ok, Involved} = get_involved_full(Id),
-    [render_role_row(Inv) || Inv <- Involved].
+    [
+        #panel{id=role_wrapper, class="row-fluid", body=[
+            [render_role_row(Inv) || Inv <- Involved]
+        ]},
+        #panel{class="row-fluid", body=[
+            #button{class="btn btn-link", body="<i class='icon-plus'></i> Add Role", postback=add_role}
+        ]}
+    ].
 
 render_role_row({ContactRole, Name}) -> % {{{1
     Rowid = wf:temp_id(),
@@ -448,6 +455,17 @@ highlight_selected(Id) ->
 
 check_changing_task_status() -> ok.
 
+save_contact_role(CR = #db_contact_roles{id=new}) -> % {{{1
+    Taskid = wf:state(current_task_id),
+    {ok, Id} = db:next_id(db_contact_roles),
+    NewCR = CR#db_contact_roles{
+              id=Id,
+              type=db_task,
+              tid=Taskid},
+    save_contact_role(NewCR);
+save_contact_role(CR) -> % {{{1
+    db:save(CR).
+
 event({change_mode, Mode}) ->
     wf:session(task_tree_mode, Mode),
     update_task_tree();
@@ -487,7 +505,7 @@ event(save) -> % {{{1
     Involved = wf:state(involved),
     Task2 = calculate_changes(Task),
     db:save(Task2),
-    [db:save(ContactRole) || {ContactRole, _} <- Involved],
+    [save_contact_role(ContactRole) || {ContactRole, _} <- Involved],
     %common:send_messages(Task2),
     update_task_tree(),
     event({task_chosen, Task#db_task.id});
@@ -509,11 +527,20 @@ event(show) ->  % {{{1
                                         #hide{trigger=hide_show,target=tasks}, 
                                         #event{postback=hide}
                                         ]}});
+
+event(add_role) -> % {{{1
+    wf:insert_bottom(role_wrapper, render_role_edit_row({#db_contact_roles{id=new}, ""}));
+
 event({edit_role, Rowid, OriginalData}) -> % {{{1
     wf:replace(Rowid, render_role_edit_row(OriginalData));
 
 event({cancel_role, Rowid, OriginalData}) -> % {{{1
-    wf:replace(Rowid, render_role_row(OriginalData));
+    case OriginalData of
+        {#db_contact_roles{id=new}, _} ->
+            wf:remove(Rowid);
+        _ ->
+            wf:replace(Rowid, render_role_row(OriginalData))
+    end;
 
 event({save_role, Rowid, {OrigContactRole, _OrigName} = OriginalData, RoleFieldid, NameFieldid}) -> % {{{1
     Name = wf:q(NameFieldid),
@@ -522,12 +549,17 @@ event({save_role, Rowid, {OrigContactRole, _OrigName} = OriginalData, RoleFieldi
     ContactRole = OrigContactRole#db_contact_roles{contact=Contactid, role=Role},
     {ok, CurrentInvolved} = get_involved_full(),
     %% In-place editing of the lists contents since there isn't a lists:replace function
-    NewInvolved = lists:map(fun(Data) ->
-                                    case Data of
-                                        OriginalData -> {ContactRole, Name};
-                                        _ -> Data
-                                    end
-                            end, CurrentInvolved),
+    NewInvolved = case lists:member(OriginalData, CurrentInvolved) of
+        true ->
+            lists:map(fun(Data) ->
+                        case Data of
+                                OriginalData -> {ContactRole, Name};
+                                _ -> Data
+                        end
+            end, CurrentInvolved);
+        false ->
+            CurrentInvolved ++ [{ContactRole, Name}]
+    end,
     wf:state(involved, NewInvolved),
     maybe_show_top_buttons(),
     wf:replace(Rowid, render_role_row({ContactRole, Name}));
