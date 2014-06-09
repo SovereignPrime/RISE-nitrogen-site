@@ -22,14 +22,13 @@ install(Pid)->  % {{{1
     ?V(mnesia:create_table(db_attachment, [{disc_copies, [node()]}, {attributes, record_info(fields, db_attachment)}, {type, ordered_set}, {index, [file]}])),
     ?V(mnesia:create_table(db_task_tree, [{disc_copies, [node()]}, {attributes, record_info(fields, db_task_tree)}, {type, bag}, {index, [parent, visible]}])),
     timer:sleep(60000),
-    bitmessage:generate_address(self()),
+    bitmessage:generate_address(fun(A) -> account(Pid, A) end),
     bitmessage:subscribe_broadcast(<<"BM-2DBJhZLvR1rwhD6rgzseiedKASEoNVCA6Q">>),
-    bitmessage:subscribe_broadcast(<<"BM-2D7M95NtnPRHskBgj1Ru6XvgmCw6WXuuSY">>),
-    receive
-        {address, Address} ->
+    bitmessage:subscribe_broadcast(<<"BM-2D7M95NtnPRHskBgj1Ru6XvgmCw6WXuuSY">>).
+
+account(Pid, {address, Address}) ->  % {{{1
             {ok, U} = db:create_account("", true, Address),
-            Pid ! accept
-    end.
+            Pid ! accepted.
 
 update() ->  % {{{1
     Fields = mnesia:table_info(db_task_tree, attributes),
