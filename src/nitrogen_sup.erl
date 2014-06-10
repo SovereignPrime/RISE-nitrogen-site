@@ -10,6 +10,20 @@
 %% Helper macro for declaring children of supervisor
 -define(CHILD(I, Type), {I, {I, start_link, []}, permanent, 5000, Type, [I]}).
 
+-ifdef(debug).
+-define(LISTEN, {ok, Port} = application:get_env(cowboy, port),
+        io:format("Debug version~n"),
+        {ok, _} = cowboy:start_http(http, 100, [{port, Port}], [
+                                                                {env, [{dispatch, Dispatch}]},
+                                                                {max_keepalive, 50}
+                                                               ])).
+-else.
+-define(LISTEN, {ok, _} = cowboy:start_http(http, 100, [{port, 0}], [
+                                                                     {env, [{dispatch, Dispatch}]},
+                                                                     {max_keepalive, 50}
+                                                                    ]),
+        Port = ranch:get_port(http)).
+-endif.
 %% ===================================================================
 %% API functions
 %% ===================================================================
@@ -30,20 +44,7 @@ init([]) ->  % {{{1
 
 
     Dispatch =  init_dispatch(DocRoot, StaticPaths),
--ifdef(debug).
-    {ok, Port} = application:get_env(cowboy, port),
-    {ok, _} = cowboy:start_http(http, 100, [{port, Port}], [
-                {env, [{dispatch, Dispatch}]},
-                {max_keepalive, 50}
-                ]),
--else.
-    {ok, _} = cowboy:start_http(http, 100, [{port, 0}], [
-                {env, [{dispatch, Dispatch}]},
-                {max_keepalive, 50}
-                ]),
-
-    Port = ranch:get_port(http),
--endif.
+    ?LISTEN,
 
     io:format("Starting Cowboy Server (~s) on ~s:~p, root: '~s'~n",
               [ServerName, BindAddress, Port, DocRoot]),
