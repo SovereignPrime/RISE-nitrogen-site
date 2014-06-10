@@ -23,7 +23,6 @@ start_link() ->
 
 init([]) ->  % {{{1
     {ok, BindAddress} = application:get_env(cowboy, bind_address),
-    %{ok, Port} = application:get_env(cowboy, port),
     {ok, ServerName} = application:get_env(cowboy, server_name),
     DocRoot = os:getenv("DOC_ROOT"),
     RootDir = os:getenv("ROOTDIR"),
@@ -31,11 +30,20 @@ init([]) ->  % {{{1
 
 
     Dispatch =  init_dispatch(DocRoot, StaticPaths),
+-ifdef(debug).
+    {ok, Port} = application:get_env(cowboy, port),
+    {ok, _} = cowboy:start_http(http, 100, [{port, Port}], [
+                {env, [{dispatch, Dispatch}]},
+                {max_keepalive, 50}
+                ]),
+-else.
     {ok, _} = cowboy:start_http(http, 100, [{port, 0}], [
                 {env, [{dispatch, Dispatch}]},
                 {max_keepalive, 50}
                 ]),
+
     Port = ranch:get_port(http),
+-endif.
 
     io:format("Starting Cowboy Server (~s) on ~s:~p, root: '~s'~n",
               [ServerName, BindAddress, Port, DocRoot]),
