@@ -5,7 +5,9 @@
 -include("records.hrl").
 -export([
     reflect/0,
-    render_element/1
+    render_element/1,
+    role_dropdown/2,
+    role_dropdown/3
 ]).
 
 -spec reflect() -> [atom()].
@@ -24,18 +26,32 @@ render_element(_Record = #involved{person = Person, role = Text}) ->
             #panel{class="dropdown span3 input-append", 
                    style="border: #000 1px solid",
                    body=[
-                    #dropdown{id=responsible, style="border-right: #fff 0 solid;", value=Text, class="span11", data_fields=[
-                            {provide, "typeahead"}, 
-                            {source, Users}
-                            ],
-                              options=[
-                            #option{text="Responsible", value="responsible"},
-                            #option{text="Consulted", value="consulted"},
-                            #option{text="Informed", value="informed"},
-                            #option{text="Accountable", value="accountable"}
-                            ]},
-                    #span{ class="add-on",
-                           style="background-color: #fff; border: #fff 0px solid;",
-                           body="<i class='icon-caret-down'></i>"}
-                    ]}
-            ]}.
+                    role_dropdown(responsible, Text, Users)
+            ]}
+    ]}.
+
+role_dropdown(Id, Value) -> % {{{1
+    role_dropdown(Id, Value, []).
+
+role_dropdown(Id, Value, Users) -> % {{{1
+    [
+        #dropdown{
+            id=Id,
+            style="border-right: #fff 0 solid;",
+            value=Value,
+            class="span11",
+            data_fields=[
+                {provide, "typeahead"}, 
+                {source, Users}
+            ],
+            options=[
+                #option{text="Responsible", value="responsible"},
+                #option{text="Consulted", value="consulted"},
+                #option{text="Informed", value="informed"},
+                #option{text="Accountable", value="accountable"}
+            ]
+        },
+        #span{ class="add-on",
+               style="background-color: #fff; border: #fff 0px solid;",
+               body="<i class='icon-caret-down'></i>"}
+    ].

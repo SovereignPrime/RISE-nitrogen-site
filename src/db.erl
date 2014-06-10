@@ -31,18 +31,38 @@ account(Pid, {address, Address}) ->  % {{{1
             Pid ! accepted.
 
 update() ->  % {{{1
+	LastUpdate = 2,
+	[update(N) || N <- lists:seq(1,LastUpdate)].
+
+update(1) -> % {{{1
     Fields = mnesia:table_info(db_task_tree, attributes),
+	Transform = fun({db_task_tree, T, P, V}) ->
+		#db_task_tree{task=T,
+				   	  parent=P,
+				      time=bm_types:timestamp(),
+				      visible=V}
+	end,
     case Fields of
         [task, parent,visible] ->
-            mnesia:transform_table(db_task_tree, fun({db_task_tree, T, P, V}) ->
-                                                         #db_task_tree{task=T,
-                                                                       parent=P,
-                                                                       time=bm_types:timestamp(),
-                                                                       visible=V}
-                                                 end, record_info(fields, db_task_tree));
+            mnesia:transform_table(db_task_tree, Transform, record_info(fields, db_task_tree));
         _ ->
             ok
-    end.
+    end;
+
+update(2) -> % {{{1
+	Fields = mnesia:table_info(db_task, attributes),
+	io:format("Fields: ~p",[Fields]),
+	Transform = fun({db_task, ID, Due, Name, Text, Parent, Status}) ->
+		io:format("Transforming Record~n"),
+		#db_task{id=ID, due=Due, name=Name, text=Text, parent=Parent, status=Status, changes=[]}
+	end,
+	case Fields of
+		[id, due, name, text, parent, status] ->
+			mnesia:transform_table(db_task, Transform, record_info(fields, db_task));
+		_ ->
+			ok
+	end.
+
 
 %%%
 %% Get new id fot Type
@@ -64,7 +84,6 @@ save(Contact) ->  % {{{1
     transaction(fun() ->
                 mnesia:write(Contact)
         end).
-
 
 save_uniq(Contact) ->  % {{{1
     transaction(fun() ->
@@ -322,6 +341,18 @@ get_tasks_no_deadline(Archive) ->
                 mnesia:select(db_task, [{#db_task{status='$1', due="", _='_'}, [{ArchOp, '$1', 'archive'}], ['$_']}])
                 end).
 
+get_tasks_completed(_Archive) ->
+    transaction(fun() ->
+                mnesia:select(db_task, [{#db_task{status=complete,  _='_'}, [], ['$_']}])
+                end).
+
+are_all_child_tasks_complete(Taskid) ->
+	{ok, Tasks} = get_tasks(Taskid, false),
+	lists:all(fun(Task) ->
+		Task#db_task.status=:=complete andalso
+			are_all_child_tasks_complete(Task#db_task.id)
+	end, Tasks).
+
 get_orphan_tasks(Archive) ->
     {ok, Tasks} = get_tasks(Archive),
     Taskids = [T#db_task.id || T <- Tasks],
@@ -461,6 +492,10 @@ get_unread_updates() ->  % {{{1
                 mnesia:select(incoming, [{#message{status=unread, enc='$1', subject='$2', _='_'}, [{'/=', '$1', 6}, {'/=', '$2', <<"Update223322">>}], ['$_']}])
         end).
 
+get_unread_ids() -> % {{{1
+	Ms = get_unread_updates(),
+	[M#message.hash || M <- Ms].
+
 set_read(Id) ->  % {{{1
     transaction(fun() ->
                  case  mnesia:wread({ incoming, Id }) of
@@ -514,12 +549,20 @@ coalesce_best_contact([User | Rest], Archive) when (User#db_contact.status==arch
 get_involved(Id) ->  % {{{1
     transaction(fun() ->
                 R = mnesia:match_object(#db_contact_roles{type=db_task, tid=Id, _='_'}),
-                L = lists:map(fun(#db_contact_roles{role=Role, contact=Contact}) ->
-                            [ #db_contact{name=Name, email=Email}=C ] = mnesia:read(db_contact, Contact),
+                lists:map(fun(#db_contact_roles{role=Role, contact=Contact}) ->
+                            [ #db_contact{name=Name, email=_Email}=C ] = mnesia:read(db_contact, Contact),
                             {Name, Role, C}
-                    end, R)
+				end, R)
         end).
 
+get_involved_full(Id) -> % {{{1
+    transaction(fun() ->
+                R = mnesia:match_object(#db_contact_roles{type=db_task, tid=Id, _='_'}),
+                lists:map(fun(ContactRole = #db_contact_roles{contact=Contact}) ->
+                            [ #db_contact{name=Name}] = mnesia:read(db_contact, Contact),
+                            {ContactRole, Name}
+				end, R)
+        end).
 
 get_users(N) ->  % {{{1
     transaction(fun() ->

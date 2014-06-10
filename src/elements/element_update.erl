@@ -33,7 +33,7 @@ render_element(#update_element{id=Id,
     ToName = name_from_address(To),
     {Text, Attachments, Timestamp} = decode_enc(Enc, Data, true),
     TD = bm_types:timestamp() - Timestamp,
-        #panel{id=Id, class="row-fluid", body=[
+        #panel{id=Id, class="row-fluid clickable", body=[
 
                 #panel{class="span4",
                        body=[
@@ -156,40 +156,45 @@ format_status(Status) when Status==wait_pubkey; Status==encrypt_message ->  % {{
 format_status(Status) ->  % {{{1
     " " ++ wf:to_list(Status).
 
-decode_enc(3, Data, _) ->  % {{{1
+decode_enc(3, Data, Collapsed) ->  % {{{1
     try
         #message_packet{text=T, attachments=A, time=TS} = binary_to_term(Data),
-        {T, A, TS}
+        Text = ?WF_IF(Collapsed, wf:html_encode(T), wf:html_encode(T, whites)),
+        {Text, A, TS}
     catch
         error:badarg ->
             {"Decoding error", [], bm_types:timestamp()}
     end;
-decode_enc(4, Data, true) ->  % {{{1
-    #task_packet{text=T, attachments=A, time=TS} = binary_to_term(Data),
-    {T, A, TS};
-decode_enc(4, Data, false) ->  % {{{1
+decode_enc(4, Data, _Collapsed=true) ->  % {{{1
+    #task_packet{text=T, attachments=A, time=TS} = receiver:extract_task(Data),
+    {wf:html_encode(T, whites), A, TS};
+decode_enc(4, Data, _Collapsed=false) ->  % {{{1
     #task_packet{text=T,
                  due=Due, 
                  involved=Involved,
                  attachments=A,
-                 time=TS} = binary_to_term(Data),
+                 time=TS} = receiver:extract_task(Data),
 
-    {#panel{ class="", body= [ 
-                              #panel{ class="", 
-                                      body=["Due: ", Due]},
-                              lists:map(fun(#role_packet{address=Address,
-                                                         role=R}) ->
-                                                {ok, #db_contact{name=Name}} = db:get_contact_by_address(Address),
-                                                #panel{ class="",
-                                                        body=[Name ++ " - " ++ R]}
-                                        end, Involved),
-                              T]}, A, TS};
+    Body = #panel{ class="", body= [ 
+        #panel{ class="", 
+              body=["Due: ", Due]
+        },
+        lists:map(fun(#role_packet{address=Address, role=R}) ->
+            {ok, #db_contact{name=Name}} = db:get_contact_by_address(Address),
+                #panel{ class="",
+                        body=[Name ++ " - " ++ R]}
+        end, Involved),
+        #br{},
+        wf:html_encode(T, whites)
+    ]},
+    {Body, A, TS};
 decode_enc(5, Data, true) ->  % {{{1
     #update_packet{text=T, time=TS} = binary_to_term(Data),
-    {T, [], TS};
+    {wf:html_encode(T), [], TS};
 decode_enc(5, Data, false) ->  % {{{1
     #update_packet{text=T, attachments=A, time=TS} = binary_to_term(Data),
-    TB = [T, #panel{id=command, 
+    EncodedT = wf:html_encode(T, whites),
+    TB = [EncodedT, #panel{id=command, 
                     body=[
                           #link{class="btn btn-link",
                                 body="<i class='icon-ok'></i> Start-update",
@@ -197,6 +202,6 @@ decode_enc(5, Data, false) ->  % {{{1
                                 new=false,
                                 delegate=common}
                          ]}],
-    {T, [], TS};
+    {EncodedT, [], TS};
 decode_enc(_, Data, _) ->  % {{{1
-    {wf:to_list( Data ), [], bm_types:timestamp()}.
+    {wf:html_encode(wf:to_list( Data ), whites), [], bm_types:timestamp()}.

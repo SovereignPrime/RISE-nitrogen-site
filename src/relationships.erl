@@ -39,39 +39,46 @@ left() ->  % {{{1
     wf:session(current_group_id, all),
     {ok, Users} = db:get_contacts_by_group(all),
     [
-        #panel{id=group_list, class="span2", body=[render_group_list(false)]},
-                      #panel{id=user_list, class="span2", body=render_contact_list(Users)}
-                      ].
+     #panel{id=group_list, class="span2", body=[render_group_list(false)]},
+     #panel{id=user_list, class="span2", body=render_contact_list(Users)}
+    ].
 
 render_group_list(Archive) ->  % {{{1
     {ok, Groups} = db:get_groups(),
     G = wf:session(current_group_id),
     wf:wire(wf:f("group~p", [G]), #add_class{class="active"}),
-    [ #list{numbered=false,
-          body=
-            #group_item{gid=my, name="My accounts", sub=[], archive=Archive }
-         },
-    #list{numbered=false,
-          body=
-          #group_item{gid=all, name="All contacts", sub=Groups, archive=Archive }
-         } ].
+    [
+     #list{numbered=false,
+           body=
+           #group_item{gid=my, name="My accounts", sub=[], archive=Archive }
+     },
+     #list{numbered=false,
+           body=
+           #group_item{gid=all, name="All contacts", sub=Groups, archive=Archive }
+     }
+    ].
 
 render_contact_list(Users) ->  % {{{1
     [
-                #list{numbered=false,
-                    body=
-                        lists:map(fun(#db_contact{id=Id, name=Name}) ->
-                                    #contact_li{uid=Id, name=Name, checked=false}
-                            end, Users)
-                        }
+     #list{
+        numbered=false,
+        body=lists:map(fun(#db_contact{id=Id, name=Name}) ->
+                #contact_li{uid=Id, name=Name, checked=false}
+             end, Users)
+     }
 
-        ].
+    ].
         
 
 body() ->   % {{{1
-    {ok, Contact} = db:get_contact(wf:session(current_contact_id)),
-    wf:session(current_contact, Contact),
-    #panel{id=contact_panel, class="span8 scrollable", body=contact_render(Contact)}.
+    Body = case wf:session(current_contact_id) of
+        undefined -> #h2{text="No Contact Currently Selected"};
+        Contactid ->
+            {ok, Contact} = db:get_contact(Contactid),
+            wf:session(current_contact, Contact),
+            contact_render(Contact)
+    end,
+    #panel{id=contact_panel, class="span8 scrollable", body=Body}.
 
 contact_render(#db_contact{id=Id,  % {{{1
                            name=Name,
@@ -100,10 +107,12 @@ contact_render(#db_contact{id=Id,  % {{{1
             ]},
             #panel{class=span2, body="Show All", style="text-align:right"}
         ]},
-        lists:map(fun(#db_task{parent=Responsible, name=Name, due=Due}) ->
+        lists:map(fun(Task = #db_task{parent=Responsible, name=Name, due=Due}) ->
             #panel{class='row-fluid', style="min-height:20px; height:20px;", body=[
                 #panel{class=span2, style="min-height:20px; height:20px;", text=Responsible},
-                #panel{class=span8, style="min-height:20px; height:20px;", text=Name},
+                #panel{class=span8, style="min-height:20px; height:20px;", body=[
+                    #link{text=Name, postback={to_task, Task}}
+                ]},
                 #panel{class=span2, style="min-height:20px; height:20px; text-align:right", text=Due}
             ]}
         end, Tasks),
@@ -206,6 +215,11 @@ event({write_to, Addr}) ->  % {{{1
     {ok, Id} = db:next_id(db_update),
     wf:session(current_update, #db_update{id=Id, to=[Addr]}),
     wf:redirect("/edit_update");
+
+event({to_task, Task = #db_task{id=Id}}) -> % {{{1
+    wf:session(current_task_id, Id),
+    wf:session(current_task, Task),
+    wf:redirect("/tasks");
 
 event(Click) ->  % {{{1
     io:format("~p~n",[Click]).

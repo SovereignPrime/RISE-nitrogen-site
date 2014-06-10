@@ -1,4 +1,4 @@
--record(task_packet, {id, name, due, text, parent, status, involved, attachments, time}).
+-record(task_packet, {id, name, due, text, parent, status, involved, attachments, time, changes=[]}).
 -record(role_packet, {address, role}).
 -record(task_tree_packet, {task, parent, time}).
 -record(message_packet, {subject, text, involved, attachments, time}).

@@ -41,6 +41,7 @@ unread() -> % {{{1
     {ok, New} = db:get_unread_updates(),
     wf:session(unread, length(New)),
     #span{id=count, class='label label-inverse',text=wf:f("~p new", [length(New)])}.
+
 connection_status() -> % {{{1
     case ets:info(addrs, size) of
          C when C==0; C==undefined ->
@@ -182,28 +183,36 @@ render_filters() -> %{{{1
             ]}.
 
 render_help() ->  % {{{1
-    #db_contact{address=RISEid} = wf:user(),
     #panel{ class='btn-group', body=[
         #link{class="btn dropdown-toggle btn-link", body="<i class='icon-question'></i> Help", data_fields=[{toggle, "dropdown"}], url="#", new=false},
         #list{numbered=false, class="dropdown-menu",body=[
-            #listitem{text=["Your RISE ID: ",RISEid]},
-            #listitem{text=["For support: support@sovereignprime.com"]}
+            #listitem{body=[
+				#email_link{text="For support: support@sovereignprime.com", email="support@sovereignprime.com"}
+			]}
         ]}
     ]}.
 	
 settings_menu() -> %{{{1
     #panel{ class="btn-group", body=[
-            #link{class="btn dropdown-toggle btn-link", body="<i class='icon-gear'></i> Settings", data_fields=[{toggle, "dropdown"}], url="#", new=false},
-            #list{numbered=false, class="dropdown-menu",
-                  body=[
-                        #listitem{ class="", body=[
-                                                   #link{text="Backup user", postback=backup, delegate=?MODULE}
-                                                  ]},
-                        #listitem{ class="", body=[
-                                                   #link{text="Restore user", postback=restore, delegate=?MODULE}
-                                                  ]}
-                       ]}
-            ]}.
+		#link{class="btn dropdown-toggle btn-link", body="<i class='icon-gear'></i> My Profile", data_fields=[{toggle, "dropdown"}], url="#", new=false},
+		#list{numbered=false, class="dropdown-menu",body=[
+			#listitem{ class="", body=[
+				#link{text="View My Profile (and RISE ID)", postback=my_profile, delegate=?MODULE}
+			]},
+			#listitem{ class="", body=[
+				#link{text="Backup user", postback=backup, delegate=?MODULE}
+			]},
+			#listitem{ class="", body=[
+				#link{text="Restore user", postback=restore, delegate=?MODULE}
+			]}
+		]}
+	]}.
+
+event(my_profile) -> % {{{1
+	User = #db_contact{id=Id} = wf:user(),
+	wf:session(current_contact, User),
+	wf:session(current_contact_id,Id),
+	wf:redirect("/relationships");
 
 event(add_group) -> %{{{1
     {ok, Id} = db:next_id(db_group),
@@ -387,7 +396,7 @@ send_messages(#db_update{subject=Subject, text=Text, from=FID, to=Contacts, date
     lists:foreach(fun(To) ->
                       bitmessage:send_message(From, wf:to_binary(To), wf:to_binary(Subject), MSG, 3)
                   end, Contacts);
-send_messages(#db_task{id=UID, name=Subject, text=Text, due=Date, parent=Parent, status=Status} = U) -> %{{{1
+send_messages(#db_task{id=UID, name=Subject, text=Text, due=Date, parent=Parent, status=Status, changes=Changes } = U) -> %{{{1
     {ok, Involved} = db:get_involved(UID),
     Contacts = [#role_packet{address=C, role=R} || {_, R, #db_contact{bitmessage=C}}  <- Involved],
     #db_contact{address=From} = wf:user(),
@@ -396,7 +405,7 @@ send_messages(#db_task{id=UID, name=Subject, text=Text, due=Date, parent=Parent,
                 bitmessage:send_message(From,
                                         wf:to_binary(To), 
                                         wf:to_binary(Subject), 
-                                        term_to_binary(#task_packet{id=UID, name=Subject, due=Date, text=Text, parent=Parent, status=Status, attachments=Attachments, involved=Contacts, time=bm_types:timestamp()}),
+                                        term_to_binary(#task_packet{id=UID, name=Subject, due=Date, text=Text, parent=Parent, status=Status, attachments=Attachments, involved=Contacts, time=bm_types:timestamp(), changes=Changes}),
                                         4);
             (_) ->
                 ok

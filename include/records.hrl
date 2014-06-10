@@ -10,6 +10,7 @@
                          subject,
                          flag=true,
                          text,
+						 status,
                          archive
     }).
 -record(update_element, {?ELEMENT_BASE(element_update),
