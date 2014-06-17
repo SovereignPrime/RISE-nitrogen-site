@@ -251,6 +251,7 @@ apply_message(#message{from=BMF,
                        subject=Subject,
                        text=Data,
                        enc=3}, FID, ToID)  ->
+    error_logger:info_msg("Message from ~s received subject ~s~n", [BMF, Subject]),
     {ok, Id} = db:next_id(db_update),
 
     #message_packet{text=Text,

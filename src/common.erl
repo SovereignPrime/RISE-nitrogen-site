@@ -394,7 +394,8 @@ send_messages(#db_update{subject=Subject, text=Text, from=FID, to=Contacts, date
     {ok, Attachments} = db:get_attachments(U),
     MSG = term_to_binary(#message_packet{subject=Subject, text=Text, involved=[From | Contacts], attachments=Attachments, time=bm_types:timestamp()}),
     lists:foreach(fun(To) ->
-                      bitmessage:send_message(From, wf:to_binary(To), wf:to_binary(Subject), MSG, 3)
+                          error_logger:info_msg("Message to ~s sent subject ~s~n", [To, Subject]),
+                          bitmessage:send_message(From, wf:to_binary(To), wf:to_binary(Subject), MSG, 3)
                   end, Contacts);
 send_messages(#db_task{id=UID, name=Subject, text=Text, due=Date, parent=Parent, status=Status, changes=Changes } = U) -> %{{{1
     {ok, Involved} = db:get_involved(UID),
