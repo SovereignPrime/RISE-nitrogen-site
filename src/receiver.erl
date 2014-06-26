@@ -351,9 +351,9 @@ get_or_request_contact(BM, From, To) ->  % {{{1
             CID
     end.
 
-extract_task(Data) when is_binary(Data) ->
+extract_task(Data) when is_binary(Data) ->  % {{{1
 	extract_task(binary_to_term(Data));
-extract_task(Task) ->
+extract_task(Task) ->  % {{{1
 	case Task of
 		T = #task_packet{} -> T;
 		{task_packet, Id, Name, Due, Text, Parent, Status, Involved, Attachments, Time} ->

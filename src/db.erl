@@ -912,7 +912,7 @@ get_subgroup(G) ->  % {{{1
                     Gr#db_group{subgroups=get_subgroup(N)}
         end, Groups).
              
-search_parent_rec(Id, PId) ->
+search_parent_rec(Id, PId) ->  % {{{1
     case mnesia:read(db_task, PId) of
         [] ->
             case mnesia:read(db_task_tree, PId) of
@@ -926,5 +926,5 @@ search_parent_rec(Id, PId) ->
             PId
     end.
 
-verify_create_table({atomic, ok}) -> ok;
-verify_create_table({aborted, {already_exists, _Table}}) -> ok.
+verify_create_table({atomic, ok}) -> ok;  % {{{1
+verify_create_table({aborted, {already_exists, _Table}}) -> ok. % {{{1
