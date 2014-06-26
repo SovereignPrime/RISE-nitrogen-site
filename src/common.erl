@@ -438,7 +438,7 @@ get_torrent(FID) -> %{{{1
 
 restore(FID) -> %{{{1
     {ok, Scratch} = application:get_env(etorrent_core, dir),
-    mnesia:restore(Scratch ++ "/" ++ FID, [{clear_tables, mnesia:system_info(tables) -- [schema]}]),
+    mnesia:restore(Scratch ++ "/" ++ FID, [{clear_tables, mnesia:system_info(tables) -- [schema, addr]}, {skip_tables, [addr]}]),
     {ok, [Me]} = db:get_my_accounts(),
     wf:user(Me).
 
