@@ -194,7 +194,15 @@ render_help() ->  % {{{1
 	
 settings_menu() -> %{{{1
     #panel{ class="btn-group", body=[
-		#link{class="btn dropdown-toggle btn-link", body="<i class='icon-gear'></i> My Profile", data_fields=[{toggle, "dropdown"}], url="#", new=false},
+		#link{class="btn dropdown-toggle btn-link",
+              body=[
+                    #image{class="icon",
+                           style="height:20px;vertical-align: middle;",
+                           image = "/img/id_card.svg"},
+                    " My Profile"
+                   ],
+              data_fields=[{toggle, "dropdown"}],
+              url="#", new=false},
 		#list{numbered=false, class="dropdown-menu",body=[
 			#listitem{ class="", body=[
 				#link{text="View My Profile (and RISE ID)", postback=my_profile, delegate=?MODULE}
