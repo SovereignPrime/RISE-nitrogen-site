@@ -125,11 +125,21 @@ contact_render(#db_contact{id=Id,  % {{{1
             ]},
             #panel{class=span2, body="Show All", style="text-align:right"}
         ]},
-        #panel{class="span12", body=[
-            lists:map(fun(#message{text=Text, subject=Subject, enc=Enc}) ->
-                #update_element{collapse=paragraph, subject=Subject, age="Age", text=Text, enc=Enc}
-            end, Updates)
-        ]}
+        #panel{ class="row-fluid",
+                body=[
+                      #panel{class="span12",
+                             body=[
+                                   lists:map(fun(#message{text=Text,
+                                                          subject=Subject,
+                                                          enc=Enc}) ->
+                                                     #update_element{collapse=paragraph,
+                                                                     subject=Subject,
+                                                                     age="Age",
+                                                                     text=Text,
+                                                                     enc=Enc}
+                                             end, Updates)
+                                  ]}
+                     ]}
     ].
 
 %%%

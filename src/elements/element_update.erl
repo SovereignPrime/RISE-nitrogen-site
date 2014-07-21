@@ -132,11 +132,11 @@ render_element(#update_element{enc=Enc,
     {Text, Attachments, Timestamp} = decode_enc(Enc, Data, true),
     TD = bm_types:timestamp() - Timestamp,
     [
-        #panel{class="row", body=[
+        #panel{class="row-fluid", body=[
                 #panel{class="span9", body="<b>Subject: </b>" ++ Subject},
                 #panel{class="span2 cell-right", body=sugar:format_timedelta(TD)}
                 ]},
-        #panel{class="row", body=[
+        #panel{class="row-fluid", body=[
                 #panel{class="span12", body=Text}
                 ]}
         ].
