@@ -151,7 +151,9 @@ format_status(ackwait) ->  % {{{1
     " (sent)";
 format_status(new) ->  % {{{1
     " (sending)";
-format_status(Status) when Status==wait_pubkey; Status==encrypt_message ->  % {{{1
+format_status(wait_pubkey) ->  % {{{1
+    " (waiting for key)";
+format_status(encrypt_message) ->  % {{{1
     " (sending)";
 format_status(Status) ->  % {{{1
     " " ++ wf:to_list(Status).
