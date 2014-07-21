@@ -29,7 +29,7 @@ buttons(main) ->  % {{{1
         ]},
         #listitem{body=[
             common:settings_menu()
-        ]}
+        ]},
         #listitem{body=[
             common:render_help()
         ]}
