@@ -171,28 +171,28 @@ render_element(#update_preview{id=Id,
                           postback={selected, Id, Subject, Archive}}}.
 
 
-render_unread_icon(unread) ->
-    "<i class='icon-square'></i>";
-render_unread_icon(_) ->
+render_unread_icon(unread) ->  % {{{1
+    "<i class='icon icon-sign-blank'></i>";
+render_unread_icon(_) ->  % {{{1
     "".
 
-render_icon(Icon) when Icon==1; Icon==2 ->
+render_icon(Icon) when Icon==1; Icon==2 ->  % {{{1
     "<i class='icon-envelope'></i>";
-render_icon(3) ->
+render_icon(3) ->  % {{{1
     "<i class='icon-envelope'></i>";
-render_icon(4) ->
+render_icon(4) ->  % {{{1
    #image{image="/img/tasks.svg",
           class="icon",
           style="height:16px;vertical-align:middle;"
    };
-render_icon(5) ->
+render_icon(5) ->  % {{{1
     "<i class='icon-refresh'></i>".
 
-participant_list(List) ->
+participant_list(List) ->  % {{{1
     Deduped = common:remove_duplicates(lists:flatten(List)),
     wf:join([get_name(Address) || Address <- Deduped], ", ").
 
-get_name(UID) ->
+get_name(UID) ->  % {{{1
     case db:get_contact_by_address(UID) of
         {ok, #db_contact{name=FN}} ->
             FN;

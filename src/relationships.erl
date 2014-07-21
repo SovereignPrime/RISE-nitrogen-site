@@ -107,8 +107,12 @@ contact_render(#db_contact{id=Id,  % {{{1
             ]},
             #panel{class=span2, body="Show All", style="text-align:right"}
         ]},
-        lists:map(fun(Task = #db_task{parent=Responsible, name=Name, due=Due}) ->
-            #panel{class='row-fluid', style="min-height:20px; height:20px;", body=[
+        lists:map(fun(Task = #db_task{parent=Responsible,
+                                      name=Name,
+                                      due=Due}) ->
+            #panel{class='row-fluid',
+                   style="min-height:20px; height:20px;",
+                   body=[
                 #panel{class=span2, style="min-height:20px; height:20px;", text=Responsible},
                 #panel{class=span8, style="min-height:20px; height:20px;", body=[
                     #link{text=Name, postback={to_task, Task}}

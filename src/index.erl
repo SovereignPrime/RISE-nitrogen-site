@@ -53,6 +53,7 @@ render_left(Updates) -> % {{{1
                                subject=Subject,
                                text=Text,
                                flag=true,
+                               status=Status,
                                archive=(Status == archive)} || 
                #message{hash=Id,
                         from=From,
@@ -63,18 +64,18 @@ render_left(Updates) -> % {{{1
                         status=Status} <- GroupedUpdates],
     #panel{id=left,class="span4 scrollable", body=Render}.
 
-group_updates(List) ->
+group_updates(List) ->  % {{{1
     group_updates(List, []).
 
 group_updates([], Acc) -> Acc;
-group_updates([U | Rest], Acc0) ->
+group_updates([U | Rest], Acc0) ->  % {{{1
     Acc = case subject_exists_in_updates(U#message.subject, Acc0) of
         true -> add_participants(U, Acc0);
         false -> Acc0 ++ [U]
     end,
     group_updates(Rest, Acc).
 
-add_participants(Update, Messages) ->
+add_participants(Update, Messages) ->  % {{{1
     lists:map(fun
                   (M) when M#message.subject==Update#message.subject ->
                     M#message{
@@ -84,12 +85,12 @@ add_participants(Update, Messages) ->
                   (M) -> M
               end, Messages).
                      
-maybe_wrap_list(AddressList) when is_list(AddressList) ->
+maybe_wrap_list(AddressList) when is_list(AddressList) ->  % {{{1
     AddressList;
-maybe_wrap_list(Address) when is_binary(Address) ->
+maybe_wrap_list(Address) when is_binary(Address) ->  % {{{1
     [Address].
 
-subject_exists_in_updates(Subject, Messages) ->
+subject_exists_in_updates(Subject, Messages) ->  % {{{1
     case [X || X <- Messages, X#message.subject==Subject] of
         [] -> false;
         [X] -> true
