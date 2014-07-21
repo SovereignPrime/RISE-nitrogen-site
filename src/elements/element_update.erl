@@ -62,12 +62,18 @@ render_element(#update_element{id=Id,
                                enc=Enc,
                                status=Status}=Record) ->
     FromName = name_from_address(From),
+    ToName = name_from_address(To),
     {Text, Attachments, Timestamp} = decode_enc(Enc, Data, false),
     TD = bm_types:timestamp() - Timestamp,
     #panel{id=Id, body=[
         #panel{class="row-fluid", body=[
-                #panel{class="span1", body=FromName},
-                #panel{class="span2 offset9", body=[
+                #panel{class="span4",
+                       body=[
+                            "<i class='icon-chevron-down'></i> ",
+                            FromName,
+                            " <i class='icon-arrow-right'></i> ",
+                            ToName]},
+                #panel{class="span2 offset6", body=[
                                             sugar:format_timedelta(TD),
                                             format_status(Status)
                        ]}
