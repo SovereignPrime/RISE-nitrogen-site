@@ -49,3 +49,8 @@ sort_by_timestamp(Updates) ->
                            end,
                        F(A) > F( B )
                end, Updates).
+
+maybe_wrap_list(AddressList) when is_list(AddressList) ->  % {{{1
+    AddressList;
+maybe_wrap_list(Address) when is_binary(Address) ->  % {{{1
+    [Address].

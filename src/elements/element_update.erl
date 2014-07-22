@@ -130,6 +130,7 @@ render_element(#update_element{id=Id,
             ]};
 %% Render update as single paragraph for relationships {{{1
 render_element(#update_element{enc=Enc,
+                               uid=Id,
                                from=From,
                                subject=Subject,
                                text=Data,
@@ -141,7 +142,7 @@ render_element(#update_element{enc=Enc,
         #panel{class="row-fluid", body=[
                 #panel{class="span9", body="<b>Subject: </b>" ++ Subject},
                 #panel{class="span2 cell-right", body=sugar:format_timedelta(TD)}
-                ]},
+                ], actions=#event{type=click, postback={to_message, Id}}},
         #panel{class="row-fluid", body=[
                 #panel{class="span12", body=Text}
                 ]}

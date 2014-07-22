@@ -45,7 +45,7 @@ left(Archive) -> % {{{1
 render_left(Updates) -> % {{{1
     SortedUpdates = sugar:sort_by_timestamp(Updates),
     GroupedUpdates = group_updates(SortedUpdates),
-    Render = [ #update_preview{id=Id,
+    Render = [ #update_preview{uid=Id,
                                icon=Enc,
                                from=From,
                                to=To,
@@ -78,17 +78,16 @@ group_updates([U | Rest], Acc0) ->  % {{{1
 add_participants(Update, Messages) ->  % {{{1
     lists:map(fun
                   (M) when M#message.subject==Update#message.subject ->
-                    M#message{
-                      from=maybe_wrap_list(M#message.from) ++ [Update#message.from],
-                      to=maybe_wrap_list(M#message.to) ++ [Update#message.to]
-                    };
+                      Ids= sugar:maybe_wrap_list(M#message.hash),
+                      Id = Update#message.hash,
+                      M#message{
+                        hash= [Id|Ids],
+                        from=sugar:maybe_wrap_list(M#message.from) ++ [Update#message.from],
+                        to=sugar:maybe_wrap_list(M#message.to) ++ [Update#message.to]
+                       };
                   (M) -> M
               end, Messages).
                      
-maybe_wrap_list(AddressList) when is_list(AddressList) ->  % {{{1
-    AddressList;
-maybe_wrap_list(Address) when is_binary(Address) ->  % {{{1
-    [Address].
 
 subject_exists_in_updates(Subject, Messages) ->  % {{{1
     case [X || X <- Messages, X#message.subject==Subject] of
@@ -119,7 +118,7 @@ render_body(Subject, Archive) -> % {{{1
     [
      #h1{body=[Icon," ",wf:html_encode(Subject)]},
      [
-      #update_element{collapse=true,
+      #update_element{collapse=(Id /= CurrentId),
                       from=From,
                       to=To,
                       text=Text,
@@ -144,8 +143,9 @@ replace_left(Body) -> % {{{1
     wf:replace(left, Body),
     wf:wire("objs('left').scrollTop(scrolltop_temp)").
 
-event({selected, Id, Subject, Archive}) -> % {{{1
+event({selected, Ids, Subject, Archive}) -> % {{{1
     wf:session(current_subject, Subject),
+    [Id | _] = lists:reverse(Ids),
     wf:session(current_update_id, Id),
     replace_left(left(Archive)),
     wf:update(body, render_body(Subject, Archive)),

@@ -3,6 +3,7 @@
 
 %% Include any application-specific custom elements, actions, or validators below
 -record(update_preview, {?ELEMENT_BASE(element_update_preview),
+                         uid,
                          icon,
                          from,
                          to,

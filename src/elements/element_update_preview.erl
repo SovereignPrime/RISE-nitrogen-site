@@ -18,6 +18,7 @@ reflect() -> record_info(fields, update_preview).
 -spec render_element(#update_preview{}) -> body().
 %% Render Messages  or  update  {{{1
 render_element(#update_preview{id=Id,
+                               uid=UID,
                                icon=Icon,
                                from=From,
                                to=To,
@@ -53,7 +54,9 @@ render_element(#update_preview{id=Id,
            end,
     TD = bm_types:timestamp() - Timestamp,
     CurrentId = wf:session(current_update_id),
-    Class = if Id == CurrentId ->
+    io:format("~p~n", [UID]),
+    HasCurrent = lists:any(fun(I) -> (I == CurrentId) end, sugar:maybe_wrap_list(UID)),
+    Class = if HasCurrent ->
            "current";
        true ->
            ""
@@ -100,10 +103,11 @@ render_element(#update_preview{id=Id,
                              ]}
                 ],
            actions=#event{type=click,
-                          postback={selected, Id, Subject, Archive}}};
+                          postback={selected, sugar:maybe_wrap_list(UID), Subject, Archive}}};
 
 %% Render tasks {{{1
 render_element(#update_preview{id=Id,
+                               uid=UID,
                                icon=Icon,
                                from=From,
                                to=To,
@@ -123,11 +127,13 @@ render_element(#update_preview{id=Id,
                                    end,
     TD = bm_types:timestamp() - Timestamp,
     CurrentId = wf:session(current_update_id),
-    Class = if Id == CurrentId ->
+    HasCurrent = lists:any(fun(I) -> (I == CurrentId) end, sugar:maybe_wrap_list(UID)),
+    Class = if HasCurrent ->
            "current";
        true ->
            ""
     end,
+
     #panel{class=['update-preview',Class],
            style="line-height:18px;margin-top:18px;",
            body=[
@@ -168,7 +174,7 @@ render_element(#update_preview{id=Id,
                                                 ]}
                 ],
            actions=#event{type=click,
-                          postback={selected, Id, Subject, Archive}}}.
+                          postback={selected, sugar:maybe_wrap_list(UID), Subject, Archive}}}.
 
 
 render_unread_icon(unread) ->  % {{{1

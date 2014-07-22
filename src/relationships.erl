@@ -134,9 +134,11 @@ contact_render(#db_contact{id=Id,  % {{{1
                       #panel{class="span12",
                              body=[
                                    lists:map(fun(#message{text=Text,
+                                                          hash=UID,
                                                           subject=Subject,
                                                           enc=Enc}) ->
                                                      #update_element{collapse=paragraph,
+                                                                     uid=UID,
                                                                      subject=Subject,
                                                                      age="Age",
                                                                      text=Text,
@@ -234,6 +236,12 @@ event({to_task, Task = #db_task{id=Id}}) -> % {{{1
     wf:session(current_task_id, Id),
     wf:session(current_task, Task),
     wf:redirect("/tasks");
+
+event({to_message, UID}) ->
+    wf:session(current_update_id, UID),
+    {ok, #message{subject=Subject}} = db:get_update(UID),
+    wf:session(current_subject, Subject),
+    wf:redirect("/");
 
 event(Click) ->  % {{{1
     io:format("~p~n",[Click]).
