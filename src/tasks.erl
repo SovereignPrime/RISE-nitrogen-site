@@ -49,7 +49,7 @@ buttons(main) ->  % {{{1
 
 left() ->  % {{{1
     CId = wf:session(current_task_id),
-    #panel{id=tasks, class="span4", body=[
+    #panel{id=tasks, class="span4 scrollable", body=[
             render_task_tree()
     ]}.
 
@@ -229,7 +229,7 @@ body() ->  % {{{1
             wf:state(current_task, Task),
             wf:state(current_task_id, Id),
             highlight_selected(Id),
-            #panel{id=body, class="span8", body=
+            #panel{id=body, class="span8 scrollable", body=
                    [
                     render_task(Task)
                    ]};
@@ -319,7 +319,7 @@ render_roles(Id) -> % {{{1
 
 render_role_row({ContactRole, Name}) -> % {{{1
     Rowid = wf:temp_id(),
-    Edit = #event{type=click, postback={edit_role, Rowid, {ContactRole, Name}}},
+    Edit = #event{type=click, postback={edit_role, Rowid, {ContactRole, Name} }},
     #panel{id=Rowid, class="row-fluid role-row", actions=Edit, body=[
         #panel{class="span2", body=[ContactRole#db_contact_roles.role,":"]},
         #panel{class="span6", body=Name}

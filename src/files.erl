@@ -72,7 +72,7 @@ body(Archive) ->   % {{{1
     {ok, Files0} = db:get_files(Archive),
     Sortby = wf:state_default(sortby, #db_file.path),
     Files = lists:sort(fun(A,B) -> element(Sortby, A) =< element(Sortby, B) end, Files0),
-    #panel{id=body, body=[
+    #panel{id=body, class="scrollable", body=[
         #table{ rows=[
                 #tablerow{ cells=[
                         #tablecell{class="", body=[
