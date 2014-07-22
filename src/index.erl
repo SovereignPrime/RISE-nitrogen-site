@@ -115,6 +115,7 @@ render_body(Subject, Archive) -> % {{{1
     {ok, Updates} = db:get_updates_by_subject(Subject, Archive),
     Type = (hd(Updates))#message.enc,
     Icon = element_update_preview:render_icon(Type),
+    CurrentId = wf:session(current_update_id),
     [
      #h1{body=[Icon," ",wf:html_encode(Subject)]},
      [

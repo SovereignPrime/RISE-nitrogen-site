@@ -54,20 +54,20 @@ render_element(#vcard{id=Id,
                                 body= #inplace_textbox{text=Name,
                                                        tag={name, Id}}
                                },
-                            #panel{body= [ "e-mail: ",
+                            #panel{body= [ "Email: ",
                                           #inplace_textbox{class="inline",
                                                            tag={ email, Id},
                                                            text=  Email,
                                                            validators=#is_email{text="You provided wrong e-mail address"}}
                                          ]},
                             #panel{body= [
-                                    "tel.: ",
+                                    "Tel: ",
                                     #inplace_textbox{class="inline",
                                                      text=Phone,
                                                      tag={phone, Id}}
                                     ]},
                             #panel{body= [
-                                          "RISE Id: ",
+                                          "RISE ID: ",
                                           #inplace_textbox{class="inline",
                                                            text=Address,
                                                            tag={address, Id}}

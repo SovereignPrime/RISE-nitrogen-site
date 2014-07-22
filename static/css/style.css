@@ -189,8 +189,10 @@ select {
 
 
 h1 .inplace_textbox .label {
-    font-weight:bold;
-	font-size: 2em;
+    font-weight:none;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+	font-size: 16px;
 }
 img.wfid_img_vcard {
     width: 150px;
