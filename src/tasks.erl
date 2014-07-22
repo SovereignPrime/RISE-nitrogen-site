@@ -54,7 +54,7 @@ left() ->  % {{{1
     ]}.
 
 
-render_task_tree_buttons(Selected) ->
+render_task_tree_buttons(Selected) ->  % {{{1
     Buttons = [
     %%  { Label, postback, width }
         {"Tree", task_tree, 2},
@@ -194,10 +194,10 @@ expand_task(Taskid) ->  % {{{1
     wf:wire(["$(\".expander[data-parent='",Hashed,"']\").addClass('icon-caret-down').removeClass('icon-caret-right')"]),
     wf:wire(["$(\".list[data-list='",Hashed,"']\").show();"]).
 
-render_task_list(Mode, Archive) ->
+render_task_list(Mode, Archive) ->  % {{{1
     Function = case Mode of
         tasks_today -> fun db:get_tasks_due_today/1;
-        tasks_soon -> fun ?MODULE:get_tasks_sorted_by_date/1;
+        tasks_soon -> fun ?MODULE:get_next_tasks_by_date/1;
         tasks_no_deadline -> fun db:get_tasks_no_deadline/1;
         tasks_complete -> fun db:get_tasks_completed/1
     end,
@@ -209,18 +209,32 @@ render_task_list(Mode, Archive) ->
        body=[render_flat_task(T, Archive) || T <- Tasks]
     }.
 
-get_tasks_sorted_by_date(Archive) ->
-    {ok, Tasks} = db:get_tasks(Archive),
-    {ok, lists:sort(fun compare_task_date/2, Tasks)}.
+get_next_tasks_by_date(Archive) -> % {{{1
+    oday = sugar:date_format(date()),
+    {ok, lists:filter(fun(#db_task{status=complete}) ->
+                              true;
+                         (_) ->
+                              false
+                      end, lists:dropwhile(fun(#db_task{due=""}) ->
+                                                   true;
+                                              (#db_task{due=D}) when D < Today ->
+                                                   true;
+                                              (_) ->
+                                                   false
+                                           end, get_tasks_sorted_by_date(Archive))}.
 
-compare_task_date(#db_task{due=""}, _) ->
-    false;
-compare_task_date(_, #db_task{due=""}) ->
+get_tasks_sorted_by_date(Archive) ->  % {{{1
+    {ok, Tasks} = db:get_tasks(Archive),
+    lists:sort(fun compare_task_date/2, Tasks).
+
+compare_task_date(#db_task{due=""}, _) ->  % {{{1
     true;
-compare_task_date(#db_task{due=A}, #db_task{due=B}) ->
+compare_task_date(_, #db_task{due=""}) ->  % {{{1
+    false;
+compare_task_date(#db_task{due=A}, #db_task{due=B}) ->  % {{{1
     A =< B.
 
-render_flat_task(Task, Archive) ->
+render_flat_task(Task, Archive) ->  % {{{1
     #listitem{body=render_task_link(Task)}.
 
 body() ->  % {{{1
