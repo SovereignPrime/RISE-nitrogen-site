@@ -83,7 +83,7 @@ render_element(Record = #file_row{fid=FID,
                                        style="text-align:center;",
                                        actions=#event{type=click,
                                                       postback={save, Name, FID},
-                                                      delegate=element_attachment}}}
+                                                      delegate=element_attachment} }}
                     ];
                 received ->
                     [

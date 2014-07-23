@@ -349,3 +349,8 @@ span.label {
     color:white;
     background-color: black;
 }
+
+.progress .bar {
+    background-color: #000;
+    background-image: none;
+}

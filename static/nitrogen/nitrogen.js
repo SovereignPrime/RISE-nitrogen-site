@@ -315,13 +315,13 @@ NitrogenClass.prototype.$attach_upload_handle_dragdrop = function(form,input,set
             },
             start: function(e) {
                 form.pageContext.value = thisNitro.$params["pageContext"];
-                jQuery(form).children(".upload_progress").fadeIn().text("Uploading...");
+                // jQuery(form).children(".upload_progress").fadeIn().text("Uploading...");
             },
             progressall: function(e,data) {
                 var prog = parseInt(data.loaded / data.total * 100,10);
                 // TODO: Convert this to a progress bar
                 // Neede to add #progress{} element to continue with that
-                jQuery(form).children(".upload_progress").text(prog + "% (" + data.loaded + "/" + data.total + " bytes)");
+                jQuery(form).children(".upload_progress").children(".bar").css("width", prog + '%')
             },
             progress: function(e,data) {
                 // Single file progress
