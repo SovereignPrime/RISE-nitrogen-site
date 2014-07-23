@@ -163,6 +163,8 @@ select {
 
 .inplace > .view:hover {
 	border: 1px solid black;
+    color:white;
+    background-color:black;
 }
 
 .inplace_textbox > .view {
@@ -335,10 +337,15 @@ span.label {
 	height:300px;
 }
 
-.role-row {
-	border: 1px solid white;
-}
+# .role-row {
+# 	border: 1px solid white;
+# }
+# 
+# .role-row:hover {
+# 	border: 1px solid black;
+# }
 
 .role-row:hover {
-	border: 1px solid black;
+    color:white;
+    background-color: black;
 }

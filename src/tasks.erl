@@ -7,6 +7,12 @@
 -include("records.hrl").
 -include("db.hrl").
 
+-define(UPDATE_CURRENT(Field, Val),
+            update_current_task(fun(T) ->
+                T#db_task{Field=Val}
+            end)
+       ).
+
 main() -> common:main().
 
 title() -> "Hello from relationships.erl!".
@@ -210,7 +216,7 @@ render_task_list(Mode, Archive) ->  % {{{1
     }.
 
 get_next_tasks_by_date(Archive) -> % {{{1
-    oday = sugar:date_format(date()),
+    Today = sugar:date_format(date()),
     {ok, lists:filter(fun(#db_task{status=complete}) ->
                               true;
                          (_) ->
@@ -221,7 +227,7 @@ get_next_tasks_by_date(Archive) -> % {{{1
                                                    true;
                                               (_) ->
                                                    false
-                                           end, get_tasks_sorted_by_date(Archive))}.
+                                           end, get_tasks_sorted_by_date(Archive)))}.
 
 get_tasks_sorted_by_date(Archive) ->  % {{{1
     {ok, Tasks} = db:get_tasks(Archive),
@@ -336,7 +342,8 @@ render_role_row({ContactRole, Name}) -> % {{{1
     Edit = #event{type=click, postback={edit_role, Rowid, {ContactRole, Name} }},
     #panel{id=Rowid, class="row-fluid role-row", actions=Edit, body=[
         #panel{class="span2", body=[ContactRole#db_contact_roles.role,":"]},
-        #panel{class="span6", body=Name}
+        #panel{class="span6", body=Name},
+        #panel{class="span4", style="background-color: #fff", body=""}
     ]}.
 
 render_role_edit_row(OriginalData = {ContactRole, Name}) -> % {{{1
@@ -358,14 +365,24 @@ render_role_edit_row(OriginalData = {ContactRole, Name}) -> % {{{1
 
 
 render_top_buttons() -> % {{{1
-    #panel{ id=top_buttons, class="row-fluid", style="display:none", body=[
-        #panel{ class="span4 offset4", body=[
-            #panel{class="row-fluid", style="border:1px solid black", body=[
-                #button{ class="btn btn-link span6", body="<i class='icon-remove'></i> Discard", postback=discard},
-                #button{ class="btn btn-link span6", body="<i class='icon-ok'></i> Save", postback=save}
-            ]}
-        ]}
-    ]}.
+    #panel{ id=top_buttons,
+            class="row-fluid",
+            style="display:none",
+            body=[
+                  #panel{ class="span4 offset4",
+                          body=[
+                                #panel{class="row-fluid",
+                                       body=[
+                                             #button{ class="btn btn-link span6",
+                                                      body="<i class='icon-remove'></i> Discard",
+                                                      postback=discard},
+
+                                             #button{ class="btn btn-link span6",
+                                                      body="<i class='icon-ok'></i> Save",
+                                                      postback=save}
+                                            ]}
+                               ]}
+                 ]}.
 
 render_side_buttons(Id, Task) -> % {{{1
     [
@@ -582,11 +599,6 @@ event(Click) ->  % {{{1
     io:format("~p~n",[Click]).
 
 
--define(UPDATE_CURRENT(Field, Val),
-            update_current_task(fun(T) ->
-                T#db_task{Field=Val}
-            end)
-       ).
 
 inplace_textarea_event(text, Val) -> % {{{1
     ?UPDATE_CURRENT(text, wf:to_binary(Val)),
