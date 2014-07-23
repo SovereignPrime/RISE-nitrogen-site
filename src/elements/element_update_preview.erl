@@ -54,7 +54,6 @@ render_element(#update_preview{id=Id,
            end,
     TD = bm_types:timestamp() - Timestamp,
     CurrentId = wf:session(current_update_id),
-    io:format("~p~n", [UID]),
     HasCurrent = lists:any(fun(I) -> (I == CurrentId) end, sugar:maybe_wrap_list(UID)),
     Class = if HasCurrent ->
            "current";

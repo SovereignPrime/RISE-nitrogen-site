@@ -218,9 +218,9 @@ render_task_list(Mode, Archive) ->  % {{{1
 get_next_tasks_by_date(Archive) -> % {{{1
     Today = sugar:date_format(date()),
     {ok, lists:filter(fun(#db_task{status=complete}) ->
-                              true;
+                              false;
                          (_) ->
-                              false
+                              true
                       end, lists:dropwhile(fun(#db_task{due=""}) ->
                                                    true;
                                               (#db_task{due=D}) when D < Today ->
