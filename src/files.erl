@@ -95,8 +95,14 @@ body(Archive) ->   % {{{1
             ]}.    
 
 sortheader(Label, Sortby) -> % {{{1
+    Sort = wf:state_default(sortby, #db_file.path),
     #tableheader{body=[
-        #link{text=Label, postback={sort, Sortby}}
+        #link{text=Label, postback={sort, Sortby}},
+        if Sortby == Sort ->
+               " <i class='icon icon-caret-down'></i>";
+           true ->
+               ""
+        end
     ]}.
 
 
