@@ -288,6 +288,12 @@ event({reply, Subject, To}) -> % {{{1
     wf:session(current_update, #db_update{id=Id, to=[ To ], subject=Subject}),
     wf:session(attached_files, undefined),
     wf:redirect("/edit_update");
+
+event({to_task, Id}) -> % {{{1
+    wf:session(current_task_id, Id),
+    {ok, [ Task ]} = db:get_task(Id),
+    wf:session(current_task, Task),
+    wf:redirect("/tasks");
 event(backup) -> %{{{1
     {ok, FD} = application:get_env(etorrent_core, dir),
     io:format("FD: ~p~n", [FD]),

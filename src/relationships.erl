@@ -107,7 +107,8 @@ contact_render(#db_contact{id=Id,  % {{{1
             ]},
             #panel{class=span2, body="Show All", style="text-align:right"}
         ]},
-        lists:map(fun(Task = #db_task{parent=Responsible,
+        lists:map(fun(Task = #db_task{id=TID,
+                                      parent=Responsible,
                                       name=Name,
                                       due=Due}) ->
             #panel{class='row-fluid',
@@ -115,7 +116,7 @@ contact_render(#db_contact{id=Id,  % {{{1
                    body=[
                 #panel{class=span2, style="min-height:20px; height:20px;", text=Responsible},
                 #panel{class=span8, style="min-height:20px; height:20px;", body=[
-                    #link{text=Name, postback={to_task, Task}}
+                    #link{text=Name, postback={to_task, TID}, delegate=common}
                 ]},
                 #panel{class=span2, style="min-height:20px; height:20px; text-align:right", text=Due}
             ]}
@@ -232,12 +233,7 @@ event({write_to, Addr}) ->  % {{{1
     wf:session(current_update, #db_update{id=Id, to=[Addr]}),
     wf:redirect("/edit_update");
 
-event({to_task, Task = #db_task{id=Id}}) -> % {{{1
-    wf:session(current_task_id, Id),
-    wf:session(current_task, Task),
-    wf:redirect("/tasks");
-
-event({to_message, UID}) ->
+event({to_message, UID}) ->  % {{{1
     wf:session(current_update_id, UID),
     {ok, #message{subject=Subject}} = db:get_update(UID),
     wf:session(current_subject, Subject),
