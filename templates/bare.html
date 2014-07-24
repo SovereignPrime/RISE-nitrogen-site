@@ -19,12 +19,10 @@
 <link rel="stylesheet" href="/css/style.css" />
 </head>
 <body>
-<audio id="receive-notify">
+<audio id="notify" loop preload="auto">
     <source src="/sounds/receive.ogg" type="audio/ogg"/>
     <source src="/sounds/receive.mp3" type="audio/mpeg"/>
     <source src="/sounds/receive.wav" type="audio/wav"/>
-</audio>
-<audio id="sent-notify">
     <source src="/sounds/sent.ogg" type="audio/ogg"/>
     <source src="/sounds/sent.mp3" type="audio/mpeg"/>
     <source src="/sounds/sent.wav" type="audio/wav"/>
@@ -97,6 +95,15 @@ $(".wfid_main").css('height', $(window).innerHeight() - $("#top").outerHeight() 
 $(window).resize(function() {
         $(".wfid_main").css('height', $(window).innerHeight() - $("#top").outerHeight() - $(".wfid_buttons").outerHeight() - 10 + 'px');
         });
+function sent() {
+    $('#notify')[0].src='/sounds/sent.wav';
+    $('#notify')[0].play();
+}
+
+function received() {
+    $('#notify')[0].src='/sounds/receive.wav';
+    $('#notify')[0].play();
+}
 </script>
 <script>
 [[[script]]]
