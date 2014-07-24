@@ -102,7 +102,7 @@ handle_cast({msg, Hash}, State) ->  % {{{1
 
     FID = get_or_request_contact(From, From, To),
     {ok, #db_contact{id=ToID}} = db:get_contact_by_address(To),
-    apply_message(Message, FID, ToID),
+    apply_message(Message, FID, ToID, State),
     State#state.pid ! update,
     {noreply, State};
 handle_cast(_Msg, State) ->  % {{{1
@@ -159,7 +159,7 @@ apply_message(#message{from=BMF,
                        to=BMT,
                        subject= <<"Get vCard">>,
                        text=Data,
-                       enc=6}, FID, ToID) ->
+                       enc=6}, FID, ToID, State) ->
                        {ok,  #db_contact{name=Name,
                                          email=Email,
                                          phone=Phone,
@@ -173,7 +173,7 @@ apply_message(#message{from=BMF,
                        to=BMT,
                        subject= <<"vCard">>,
                        text=Data,
-                       enc=6}, FID, ToID) ->
+                       enc=6}, FID, ToID, State) ->
     [Name, Email, Phone, Address, BM] = binary:split(Data, <<",">>, [global, trim]),
     {ok, Contact } = db:get_contact_by_address(BM),
     db:save(Contact#db_contact{name=wf:to_list(Name),
@@ -185,7 +185,7 @@ apply_message(#message{from=BMF,
                        to=BMT,
                        subject= <<"Get torrent">>,
                        text=Data,
-                       enc=6}, FID, ToID) ->
+                       enc=6}, FID, ToID, State) ->
     {ok, FD} = application:get_env(etorrent_core, dir),
     {ok,  F } = file:read_file(FD ++ "/" ++ wf:to_list(Data) ++ ".torrent"),
     bitmessage:send_message(BMT, BMF, <<"torrent">>, <<Data/bytes, ";", F/bytes>>, 6);
@@ -195,7 +195,7 @@ apply_message(#message{from=BMF,
                        to=BMT,
                        subject= <<"torrent">>,
                        text=Data,
-                       enc=6}, FID, ToID) ->
+                       enc=6}, FID, ToID, State) ->
     [Id, Torrent] = binary:split(Data, <<";">>, [trim]),
     {ok, FD} = application:get_env(etorrent_core, dir),
     Path = wf:f("~s/~s.torrent", [FD, Id]),
@@ -207,7 +207,7 @@ apply_message(#message{from=BMF,
                        to=BMT,
                        subject= <<"Task tree">>,
                        text=Data,
-                       enc=6}, FID, ToID) ->
+                       enc=6}, FID, ToID, State) ->
     #task_tree_packet{task=Task, parent=Parent, time=TS} = binary_to_term(Data),
     db:save_subtask(Task, Parent, TS);
 
@@ -216,7 +216,7 @@ apply_message(#message{from=BMF,
                        to=BMT,
                        subject= <<"Update223322">>,
                        text=Data,
-                       enc=2}, FID, ToID) ->
+                       enc=2}, FID, ToID, State) ->
     [BVSN, Torrent] = binary:split(Data, <<";">>, [trim]),
     {ok, CVSN} = application:get_key(nitrogen, 'vsn'),
     PWD = application:get_env(nitrogen, work_dir, "."),
@@ -250,7 +250,7 @@ apply_message(#message{from=BMF,
                        to=BMT,
                        subject=Subject,
                        text=Data,
-                       enc=3}, FID, ToID)  ->
+                       enc=3}, FID, ToID, State)  ->
     error_logger:info_msg("Message from ~s received subject ~s~n", [BMF, Subject]),
     {ok, Id} = db:next_id(db_update),
 
@@ -272,14 +272,15 @@ apply_message(#message{from=BMF,
                                                       status=received}),
                                     I
                     end, Attachments),
-    db:save_attachments(Message, sets:from_list(Files));
+    db:save_attachments(Message, sets:from_list(Files)),
+    State#state.pid ! received;
 
 % Task  {{{1
 apply_message(#message{from=BMF,
                        to=BMT,
                        subject=Subject,
                        text=Data,
-                       enc=4}, FID, ToID)  ->
+                       enc=4}, FID, ToID, State)  ->
 
     #task_packet{id=UID, 
                  due=Due, 
@@ -331,10 +332,11 @@ apply_message(#message{from=BMF,
     {ok, Children} = db:get_children(UID, Time),
     lists:foreach(fun(#db_task_tree{task=T, time=TS}) ->
                           db:save_subtask(T, UID, TS)
-                  end, Children);
+                  end, Children),
+    State#state.pid ! received;
 
 % Default  {{{1
-apply_message(Message, FID, ToID) ->
+apply_message(Message, FID, ToID, State) ->
     error_logger:warning_msg("Wrong incomming message: ~p from ~p~n", [Message, FID]).
 
 get_vcard(BM, To, From) ->  % {{{1

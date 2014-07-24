@@ -369,6 +369,9 @@ finish_upload_event(filename, FName, FPath, _Node) -> %{{{1
 
 incoming() -> %{{{1
     receive
+        receiceived ->
+            wf:wire(#script{script="$('#receive-notify').[0].play();"}),
+            wf:flush();
         update ->
             (wf:page_module()):incoming(),
             wf:replace(count, unread()),
