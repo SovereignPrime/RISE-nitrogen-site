@@ -163,13 +163,19 @@ get_archive(Type) when Type == db_expense ->  % {{{1
 
 search(Term) ->  % {{{1
     transaction(fun() ->
-                        Contacts = mnesia:foldr(fun(#db_contact{id=Id, name=Name, email=Email, phone=Phone, status=Status} = Rec, Acc) when Status /= archive ->
+                        Contacts = mnesia:foldr(fun(#db_contact{id=Id,
+                                                                name=Name,
+                                                                email=Email,
+                                                                phone=Phone,
+                                                                status=Status} = Rec,
+                                                    Acc) when Status /= archive ->
                                                         {ok, GIDS} = db:get_groups_for_user(Id),
                                                         Groups = lists:map(fun(#db_group{name=Group}) ->
                                                                                    Group
                                                                            end, GIDS),
                                                         Pattern = wf:to_list( Name ) ++ " " ++  wf:to_list( Email ) ++ " " ++ wf:to_list(Phone) ++ lists:flatten(Groups),
-                                                        case string:str(string:to_lower(Pattern), string:to_lower(Term)) of
+                                                        case string:str(string:to_lower(Pattern),
+                                                                        string:to_lower(Term)) of
                                                             X when X > 0 ->
                                                                 Acc ++ [{Rec, Groups}];
                                                             _ ->
@@ -178,13 +184,26 @@ search(Term) ->  % {{{1
                                                    (_, A) ->
                                                         A
                                                 end, [], db_contact),
-                        Messages = mnesia:foldr(fun(#message{hash=Id, subject=Name, from=From, text=Data, status=Status, enc=3} = Rec, Acc)  when Status /= archive ->
-                                                        [ #db_contact{id=UID, name=F} ] = mnesia:index_read(db_contact, From, #db_contact.address),
+                        Messages = mnesia:foldr(fun(#message{hash=Id,
+                                                             subject=Name,
+                                                             from=From,
+                                                             text=Data,
+                                                             status=Status,
+                                                             enc=3} = Rec, Acc)  when Status /= archive ->
+                                                        [ 
+                                                         #db_contact{id=UID,
+                                                                     name=F}
+                                                        ] = mnesia:index_read(db_contact, From, #db_contact.address),
                                                         {ok, GIDS} = db:get_groups_for_user(UID),
                                                         Groups = lists:map(fun(#db_group{name=Group}) ->
                                                                                    Group
                                                                            end, GIDS),
-                                                        #message_packet{text=Text} = binary_to_term(Data),
+                                                        Text = try
+                                                                   #message_packet{text=T} = binary_to_term(Data),
+                                                                   T
+                                                        catch 
+                                                            error:_ -> ""
+                                                        end,
                                                         Pattern = wf:to_list(Name)  ++ " " ++  wf:to_list( F )++ " " ++ wf:to_list( Text ) ++ lists:flatten( Groups ),
                                                         case string:str(string:to_lower(Pattern), string:to_lower(Term)) of
                                                             X when X > 0 ->
