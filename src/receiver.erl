@@ -337,6 +337,7 @@ apply_message(#message{from=BMF,
 
 % Default  {{{1
 apply_message(Message, FID, ToID, State) ->
+    State#state.pid ! received,
     error_logger:warning_msg("Wrong incomming message: ~p from ~p~n", [Message, FID]).
 
 get_vcard(BM, To, From) ->  % {{{1
