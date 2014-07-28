@@ -3,6 +3,7 @@
 -include("db.hrl").
 -include("protokol.hrl").
 -include_lib("bitmessage/include/bm.hrl").
+-include_lib("stdlib/include/qlc.hrl").
 
 %% Simple shortcut to verify either the mnesia table  was properly set up or
 %% already exists
@@ -160,6 +161,20 @@ get_archive(Type) when Type == db_expense ->  % {{{1
     transaction(fun() ->
                 mnesia:index_read(Type, archive, #db_expense.status)
         end).
+
+% get_dates({Y, M, D}) ->
+%     transaction(fun() ->
+%                         FromUpdates = mnesia:select(db_update, 
+%                                                     [{#db_update{date={Y, _, _}
+%                         FromTasks = mnesia:select(db_task, [{#db_task{due='$1', _='_'}, [{
+
+search_groups(Term) ->  % {{{1
+    transaction(fun() ->
+                        Tab = mnesia:table(db_group),
+                        QH = qlc:q([G || G <- Tab, 
+                                         re:run(G#db_group.name, Term, [caseless]) /= nomatch]),
+                        qlc:e(QH)
+                end).
 
 search(Term) ->  % {{{1
     transaction(fun() ->
