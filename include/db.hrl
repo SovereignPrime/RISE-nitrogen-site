@@ -1,5 +1,5 @@
 -record(db_group,{id, name, subgroups}).
--record(db_contact,{id, name="unknown", email="", phone, photo="undefined.png", bitmessage, address, my=false, status}).
+-record(db_contact,{id, name="unknown", email="", phone="", photo="undefined.png", bitmessage, address, my=false, status}).
 -record(db_task,{id, due, name, text="", parent, status=new, changes=[]}).
 -record(db_task_change, {address, datetime, field, new_value}).
 -record(db_file,{id, path, type, user, date, status, size}).
