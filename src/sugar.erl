@@ -9,6 +9,16 @@ date_format({Y, M, D}) ->
 	%% might be worth replacing with qdate:to_string()
    	lists:flatten(io_lib:format("~4..0w-~2..0w-~2..0w", [Y, M, D])).
 
+date_to_timestamps(Str) when is_list(Str) ->
+    [Y, M, D] = string:tokens(Str, "-"),
+    date_to_timestamps({list_to_integer(Y), list_to_integer(M), list_to_integer(D)});
+date_to_timestamps(Date) when is_tuple(Date), size(Date) == 3 ->
+    {datetime_to_timestamp({Date, {0,0,0}}), datetime_to_timestamp({Date, {23, 59, 59}})}.
+
+datetime_to_timestamp(DateTime) ->
+    calendar:datetime_to_gregorian_seconds(DateTime) -
+    calendar:datetime_to_gregorian_seconds({{1970, 1, 1}, {0, 0, 0}}).
+
 format_file_size(S) when S > 1000 * 1000 * 1000 ->
     wf:f("~.2fG", [ S  / bm_types:pow(1024, 3)]);
 format_file_size(S) when S >  1000 * 1000 ->

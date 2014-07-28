@@ -176,6 +176,24 @@ search_groups(Term) ->  % {{{1
                         qlc:e(QH)
                 end).
 
+search_contacts(Term) ->  % {{{1
+    transaction(fun() ->
+                        Tab = mnesia:table(db_contact),
+                        QH = qlc:q([G || G <- Tab, 
+                                         G#db_contact.status /= archive,
+                                         re:run(G#db_contact.name ++ G#db_contact.email, Term, [caseless]) /= nomatch]),
+                        qlc:e(QH)
+                end).
+
+search_files(Term) ->  % {{{1
+    transaction(fun() ->
+                        Tab = mnesia:table(db_file),
+                        QH = qlc:q([G || G <- Tab, 
+                                         G#db_file.status /= archive,
+                                         re:run(G#db_file.path, Term, [caseless]) /= nomatch]),
+                        qlc:e(QH)
+                end).
+
 search(Term) ->  % {{{1
     transaction(fun() ->
                         Contacts = mnesia:foldr(fun(#db_contact{id=Id,

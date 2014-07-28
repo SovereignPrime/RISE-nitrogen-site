@@ -96,7 +96,8 @@ render_element(#update_element{id=Id,
                                                  body=[
                                                        #span{class="icon-reply icon-large", text=" "}
                                                       ], postback=case Enc of
-                                                                      3 -> 
+
+                                                                      E when E == 3; E == 2 -> 
                                                                           {reply, Subject, From};
                                                                       4 ->
                                                                           {to_task, TID}

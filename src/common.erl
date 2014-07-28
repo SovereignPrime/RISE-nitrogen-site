@@ -95,76 +95,85 @@ render_files() -> % {{{1
 
 sigma_search_event(search, Term) -> % {{{1
     {ok, {Contacts, Messages, Tasks, Files}} = db:search(Term),
-    
-    Out = #panel{body=[
-                case Contacts of
-                    [] ->
-                        [];
-                    _ ->
-                        ["<dl class='dl-horizontal'>",
-                        "<dt>Relationships:</dt><dd>",
-                        lists:map(fun({#db_contact{id=Id, name=Name, email=Email}, Groups}) ->
-                                    Grs = lists:foldl(fun(G, A) ->
-                                                    A ++ ", " ++ G
-                                            end, "", Groups),
-                                    #panel{body=[
-                                            #link{text=wf:f("~s (~s) - ~s", [Name, Email, Grs]), postback={db_contact, Id}, delegate=?MODULE}
-                                            ]}
-                            end, Contacts),
-                         "</dd>"]
-                end,
-                case Messages of
-                    [] ->
-                        [];
-                    _ ->
-                        ["<dt>Messages:</dt><dd>",
-                        lists:map(fun(#message{hash=Id, subject=Subject, from=FID, text=Data}) ->
-                                          {ok, #db_contact{name=Name}} = db:get_contact_by_address(FID),
-                                          #message_packet{text=Text} = binary_to_term(Data),
-                                          TextL = wf:to_list(Text),
-                                          Pos = string:str(string:to_lower(TextL), string:to_lower(Term)),
-                                          TextS = string:sub_string(TextL, Pos + 1),
-                                          #panel{body=[
-                                                       #link{text=wf:f("~s (~s) - ~40s", [Subject, Name, TextS]), postback={db_update, Subject}, delegate=?MODULE}
-                                                      ]}
-                                  end, Messages),
-                        "</dd>"]
-                end,
-                case Tasks of
-                    [] ->
-                        [];
-                    _ ->
-                        ["<dt>Tasks:</dt><dd>",
-                         lists:map(fun(#db_task{id=Id, name=Subject, due=Date, text=Text}) ->
-                                        TextL = wf:to_list(Text),
-                                        Pos = string:str(string:to_lower(TextL), string:to_lower(Term)),
-                                        TextS = string:sub_string(TextL, Pos + 1),
-                                        #panel{body=[
-                                                #link{text=wf:f("~s (~s) - ~s", [Subject, Date, TextS]), postback={db_task, Id}, delegate=?MODULE}
-                                                ]}
-                            end, Tasks),
-                         "</dd>"]
-                end,
+    G = search:groups(Term),
+    C = search:contacts(Term),
+    M = search:messages(Term),
+    T = search:tasks(Term),
+    F = search:files(Term),
+    % 
+    % Out = #panel{body=[
+    %             case Contacts of
+    %                 [] ->
+    %                     [];
+    %                 _ ->
+    %                     ["<dl class='dl-horizontal'>",
+    %                     "<dt>Relationships:</dt><dd>",
+    %                     lists:map(fun({#db_contact{id=Id, name=Name, email=Email}, Groups}) ->
+    %                                 Grs = lists:foldl(fun(G, A) ->
+    %                                                 A ++ ", " ++ G
+    %                                         end, "", Groups),
+    %                                 #panel{body=[
+    %                                         #link{text=wf:f("~s (~s) - ~s", [Name, Email, Grs]), postback={db_contact, Id}, delegate=?MODULE}
+    %                                         ]}
+    %                         end, Contacts),
+    %                      "</dd>"]
+    %             end,
+    %             case Messages of
+    %                 [] ->
+    %                     [];
+    %                 _ ->
+    %                     ["<dt>Messages:</dt><dd>",
+    %                     lists:map(fun(#message{hash=Id, subject=Subject, from=FID, text=Data}) ->
+    %                                       {ok, #db_contact{name=Name}} = db:get_contact_by_address(FID),
+    %                                       #message_packet{text=Text} = binary_to_term(Data),
+    %                                       TextL = wf:to_list(Text),
+    %                                       Pos = string:str(string:to_lower(TextL), string:to_lower(Term)),
+    %                                       TextS = string:sub_string(TextL, Pos + 1),
+    %                                       #panel{body=[
+    %                                                    #link{text=wf:f("~s (~s) - ~40s", [Subject, Name, TextS]), postback={db_update, Subject}, delegate=?MODULE}
+    %                                                   ]}
+    %                               end, Messages),
+    %                     "</dd>"]
+    %             end,
+    %             case Tasks of
+    %                 [] ->
+    %                     [];
+    %                 _ ->
+    %                     ["<dt>Tasks:</dt><dd>",
+    %                      lists:map(fun(#db_task{id=Id, name=Subject, due=Date, text=Text}) ->
+    %                                     TextL = wf:to_list(Text),
+    %                                     Pos = string:str(string:to_lower(TextL), string:to_lower(Term)),
+    %                                     TextS = string:sub_string(TextL, Pos + 1),
+    %                                     #panel{body=[
+    %                                             #link{text=wf:f("~s (~s) - ~s", [Subject, Date, TextS]), postback={db_task, Id}, delegate=?MODULE}
+    %                                             ]}
+    %                         end, Tasks),
+    %                      "</dd>"]
+    %             end,
 
-                 case Files of
-                    [] ->
-                        [];
-                    _ ->
-                        ["<dt>Files:</dt><dd>",
-                        lists:map(fun(#db_file{id=Id, path=Subject, size=Size, date=Date}) ->
-                                                                    #panel{body=[
-                                                                            #link{text=wf:f("~s (~s) - ~s", [Subject, sugar:format_file_size( Size ), sugar:date_format(Date)]), 
-                                                                                  postback={db_file, Id}, 
-                                                                                  delegate=?MODULE}
-                                                                            ]}
-                            end, Files),
-                         "</dd>"]
-                end,
-                "</dl>"
-                ]},
+    %              case Files of
+    %                 [] ->
+    %                     [];
+    %                 _ ->
+    %                     ["<dt>Files:</dt><dd>",
+    %                     lists:map(fun(#db_file{id=Id, path=Subject, size=Size, date=Date}) ->
+    %                                                                 #panel{body=[
+    %                                                                         #link{text=wf:f("~s (~s) - ~s", [Subject, sugar:format_file_size( Size ), sugar:date_format(Date)]), 
+    %                                                                               postback={db_file, Id}, 
+    %                                                                               delegate=?MODULE}
+    %                                                                         ]}
+    %                         end, Files),
+    %                      "</dd>"]
+    %             end,
+    %             "</dl>"
+    %             ]},
                     
-    {length(Contacts) + length(Messages) + length(Tasks) + length(Files), #panel{class="", body=[
-                Out,
+    {length(Contacts) + length(Messages) + length(Tasks) + length(Files),
+     #panel{class="",
+            body=[
+                  #panel{body=G}, 
+                  #panel{body=C},
+                  #panel{body=F},
                 #panel{body=#link{body="<i class='icon icon-filter'></i> Create filter with search", postback={save_filter, Term}, delegate=?MODULE}}
                 
                 ]}}.  
