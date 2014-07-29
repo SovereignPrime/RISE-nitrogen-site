@@ -61,16 +61,71 @@ files(Term) ->  % {{{1
         Files ->
     ["<dl class='dl-horizontal'>",
                         "<dt>Files:</dt><dd>",
-                        lists:map(fun(#db_file{id=Id, path=Name, size=Size}) ->
+                        lists:map(fun(#db_file{id=Id,
+                                               path=Name,
+                                               user=UID,
+                                               date=Date,
+                                               size=Size}) ->
+                                          {ok, #db_contact{name=User}} = db:get_contact(UID),
+                                          #panel{body=[
+                                                       #link{text=wf:f("~s (~s) - ~s - ~s", [
+                                                                                   Name,
+                                                                                   sugar:format_file_size(Size),
+                                                                                   User,
+                                                                                   sugar:date_format(Date)
+                                                                                  ]),
+                                                             postback={to_file, Id},
+                                                             delegate=?MODULE}
+                                                      ]}
+                                  end, Files),
+                        "</dd>"]
+    end.
+
+messages(Term) ->  % {{{1
+    {ok, Messages} = db:search_messages(Term),
+    case Messages of
+        [] ->
+            [];
+        Messages ->
+    ["<dl class='dl-horizontal'>",
+                        "<dt>Messages:</dt><dd>",
+                        lists:map(fun(#message{hash=Id, subject=Subject, from=FID, text=Text}) ->
+                                    {ok, #db_contact{name=From}} = db:get_contact_by_address(FID),
                                     #panel{body=[
-                                            #link{text=Name,
-                                                  postback={to_file, Id},
+                                            #link{text=wf:f("~s (~s) ~100s", [
+                                                                        Subject,
+                                                                        From,
+                                                                        Text
+                                                                       ]),
+                                                  postback={to_message, Id},
                                                   delegate=?MODULE}
                                             ]}
-                            end, Files),
+                            end, Messages),
                          "</dd>"]
     end.
 
-text(Term) ->  % {{{1
-    "".
+tasks(Term) ->  % {{{1
+    {ok, Tasks} = db:search_tasks(Term),
+    case Tasks of
+        [] ->
+            [];
+        Tasks ->
+    ["<dl class='dl-horizontal'>",
+                        "<dt>Tasks:</dt><dd>",
+                        lists:map(fun(#db_task{id=Id, name=Subject, text=Text}) ->
+                                    #panel{body=[
+                                            #link{text=wf:f("~s - ~100s", [
+                                                                        Subject,
+                                                                        Text
+                                                                       ]),
+                                                  postback={to_task, Id},
+                                                  delegate=?MODULE}
+                                            ]}
+                            end, Tasks),
+                         "</dd>"]
+    end.
+
+
+%text(Term) ->  % {{{1
+%    "".
 

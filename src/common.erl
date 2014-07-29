@@ -97,7 +97,7 @@ sigma_search_event(search, Term) -> % {{{1
     {ok, {Contacts, Messages, Tasks, Files}} = db:search(Term),
     G = search:groups(Term),
     C = search:contacts(Term),
-    M = search:messages(Term),
+    % M = search:messages(Term),
     T = search:tasks(Term),
     F = search:files(Term),
     % 
@@ -173,6 +173,7 @@ sigma_search_event(search, Term) -> % {{{1
             body=[
                   #panel{body=G}, 
                   #panel{body=C},
+                  #panel{body=T},
                   #panel{body=F},
                 #panel{body=#link{body="<i class='icon icon-filter'></i> Create filter with search", postback={save_filter, Term}, delegate=?MODULE}}
                 

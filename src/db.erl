@@ -194,6 +194,26 @@ search_files(Term) ->  % {{{1
                         qlc:e(QH)
                 end).
 
+search_messages(Term) ->  % {{{1
+    transaction(fun() ->
+                        Incoming = mnesia:table(incoming),
+                        Sent = mnesia:table(sent),
+                        QH = qlc:q([G || G <- qlc:append(Incoming, Sent), 
+                                         G#message.status /= archive,
+                                         % G#message.enc /= 6,
+                                         re:run(G#message.subject, Term, [caseless]) /= nomatch]),
+                        qlc:e(QH)
+                end).
+
+search_tasks(Term) ->  % {{{1
+    transaction(fun() ->
+                        Tab = mnesia:table(db_task),
+                        QH = qlc:q([G || G <- Tab, 
+                                         G#db_task.status /= archive,
+                                         re:run(wf:to_list(G#db_task.name) ++ wf:to_list(G#db_task.text), Term, [caseless]) /= nomatch]),
+                        qlc:e(QH)
+                end).
+
 search(Term) ->  % {{{1
     transaction(fun() ->
                         Contacts = mnesia:foldr(fun(#db_contact{id=Id,
