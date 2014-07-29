@@ -36,8 +36,8 @@ buttons(main) ->  % {{{1
     ]}.
 
 left() ->  % {{{1
-    wf:session(current_group_id, all),
-    {ok, Users} = db:get_contacts_by_group(all),
+    GID = wf:session_default(current_group_id, all),
+    {ok, Users} = db:get_contacts_by_group(GID),
     [
      #panel{id=group_list, class="span2", body=[render_group_list(false)]},
      #panel{id=user_list, class="span2", body=render_contact_list(Users)}
@@ -215,7 +215,6 @@ event({contact, Id}) ->  % {{{1
 
 event({group, Id, Archive}) ->  % {{{1
     {ok, Contacts} = db:get_contacts_by_group(Id, Archive),
-    io:format("User ~p in ~p~n", [Contacts, Id]),
     wf:session(current_group_id, Id),
     wf:update(group_list, render_group_list(Archive)),
     wf:wire(wf:f("group~p", [Id]), #add_class{class="active"}),
@@ -233,11 +232,6 @@ event({write_to, Addr}) ->  % {{{1
     wf:session(current_update, #db_update{id=Id, to=[Addr]}),
     wf:redirect("/edit_update");
 
-event({to_message, UID}) ->  % {{{1
-    wf:session(current_update_id, UID),
-    {ok, #message{subject=Subject}} = db:get_update(UID),
-    wf:session(current_subject, Subject),
-    wf:redirect("/");
 
 event(Click) ->  % {{{1
     io:format("~p~n",[Click]).

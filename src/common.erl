@@ -231,6 +231,20 @@ event({reply, Subject, To}) -> % {{{1
     wf:session(attached_files, undefined),
     wf:redirect("/edit_update");
 
+event({to_message, UID}) ->  % {{{1
+    wf:session(current_update_id, UID),
+    {ok, #message{subject=Subject}} = db:get_update(UID),
+    wf:session(current_subject, Subject),
+    wf:redirect("/");
+
+event({to_contact, ID}) ->  % {{{1
+    wf:session(current_contact_id, ID),
+    wf:redirect("/relationships");
+
+event({to_group, ID}) ->  % {{{1
+    wf:session(current_group_id, ID),
+    wf:redirect("/relationships");
+
 event({to_task, Id}) -> % {{{1
     wf:session(current_task_id, Id),
     {ok, [ Task ]} = db:get_task(Id),

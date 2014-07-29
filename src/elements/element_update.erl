@@ -160,7 +160,7 @@ render_element(#update_element{enc=Enc,
      #panel{class="row-fluid", body=[
                                      #panel{class="span9", body="<b>Subject: </b>" ++ Subject},
                                      #panel{class="span2 cell-right", body=sugar:format_timedelta(TD)}
-                                    ], actions=#event{type=click, postback={to_message, Id} }},
+                                    ], actions=#event{type=click, postback={to_message, Id}, delegate=common }},
      #panel{class="row-fluid", body=[
                                      #panel{class="span12", body=Text}
                                     ]}

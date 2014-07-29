@@ -30,7 +30,7 @@ contacts(Term) ->  % {{{1
                                #panel{body=[
                                             #link{text=wf:f("~s (~s)", [Name, Email]),
                                                   postback={to_contact, Id},
-                                                  delegate=?MODULE}
+                                                  delegate=common}
                                            ]}
                        end, Contacts),
              "</dd>"]}
@@ -49,7 +49,7 @@ groups(Term) ->  % {{{1
                                     #panel{body=[
                                             #link{text=Name,
                                                   postback={to_group, Id},
-                                                  delegate=?MODULE}
+                                                  delegate=common}
                                             ]}
                             end, Groups),
                          "</dd>"]}
@@ -77,8 +77,7 @@ files(Term) ->  % {{{1
                                                                                    User,
                                                                                    sugar:date_format(Date)
                                                                                   ]),
-                                                             postback={to_file, Id},
-                                                             delegate=?MODULE}
+                                                             url="/files"}
                                                       ]}
                                   end, Files),
                         "</dd>"]}
@@ -103,7 +102,7 @@ messages(Term) ->  % {{{1
                                                                         Text
                                                                        ]),
                                                   postback={to_message, Id},
-                                                  delegate=?MODULE}
+                                                  delegate=common}
                                             ]}
                             end, Messages),
                          "</dd>"]}
@@ -125,7 +124,7 @@ tasks(Term) ->  % {{{1
                                                                         Text
                                                                        ]),
                                                   postback={to_task, Id},
-                                                  delegate=?MODULE}
+                                                  delegate=common}
                                             ]}
                             end, Tasks),
                          "</dd>"]}
