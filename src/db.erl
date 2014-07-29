@@ -200,8 +200,14 @@ search_messages(Term) ->  % {{{1
                         Sent = mnesia:table(sent),
                         QH = qlc:q([G || G <- qlc:append(Incoming, Sent), 
                                          G#message.status /= archive,
-                                         % G#message.enc /= 6,
-                                         re:run(G#message.subject, Term, [caseless]) /= nomatch]),
+                                         G#message.enc == 3,
+                                         try
+                                             #message_packet{text=Text} = binary_to_term(G#message.text),
+                                             re:run(wf:to_list(G#message.subject) ++ wf:to_list(Text), Term, [caseless]) /= nomatch
+                                         catch 
+                                             error:badarg ->
+                                                 false
+                                         end]),
                         qlc:e(QH)
                 end).
 
@@ -214,104 +220,6 @@ search_tasks(Term) ->  % {{{1
                         qlc:e(QH)
                 end).
 
-search(Term) ->  % {{{1
-    transaction(fun() ->
-                        Contacts = mnesia:foldr(fun(#db_contact{id=Id,
-                                                                name=Name,
-                                                                email=Email,
-                                                                phone=Phone,
-                                                                status=Status} = Rec,
-                                                    Acc) when Status /= archive ->
-                                                        {ok, GIDS} = db:get_groups_for_user(Id),
-                                                        Groups = lists:map(fun(#db_group{name=Group}) ->
-                                                                                   Group
-                                                                           end, GIDS),
-                                                        Pattern = wf:to_list( Name ) ++ " " ++  wf:to_list( Email ) ++ " " ++ wf:to_list(Phone) ++ lists:flatten(Groups),
-                                                        case string:str(string:to_lower(Pattern),
-                                                                        string:to_lower(Term)) of
-                                                            X when X > 0 ->
-                                                                Acc ++ [{Rec, Groups}];
-                                                            _ ->
-                                                                Acc
-                                                        end;
-                                                   (_, A) ->
-                                                        A
-                                                end, [], db_contact),
-                        Messages = mnesia:foldr(fun(#message{hash=Id,
-                                                             subject=Name,
-                                                             from=From,
-                                                             text=Data,
-                                                             status=Status,
-                                                             enc=3} = Rec, Acc)  when Status /= archive ->
-                                                        [ 
-                                                         #db_contact{id=UID,
-                                                                     name=F}
-                                                        ] = mnesia:index_read(db_contact, From, #db_contact.address),
-                                                        {ok, GIDS} = db:get_groups_for_user(UID),
-                                                        Groups = lists:map(fun(#db_group{name=Group}) ->
-                                                                                   Group
-                                                                           end, GIDS),
-                                                        Text = try
-                                                                   #message_packet{text=T} = binary_to_term(Data),
-                                                                   T
-                                                        catch 
-                                                            error:_ -> ""
-                                                        end,
-                                                        Pattern = wf:to_list(Name)  ++ " " ++  wf:to_list( F )++ " " ++ wf:to_list( Text ) ++ lists:flatten( Groups ),
-                                                        case string:str(string:to_lower(Pattern), string:to_lower(Term)) of
-                                                            X when X > 0 ->
-                                                                Acc ++ [Rec];
-                                                            _ ->
-                                                                Acc
-                                                        end;
-                                                   (_, A) ->
-                                                        A
-                                                end, [], incoming) ++ 
-                        mnesia:foldr(fun(#message{hash=Id, subject=Name, from=From, text=Data, status=Status, enc=3} = Rec, Acc)  when Status /= archive ->
-                                             [ #db_contact{id=UID, name=F} ] = mnesia:index_read(db_contact, From, #db_contact.address),
-                                             {ok, GIDS} = db:get_groups_for_user(UID),
-                                             Groups = lists:map(fun(#db_group{name=Group}) ->
-                                                                        Group
-                                                                end, GIDS),
-                                             #message_packet{text=Text} = binary_to_term(Data),
-                                             Pattern = wf:to_list(Name)  ++ " " ++  wf:to_list( F )++ " " ++ wf:to_list( Text ) ++ lists:flatten( Groups ),
-                                             case string:str(string:to_lower(Pattern), string:to_lower(Term)) of
-                                                 X when X > 0 ->
-                                                     Acc ++ [Rec];
-                                                 _ ->
-                                                     Acc
-                                             end;
-                                        (_, A) ->
-                                             A
-                                     end, [], sent),
-                        Tasks = mnesia:foldr(fun(#db_task{id=Id, name=Name, due=Due, text=Text, status=Status} = Rec, Acc)  when Status /= archive ->
-                                                     Pattern = wf:to_list(Name)  ++ " " ++  wf:to_list( Due )++ " " ++ wf:to_list( Text ),
-                                                     case string:str(string:to_lower(Pattern), string:to_lower(Term)) of
-                                                         X when X > 0 ->
-                                                             Acc ++ [Rec];
-                                                         _ ->
-                                                             Acc
-                                                     end;
-                                                   (_, A) ->
-                                                        A
-                                             end, [], db_task),
-                        TasksU = lists:foldr(fun({#db_contact{id=Id}, _}, A) ->
-                                                     {ok, TIDS} = get_tasks_by_user(Id),
-                                                     A ++ iterate(db_task, TIDS)
-                                             end, [], Contacts), 
-                        Files = mnesia:foldr(fun(#db_file{id=Id, path=Name, date=Due, status=Status} = Rec, Acc)   when Status /= archive ->
-                                                     Pattern = wf:to_list(Name)  ++ " " ++  wf:to_list( sugar:date_format( Due ) ),
-                                                     case string:str(string:to_lower(Pattern), string:to_lower(Term)) of
-                                                         X when X > 0 ->
-                                                             Acc ++ [Rec];
-                                                         _ ->
-                                                             Acc
-                                                        end;
-                                                   (_, A) ->
-                                                        A
-                                             end, [], db_file),
-                        { Contacts, Messages , Tasks ++ TasksU, Files }
-                end).
 get_filters() ->  % {{{1
     transaction(fun() ->
                         mnesia:select(db_search, [{#db_search{text='$1', _='_'}, [], ['$1']}])

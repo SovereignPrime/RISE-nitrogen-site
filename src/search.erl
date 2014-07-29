@@ -19,11 +19,12 @@ dates(Term) ->  % {{{1
 
 contacts(Term) ->  % {{{1
     {ok, Contacts} = db:search_contacts(Term),
+    Len = length(Contacts),
     case Contacts of
         [] ->
-            [];
+            {0, []};
         Contacts ->
-            ["<dl class='dl-horizontal'>",
+            {Len, ["<dl class='dl-horizontal'>",
              "<dt>Contacts:</dt><dd>",
              lists:map(fun(#db_contact{id=Id, name=Name, email=Email}) ->
                                #panel{body=[
@@ -32,16 +33,17 @@ contacts(Term) ->  % {{{1
                                                   delegate=?MODULE}
                                            ]}
                        end, Contacts),
-             "</dd>"]
+             "</dd>"]}
     end.
 
 groups(Term) ->  % {{{1
     {ok, Groups} = db:search_groups(Term),
+    Len = length(Groups),
     case Groups of
         [] ->
-            [];
+            {0, []};
         Groups ->
-    ["<dl class='dl-horizontal'>",
+            {Len, ["<dl class='dl-horizontal'>",
                         "<dt>Groups:</dt><dd>",
                         lists:map(fun(#db_group{id=Id, name=Name}) ->
                                     #panel{body=[
@@ -50,16 +52,17 @@ groups(Term) ->  % {{{1
                                                   delegate=?MODULE}
                                             ]}
                             end, Groups),
-                         "</dd>"]
+                         "</dd>"]}
     end.
 
 files(Term) ->  % {{{1
     {ok, Files} = db:search_files(Term),
+    Len = length(Files),
     case Files of
         [] ->
-            [];
+            {0, []};
         Files ->
-    ["<dl class='dl-horizontal'>",
+            {Len, ["<dl class='dl-horizontal'>",
                         "<dt>Files:</dt><dd>",
                         lists:map(fun(#db_file{id=Id,
                                                path=Name,
@@ -78,19 +81,21 @@ files(Term) ->  % {{{1
                                                              delegate=?MODULE}
                                                       ]}
                                   end, Files),
-                        "</dd>"]
+                        "</dd>"]}
     end.
 
 messages(Term) ->  % {{{1
     {ok, Messages} = db:search_messages(Term),
+    Len = length(Messages),
     case Messages of
         [] ->
-            [];
+            {0, []};
         Messages ->
-    ["<dl class='dl-horizontal'>",
+            {Len, ["<dl class='dl-horizontal'>",
                         "<dt>Messages:</dt><dd>",
-                        lists:map(fun(#message{hash=Id, subject=Subject, from=FID, text=Text}) ->
+                        lists:map(fun(#message{hash=Id, subject=Subject, from=FID, text=Data}) ->
                                     {ok, #db_contact{name=From}} = db:get_contact_by_address(FID),
+                                    #message_packet{text=Text} = binary_to_term(Data),
                                     #panel{body=[
                                             #link{text=wf:f("~s (~s) ~100s", [
                                                                         Subject,
@@ -101,16 +106,17 @@ messages(Term) ->  % {{{1
                                                   delegate=?MODULE}
                                             ]}
                             end, Messages),
-                         "</dd>"]
+                         "</dd>"]}
     end.
 
 tasks(Term) ->  % {{{1
     {ok, Tasks} = db:search_tasks(Term),
+    Len = length(Tasks),
     case Tasks of
         [] ->
-            [];
+            {0, []};
         Tasks ->
-    ["<dl class='dl-horizontal'>",
+            {Len, ["<dl class='dl-horizontal'>",
                         "<dt>Tasks:</dt><dd>",
                         lists:map(fun(#db_task{id=Id, name=Subject, text=Text}) ->
                                     #panel{body=[
@@ -122,10 +128,5 @@ tasks(Term) ->  % {{{1
                                                   delegate=?MODULE}
                                             ]}
                             end, Tasks),
-                         "</dd>"]
+                         "</dd>"]}
     end.
-
-
-%text(Term) ->  % {{{1
-%    "".
-
