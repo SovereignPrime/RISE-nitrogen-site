@@ -94,21 +94,20 @@ render_files() -> % {{{1
             ]}.
 
 sigma_search_event(search, Term) -> % {{{1
-    {LD, D} = search:dates(Term),
-    {LG, G} = search:groups(Term),
-    {LC, C} = search:contacts(Term),
-    {LM, M} = search:messages(Term),
-    {LT, T} = search:tasks(Term),
-    {LF, F} = search:files(Term),
-    {LD + LG + LC + LM + LT + LF,
+    Terms = string:tokens(Term, " "),
+    {Badges, D, G, C, M, T, F} = lists:foldl(fun search:term/2, {[],[],[],[],[],[],[]}, Terms),
+    Ms = search:messages(M),
+    Ts = search:tasks(T),
+    Fs = search:files(F),
+    {[#sigma_search_badge{type="Test", text="Test"}],
      #panel{class="",
             body=[
                   #panel{body=D}, 
                   #panel{body=G}, 
                   #panel{body=C},
-                  #panel{body=M},
-                  #panel{body=T},
-                  #panel{body=F},
+                  #panel{body=Ms},
+                  #panel{body=Ts},
+                  #panel{body=Fs},
                 #panel{body=#link{body="<i class='icon icon-filter'></i> Create filter with search", postback={save_filter, Term}, delegate=?MODULE}}
                 
                 ]}}.  

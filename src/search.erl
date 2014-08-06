@@ -7,6 +7,24 @@
 -include_lib("nitrogen_core/include/wf.hrl").
 -include("records.hrl").
 
+dates(Term, A) when length(Term) == 10 ->
+    case lists:dropwhile(fun({date, _}) -> false;
+                       (_) ->
+                            true
+                    end, A) of
+        [] -> 
+            dates(Term);
+        [{date, Date}] ->
+            {[{date, DateN}], []} = dates(Term),
+            if DateN > Date ->
+                   {[{daterange, {Date, DateN}}], []};
+               true ->
+                   {[{daterange, {DateN, Date}}], []}
+            end
+    end;
+dates(Term, A) ->
+    dates(Term).
+
 dates(Term) when length(Term) == 1 ->  % {{{1
     NTerm = "0" ++ Term,
     dates(NTerm);
@@ -21,7 +39,7 @@ dates(Term) when length(Term) == 4 ->  % {{{1
 dates(Term) when length(Term) == 10 ->  % {{{1
     Date = sugar:date_from_string(Term),
     {ok,  Dates} = db:search_dates(Date),
-    format_dates(Dates);
+    {[{date, Date}], []};
 dates(Term) ->  % {{{1
     {0, ""}.
 
@@ -63,14 +81,12 @@ groups(Term) ->  % {{{1
                          "</dd>"]}
     end.
 
-files(Term) ->  % {{{1
-    {ok, Files} = db:search_files(Term),
-    Len = length(Files),
+files(Files) ->  % {{{1
     case Files of
         [] ->
-            {0, []};
+            [];
         Files ->
-            {Len, ["<dl class='dl-horizontal'>",
+            ["<dl class='dl-horizontal'>",
                         "<dt>Files:</dt><dd>",
                         lists:map(fun(#db_file{id=Id,
                                                path=Name,
@@ -88,17 +104,15 @@ files(Term) ->  % {{{1
                                                              url="/files"}
                                                       ]}
                                   end, Files),
-                        "</dd>"]}
+                        "</dd>"]
     end.
 
-messages(Term) ->  % {{{1
-    {ok, Messages} = db:search_messages(Term),
-    Len = length(Messages),
+messages(Messages) ->  % {{{1
     case Messages of
         [] ->
-            {0, []};
+            [];
         Messages ->
-            {Len, ["<dl class='dl-horizontal'>",
+            ["<dl class='dl-horizontal'>",
                         "<dt>Messages:</dt><dd>",
                         lists:map(fun(#message{hash=Id, subject=Subject, from=FID, text=Data}) ->
                                     {ok, #db_contact{name=From}} = db:get_contact_by_address(FID),
@@ -113,17 +127,15 @@ messages(Term) ->  % {{{1
                                                   delegate=common}
                                             ]}
                             end, Messages),
-                         "</dd>"]}
+                         "</dd>"]
     end.
 
-tasks(Term) ->  % {{{1
-    {ok, Tasks} = db:search_tasks(Term),
-    Len = length(Tasks),
+tasks(Tasks) ->  % {{{1
     case Tasks of
         [] ->
-            {0, []};
+            [];
         Tasks ->
-            {Len, ["<dl class='dl-horizontal'>",
+            ["<dl class='dl-horizontal'>",
                         "<dt>Tasks:</dt><dd>",
                         lists:map(fun(#db_task{id=Id, name=Subject, text=Text}) ->
                                     #panel{body=[
@@ -135,13 +147,13 @@ tasks(Term) ->  % {{{1
                                                   delegate=common}
                                             ]}
                             end, Tasks),
-                         "</dd>"]}
+                         "</dd>"]
     end.
 
-format_dates([]) ->
-    {0, ""};
-format_dates(Dates) ->
-    {length(Dates), ["<dl class='dl-horizontal'>",
+format_dates([]) ->  % {{{1
+    {[], ""};
+format_dates(Dates) ->  % {{{1
+    {[], ["<dl class='dl-horizontal'>",
                         "<dt>Dates:</dt><dd>",
                         lists:foldl(fun(Date, A) ->
                                     A ++ [#panel{body=[
@@ -154,3 +166,20 @@ format_dates(Dates) ->
 
 
 
+term(Term, {OB, OD, OG, OC, OM, OT, OF}) ->
+    {LD, D} = search:dates(Term, OB),
+    {LG, G} = search:groups(Term),
+    {LC, C} = search:contacts(Term),
+
+    {ok, M} = db:search_messages(Term),
+    {ok, T} = db:search_tasks(Term),
+    {ok, F} = db:search_files(Term),
+
+    {lists:usort(OB ++ []),
+     lists:usort(OD ++ D),
+     lists:usort(OG ++ G),
+     lists:usort(OC ++ C),
+     lists:usort(OM ++ M),
+     lists:usort(OT ++ T),
+     lists:usort(OF ++ F)}.
+    
