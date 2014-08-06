@@ -3,39 +3,44 @@
 -include_lib("bitmessage/include/bm.hrl").
 -include("protokol.hrl").
 
-date_format(Str) when is_list(Str)->
+date_format(Str) when is_list(Str)->  %{{{1
     Str;
-date_format({Y, M, D}) ->
+date_format({Y, M, D}) ->  %{{{1
 	%% might be worth replacing with qdate:to_string()
    	lists:flatten(io_lib:format("~4..0w-~2..0w-~2..0w", [Y, M, D])).
 
-date_to_timestamps(Str) when is_list(Str) ->
+date_from_string(Str) when is_list(Str) ->  % {{{1
     [Y, M, D] = string:tokens(Str, "-"),
-    date_to_timestamps({list_to_integer(Y), list_to_integer(M), list_to_integer(D)});
-date_to_timestamps(Date) when is_tuple(Date), size(Date) == 3 ->
-    {datetime_to_timestamp({Date, {0,0,0}}), datetime_to_timestamp({Date, {23, 59, 59}})}.
+    {wf:to_integer(Y), wf:to_integer(M), wf:to_integer(D)};
+date_from_string(Any) ->  % {{{1
+    Any.
 
-datetime_to_timestamp(DateTime) ->
+
+datetime_to_timestamp(DateTime) ->  %{{{1
     calendar:datetime_to_gregorian_seconds(DateTime) -
     calendar:datetime_to_gregorian_seconds({{1970, 1, 1}, {0, 0, 0}}).
 
-format_file_size(S) when S > 1000 * 1000 * 1000 ->
+timestamp_to_datetime(TS) when is_integer(TS) -> % {{{1
+    calendar:gregorian_seconds_to_datetime(TS +
+    calendar:datetime_to_gregorian_seconds({{1970, 1, 1}, {0, 0, 0}})).
+
+format_file_size(S) when S > 1000 * 1000 * 1000 ->  %{{{1
     wf:f("~.2fG", [ S  / bm_types:pow(1024, 3)]);
-format_file_size(S) when S >  1000 * 1000 ->
+format_file_size(S) when S >  1000 * 1000 ->  %{{{1
     wf:f("~.2fM", [S / bm_types:pow(1024, 2)]);
-format_file_size(S) when S > 1000 ->
+format_file_size(S) when S > 1000 ->  %{{{1
     wf:f("~.2fK", [S / 1024]);
-format_file_size(S) ->
+format_file_size(S) ->  %{{{1
     wf:f("~pb", [ S ]). 
 
-format_timedelta(TD) when TD <  3600 ->
+format_timedelta(TD) when TD <  3600 ->  %{{{1
     wf:f("~p mins ago", [wf:to_integer(TD/60)]);
-format_timedelta(TD) when TD < 24 * 3600 ->
+format_timedelta(TD) when TD < 24 * 3600 ->  %{{{1
     wf:f("~p hrs ago", [wf:to_integer(TD/3600)]);
-format_timedelta(TD) ->
+format_timedelta(TD) ->  %{{{1
     wf:f("~p days ago", [wf:to_integer(TD/(24 * 3600))]).
 
-sort_by_timestamp(Updates) ->
+sort_by_timestamp(Updates) ->  %{{{1
     lists:sort(fun(#message{text=A}, #message{text=B}) ->
                        F = fun(E) -> 
                                    try binary_to_term(E) of
