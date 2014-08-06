@@ -7,7 +7,7 @@
 -include_lib("nitrogen_core/include/wf.hrl").
 -include("records.hrl").
 
-dates(Term, A) when length(Term) == 10 ->
+dates(Term, A) when length(Term) == 10 ->  % {{{1
     case lists:dropwhile(fun({date, _}) -> false;
                        (_) ->
                             true
@@ -22,7 +22,7 @@ dates(Term, A) when length(Term) == 10 ->
                    {[{daterange, {DateN, Date}}], []}
             end
     end;
-dates(Term, A) ->
+dates(Term, A) ->  % {{{1
     dates(Term).
 
 dates(Term) when length(Term) == 1 ->  % {{{1
@@ -31,24 +31,24 @@ dates(Term) when length(Term) == 1 ->  % {{{1
 dates(Term) when length(Term) == 2 ->  % {{{1
     T = wf:to_integer(Term),
     {ok, Dates} = db:search_dates({0, T, T}),
-    format_dates(Dates);
+    {[], Dates };
 dates(Term) when length(Term) == 4 ->  % {{{1
     T = wf:to_integer(Term),
     {ok, Dates}= db:search_dates({T, 0, 0}),
-    format_dates(Dates);
+    {[], Dates};
 dates(Term) when length(Term) == 10 ->  % {{{1
     Date = sugar:date_from_string(Term),
     {ok,  Dates} = db:search_dates(Date),
     {[{date, Date}], []};
 dates(Term) ->  % {{{1
-    {0, ""}.
+    {[], ""}.
 
 contacts(Term) ->  % {{{1
     {ok, Contacts} = db:search_contacts(Term),
-    Len = length(Contacts),
+    Len = [],
     case Contacts of
         [] ->
-            {0, []};
+            {[], []};
         Contacts ->
             {Len, ["<dl class='dl-horizontal'>",
              "<dt>Contacts:</dt><dd>",
@@ -67,9 +67,9 @@ groups(Term) ->  % {{{1
     Len = length(Groups),
     case Groups of
         [] ->
-            {0, []};
+            {[], []};
         Groups ->
-            {Len, ["<dl class='dl-horizontal'>",
+            {[], ["<dl class='dl-horizontal'>",
                         "<dt>Groups:</dt><dd>",
                         lists:map(fun(#db_group{id=Id, name=Name}) ->
                                     #panel{body=[
@@ -151,9 +151,9 @@ tasks(Tasks) ->  % {{{1
     end.
 
 format_dates([]) ->  % {{{1
-    {[], ""};
+    "";
 format_dates(Dates) ->  % {{{1
-    {[], ["<dl class='dl-horizontal'>",
+    ["<dl class='dl-horizontal'>",
                         "<dt>Dates:</dt><dd>",
                         lists:foldl(fun(Date, A) ->
                                     A ++ [#panel{body=[
@@ -162,24 +162,24 @@ format_dates(Dates) ->  % {{{1
                                                  delegate=common}
                                             ]}]
                             end, [], Dates),
-                         "</dd>"]}.
+                         "</dd>"].
 
 
 
-term(Term, {OB, OD, OG, OC, OM, OT, OF}) ->
+term(Term, {OB, OD, OG, OC, _OM, _OT, _OF}) ->  % {{{1
     {LD, D} = search:dates(Term, OB),
     {LG, G} = search:groups(Term),
     {LC, C} = search:contacts(Term),
-
+    B = LD ++ LG ++ LC,
     {ok, M} = db:search_messages(Term),
     {ok, T} = db:search_tasks(Term),
     {ok, F} = db:search_files(Term),
 
-    {lists:usort(OB ++ []),
+    {lists:usort(OB ++ B),
      lists:usort(OD ++ D),
      lists:usort(OG ++ G),
      lists:usort(OC ++ C),
-     lists:usort(OM ++ M),
-     lists:usort(OT ++ T),
-     lists:usort(OF ++ F)}.
+     lists:usort(M),
+     lists:usort(T),
+     lists:usort(F)}.
     

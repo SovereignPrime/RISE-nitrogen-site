@@ -96,13 +96,31 @@ render_files() -> % {{{1
 sigma_search_event(search, Term) -> % {{{1
     Terms = string:tokens(Term, " "),
     {Badges, D, G, C, M, T, F} = lists:foldl(fun search:term/2, {[],[],[],[],[],[],[]}, Terms),
+    Ds = search:format_dates(D),
     Ms = search:messages(M),
     Ts = search:tasks(T),
     Fs = search:files(F),
-    {[#sigma_search_badge{type="Test", text="Test"}],
+    Bs = lists:map(fun({date, Date}) ->
+                           #sigma_search_badge{type="Date", text=sugar:date_format(Date)};
+                      ({daterange, {SDate, EDate}}) ->
+                           #sigma_search_badge{type="Date range", text=sugar:date_format(SDate) 
+                                               ++ " " ++
+                                               sugar:date_format(EDate)
+                                              };
+                      ({group, Group}) ->
+                           #sigma_search_badge{type="Group", text=Group};
+                      ({contact, Contact}) ->
+                           #sigma_search_badge{type="Contact", text=Contact};
+                      ({term, Str}) ->
+                           #sigma_search_badge{type="Other", text=Str};
+                      (_) ->
+                           ""
+                   end, Badges),
+
+    {Bs,
      #panel{class="",
             body=[
-                  #panel{body=D}, 
+                  #panel{body=Ds}, 
                   #panel{body=G}, 
                   #panel{body=C},
                   #panel{body=Ms},
