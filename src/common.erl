@@ -94,14 +94,16 @@ render_files() -> % {{{1
             ]}.
 
 sigma_search_event(search, Term) -> % {{{1
+    {LD, D} = search:dates(Term),
     {LG, G} = search:groups(Term),
     {LC, C} = search:contacts(Term),
     {LM, M} = search:messages(Term),
     {LT, T} = search:tasks(Term),
     {LF, F} = search:files(Term),
-    {LG + LC + LM + LT + LF,
+    {LD + LG + LC + LM + LT + LF,
      #panel{class="",
             body=[
+                  #panel{body=D}, 
                   #panel{body=G}, 
                   #panel{body=C},
                   #panel{body=M},

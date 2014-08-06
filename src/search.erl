@@ -10,12 +10,20 @@
 dates(Term) when length(Term) == 1 ->  % {{{1
     NTerm = "0" ++ Term,
     dates(NTerm);
-dates(Term) when length(Term) == 2; length(Term) == 4 ->  % {{{1
-    db:get_dates(Term);
+dates(Term) when length(Term) == 2 ->  % {{{1
+    T = wf:to_integer(Term),
+    {ok, Dates} = db:search_dates({0, T, T}),
+    format_dates(Dates);
+dates(Term) when length(Term) == 4 ->  % {{{1
+    T = wf:to_integer(Term),
+    {ok, Dates}= db:search_dates({T, 0, 0}),
+    format_dates(Dates);
 dates(Term) when length(Term) == 10 ->  % {{{1
-    "";
+    Date = sugar:date_from_string(Term),
+    {ok,  Dates} = db:search_dates(Date),
+    format_dates(Dates);
 dates(Term) ->  % {{{1
-    "".
+    {0, ""}.
 
 contacts(Term) ->  % {{{1
     {ok, Contacts} = db:search_contacts(Term),
@@ -129,3 +137,20 @@ tasks(Term) ->  % {{{1
                             end, Tasks),
                          "</dd>"]}
     end.
+
+format_dates([]) ->
+    {0, ""};
+format_dates(Dates) ->
+    {length(Dates), ["<dl class='dl-horizontal'>",
+                        "<dt>Dates:</dt><dd>",
+                        lists:foldl(fun(Date, A) ->
+                                    A ++ [#panel{body=[
+                                            #link{text=sugar:date_format(Date),
+                                                 postback={to_date, Date},
+                                                 delegate=common}
+                                            ]}]
+                            end, [], Dates),
+                         "</dd>"]}.
+
+
+
