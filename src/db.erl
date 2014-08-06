@@ -65,6 +65,11 @@ update(2) -> % {{{1
 	end.
 
 
+qlc_result(QH) ->  % {{{1
+    transaction(fun() ->
+                        qlc:e(QH)
+                end).
+
 %%%
 %% Get new id fot Type
 %%%
@@ -162,11 +167,23 @@ get_archive(Type) when Type == db_expense ->  % {{{1
                 mnesia:index_read(Type, archive, #db_expense.status)
         end).
 
-% get_dates({Y, M, D}) ->
-%     transaction(fun() ->
-%                         FromUpdates = mnesia:select(db_update, 
-%                                                     [{#db_update{date={Y, _, _}
-%                         FromTasks = mnesia:select(db_task, [{#db_task{due='$1', _='_'}, [{
+search_dates({0, M, D}=Date) ->  % {{{1
+    MS = wf:to_list(M),
+    DS = wf:to_list(D),
+    get_by_date({'or', {'==', '$2', M}, {'==', '$3', D}},
+                "\\d{4}-" ++ MS ++ "-\\d{2}|\\d{4}-\\d{2}-" ++ DS,
+                Date);
+search_dates({Y, 0, 0}=Date) ->  % {{{1
+    YS = wf:to_list(Y),
+    get_by_date({'==', '$3', Y}, 
+                YS ++ "-\\d{2}-\\d{2}",
+                Date);
+search_dates({Y, M, D}=Date) when M > 12; D > 31 ->  % {{{1
+    [];
+search_dates({Y, M, D}=Date) ->  % {{{1
+    get_by_date([{'==', '$1', Y}, {'==', '$2', M}, {'==', '$3', D}], 
+                sugar:date_format(Date),
+                Date).
 
 search_groups(Term) ->  % {{{1
     transaction(fun() ->
@@ -556,8 +573,8 @@ add_user_to_group(Group, User) ->  % {{{1
 
 get_contacts_by_group(Group) ->  % {{{1
     get_contacts_by_group(Group, false).
-get_contacts_by_group(my, false) ->
-    transaction(fun() ->  % {{{1
+get_contacts_by_group(my, false) -> % {{{1
+    transaction(fun() -> 
                 mnesia:match_object(#db_contact{my=true, _='_'})
         end);
 get_contacts_by_group(all, false) ->  % {{{1
@@ -854,7 +871,7 @@ create_account(User, Passwd, Address) ->  % {{{1
 
 transaction(Fun) ->  % {{{1
    case mnesia:transaction(Fun) of
-        {error, R} ->
+        {aborted, R} ->
             {error, R};
         {atomic, '$end_of_table'} ->
             {ok, [], undefined};
@@ -908,3 +925,62 @@ search_parent_rec(Id, PId) ->  % {{{1
 
 verify_create_table({atomic, ok}) -> ok;  % {{{1
 verify_create_table({aborted, {already_exists, _Table}}) -> ok. % {{{1
+
+filter_messages_by_date({0, M, D}, #message{text=Data, enc=3, status=S}, A) when S /= archive->  % {{{1
+    try
+        #message_packet{time=TS} = binary_to_term(Data),
+        case sugar:timestamp_to_datetime(TS) of
+            {{_, MU, DU} = Date, _} when MU == M; DU == D ->
+                A ++ [Date];
+            _ ->
+                A
+        end
+    catch
+        error:_ ->
+            A
+    end;
+filter_messages_by_date({Y, 0, 0}, #message{text=Data, enc=3, status=S}, A) when S /= archive->  % {{{1
+    try
+        #message_packet{time=TS} = binary_to_term(Data),
+        case sugar:timestamp_to_datetime(TS) of
+            {{Y, _, _} = Date, _} ->
+                A ++ [Date];
+            _ ->
+                A
+        end
+    catch
+        error:_ ->
+            A
+    end;
+filter_messages_by_date(Date, #message{text=Data, enc=3, status=S}, A) when S /= archive->  % {{{1
+    try
+        #message_packet{time=TS} = binary_to_term(Data),
+        case sugar:timestamp_to_datetime(TS) of
+            {Date, _} ->
+                A ++ [Date];
+            _ ->
+                A
+        end
+    catch
+        error:_ ->
+            A
+    end;
+filter_messages_by_date(_,_, A) ->  % {{{1
+    A.
+
+get_by_date(FilePred, TaskRe, Date) ->  % {{{1
+    transaction(fun() ->
+                        FilesH = mnesia:table(db_file, [{traverse, {select, [{#db_file{date={'$1', '$2', '$3'}, status='$4', _='_'}, [FilePred, {'/=', '$4', archive}],['$_']}]}}]),
+                        Incoming = mnesia:foldl(fun(Upd, A) -> filter_messages_by_date(Date, Upd, A) end, [], incoming),
+                        Sent = mnesia:foldl(fun(Upd, A) -> filter_messages_by_date(Date, Upd, A) end, [], sent),
+                        TasksH1 = mnesia:table(db_task, [{traverse, {select, [{#db_task{status='$1', _='_'}, [ {'/=', '$1', archive}],['$_']}]}}]),
+                        TasksH2 = qlc:q([T || #db_task{due=DT}=T <- TasksH1,
+                                              re:run(DT, TaskRe) /= nomatch]),
+                        FromFilesH = qlc:q([DT || #db_file{date=DT} <- FilesH], [unique]),
+                        FromTasksH = qlc:q([sugar:date_from_string(DT) || #db_task{due=DT} <- TasksH2], [unique]),
+
+
+                        Rest = qlc:e(qlc:append([FromFilesH, FromTasksH])),
+                        lists:usort(Incoming ++ Sent ++ Rest)
+
+                end).
