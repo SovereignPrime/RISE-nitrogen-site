@@ -8,38 +8,65 @@
 -include("records.hrl").
 
 dates(Term, A) when length(Term) == 10 ->  % {{{1
-    case lists:dropwhile(fun({date, _}) -> false;
-                       (_) ->
-                            true
-                    end, A) of
-        [] -> 
-            dates(Term);
-        [{date, Date}] ->
-            {[{date, DateN}], []} = dates(Term),
-            if DateN > Date ->
-                   {[{daterange, {Date, DateN}}], []};
-               true ->
-                   {[{daterange, {DateN, Date}}], []}
+    ADict = dict:from_list(A),
+    case dict:is_key(daterange, ADict) of
+        true ->
+            {A, []};
+        false ->
+            case dict:find(date, ADict) of
+                error ->
+                    {B, Ts} = dates(Term),
+                    {A ++ B,  Ts};
+                {ok, Date} ->
+                    {[{date, DateN}], []} = dates(Term),
+                    ADict1 = dict:erase(date, ADict),
+                    if DateN > Date ->
+                           {dict:to_list(dict:append_list(daterange, {Date, DateN}, ADict1)), []};
+                       true ->
+                           {dict:to_list(dict:append_list(daterange, {DateN, Date}, ADict1)), []}
+                    end
             end
     end;
 dates(Term, A) ->  % {{{1
-    dates(Term).
+    ADict = dict:from_list(A),
+    case dict:is_key(daterange, ADict) of
+        true ->
+            {A,  []};
+        false ->
+            {B, Ts} = dates(Term),
+            {A ++ B,  Ts}
+    end.
 
 dates(Term) when length(Term) == 1 ->  % {{{1
     NTerm = "0" ++ Term,
     dates(NTerm);
 dates(Term) when length(Term) == 2 ->  % {{{1
-    T = wf:to_integer(Term),
-    {ok, Dates} = db:search_dates({0, T, T}),
-    {[], Dates };
+    try
+        T = wf:to_integer(Term),
+        {ok, Dates} = db:search_dates({0, T, T}),
+        {[], Dates }
+    catch 
+        error:badarg ->
+            {[], []}
+    end;
 dates(Term) when length(Term) == 4 ->  % {{{1
-    T = wf:to_integer(Term),
-    {ok, Dates}= db:search_dates({T, 0, 0}),
-    {[], Dates};
+    try
+        T = wf:to_integer(Term),
+        {ok, Dates}= db:search_dates({T, 0, 0}),
+        {[], Dates}
+    catch 
+        error:badarg ->
+            {[], []}
+    end;
 dates(Term) when length(Term) == 10 ->  % {{{1
-    Date = sugar:date_from_string(Term),
-    {ok,  Dates} = db:search_dates(Date),
-    {[{date, Date}], []};
+    try
+        Date = sugar:date_from_string(Term),
+        {ok,  Dates} = db:search_dates(Date),
+        {[{date, Date}], []}
+    catch 
+        error:badarg ->
+            {[], []}
+    end;
 dates(Term) ->  % {{{1
     {[], ""}.
 
@@ -171,11 +198,12 @@ term(Term, {OB, OD, OG, OC, _OM, _OT, _OF}) ->  % {{{1
     {LG, G} = search:groups(Term),
     {LC, C} = search:contacts(Term),
     B = LD ++ LG ++ LC,
+    wf:wire(#console_log{text=B}),
     {ok, M} = db:search_messages(Term),
     {ok, T} = db:search_tasks(Term),
     {ok, F} = db:search_files(Term),
 
-    {lists:usort(OB ++ B),
+    {lists:usort(B),
      lists:usort(OD ++ D),
      lists:usort(OG ++ G),
      lists:usort(OC ++ C),

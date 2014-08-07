@@ -69,8 +69,8 @@ connection_status() -> % {{{1
 search() -> %{{{1
     #sigma_search{tag=search, 
                   placeholder="Search", 
-                  class="input-append input-block-level search", 
-                  textbox_class="input-block-level",
+                  class="input-append input-prepend input-block-level search", 
+                  textbox_class="",
                   search_button_class="btn btn-inverse search-btn", 
                   search_button_text="<i class='icon icon-search'></i>",
                   x_button_class="search-x",

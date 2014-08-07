@@ -106,19 +106,23 @@ a.current:hover {
     position: absolute;
     padding: 3px;
     background-color: #fff;
-    width:82.7%;
+    width:80.8%;
     margin-top: -10px;
     border:#000 1px solid;
     border-top: #000 0px solid;
     border-radius:  1px 1px 0;
     z-index:999;
 }
+
+.sigma_search_badge {
+    background-color: #000;
+}
+
 .search-x {
     display: none;
     visibility:hidden;
 }
 .input-prepend input {
-    swidth: 100%;
     border: 0px #000 solid;
     background-color:transparent;
 }
@@ -241,7 +245,8 @@ img.wfid_img_vcard {
 /* Fix rendering and cut-off of search button */
 .sigma_search_button {
 	position:relative;
-	right: 20px;
+    height:100%;
+	sright: 20px;
 	z-index:100;
 }
 
