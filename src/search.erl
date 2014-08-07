@@ -8,33 +8,31 @@
 -include("records.hrl").
 
 dates(Term, A) when length(Term) == 10 ->  % {{{1
-    ADict = dict:from_list(A),
-    case dict:is_key(daterange, ADict) of
+    case dict:is_key(daterange, A) of
         true ->
             {A, []};
         false ->
-            case dict:find(date, ADict) of
+            case dict:find(date, A) of
                 error ->
-                    {B, Ts} = dates(Term),
-                    {A ++ B,  Ts};
+                    {[{date, Date}], Ts} = dates(Term),
+                    {dict:append_list(date, Date, A),  Ts};
                 {ok, Date} ->
                     {[{date, DateN}], []} = dates(Term),
-                    ADict1 = dict:erase(date, ADict),
+                    ADict1 = dict:erase(date, A),
                     if DateN > Date ->
-                           {dict:to_list(dict:append_list(daterange, {Date, DateN}, ADict1)), []};
+                           {dict:append_list(daterange, {Date, DateN}, ADict1), []};
                        true ->
-                           {dict:to_list(dict:append_list(daterange, {DateN, Date}, ADict1)), []}
+                           {dict:append_list(daterange, {DateN, Date}, ADict1), []}
                     end
             end
     end;
 dates(Term, A) ->  % {{{1
-    ADict = dict:from_list(A),
-    case dict:is_key(daterange, ADict) of
+    case dict:is_key(daterange, A) of
         true ->
             {A,  []};
         false ->
-            {B, Ts} = dates(Term),
-            {A ++ B,  Ts}
+            {{date, Date}, Ts} = dates(Term),
+            {dict:append_list(date, Date, A),  Ts}
     end.
 
 dates(Term) when length(Term) == 1 ->  % {{{1
@@ -195,18 +193,18 @@ format_dates(Dates) ->  % {{{1
 
 term(Term, {OB, OD, OG, OC, _OM, _OT, _OF}) ->  % {{{1
     {LD, D} = search:dates(Term, OB),
-    {LG, G} = search:groups(Term),
-    {LC, C} = search:contacts(Term),
-    B = LD ++ LG ++ LC,
+    %{LG, G} = search:groups(Term, LD),
+    %{LC, C} = search:contacts(Term, LG),
+    B = LD, % ++ LG ++ LC,
     wf:wire(#console_log{text=B}),
     {ok, M} = db:search_messages(Term),
     {ok, T} = db:search_tasks(Term),
     {ok, F} = db:search_files(Term),
 
-    {lists:usort(B),
+    {B,
      lists:usort(OD ++ D),
-     lists:usort(OG ++ G),
-     lists:usort(OC ++ C),
+     lists:usort(OG), % ++ G),
+     lists:usort(OC), % ++ C),
      lists:usort(M),
      lists:usort(T),
      lists:usort(F)}.
