@@ -73,9 +73,9 @@ search() -> %{{{1
                   textbox_class="",
                   search_button_class="btn btn-inverse search-btn", 
                   search_button_text="<i class='icon icon-search'></i>",
-                  x_button_class="search-x",
-                  clear_button_class="search-x",
-                  clear_button_text="",
+                  %x_button_class="search-x",
+                  clear_button_class="pull-right",
+                  clear_button_text="c",
                   results_summary_class="search-results",
                   delegate=?MODULE}.
 
