@@ -31,8 +31,8 @@ dates(Term, A) ->  % {{{1
         true ->
             {A,  []};
         false ->
-            {{date, Date}, Ts} = dates(Term),
-            {dict:append_list(date, Date, A),  Ts}
+            {[], Ts} = dates(Term),
+            {A,  Ts}
     end.
 
 dates(Term) when length(Term) == 1 ->  % {{{1
@@ -68,42 +68,60 @@ dates(Term) when length(Term) == 10 ->  % {{{1
 dates(Term) ->  % {{{1
     {[], ""}.
 
-contacts(Term) ->  % {{{1
-    {ok, Contacts} = db:search_contacts(Term),
-    Len = [],
-    case Contacts of
-        [] ->
-            {[], []};
-        Contacts ->
-            {Len, ["<dl class='dl-horizontal'>",
-             "<dt>Contacts:</dt><dd>",
-             lists:map(fun(#db_contact{id=Id, name=Name, email=Email}) ->
-                               #panel{body=[
-                                            #link{text=wf:f("~s (~s)", [Name, Email]),
-                                                  postback={to_contact, Id},
-                                                  delegate=common}
-                                           ]}
-                       end, Contacts),
-             "</dd>"]}
+contacts(Term, A) ->  % {{{1
+    case {dict:is_key(group, A), dict:is_key(contact, A)} of
+        {false, false} ->
+            {ok, Contacts} = db:search_contacts(Term),
+            case Contacts of
+                [] ->
+                    {A, []};
+                Contacts ->
+                    case lists:keyfind(Term, #db_contact.name, Contacts) of
+                        false ->
+                            {A, ["<dl class='dl-horizontal'>",
+                                 "<dt>Contacts:</dt><dd>",
+                                 lists:map(fun(#db_contact{id=Id, name=Name, email=Email}) ->
+                                                   #panel{body=[
+                                                                #link{text=wf:f("~s (~s)", [Name, Email]),
+                                                                      postback={search, Name},
+                                                                      delegate=common}
+                                                               ]}
+                                           end, Contacts),
+                                 "</dd>"]};
+                        #db_contact{name=Term} ->
+                            {dict:append_list(group, Term, A), []}
+                    end
+            end;
+        _ ->
+            {A, []}
     end.
 
-groups(Term) ->  % {{{1
-    {ok, Groups} = db:search_groups(Term),
-    Len = length(Groups),
-    case Groups of
-        [] ->
-            {[], []};
-        Groups ->
-            {[], ["<dl class='dl-horizontal'>",
-                        "<dt>Groups:</dt><dd>",
-                        lists:map(fun(#db_group{id=Id, name=Name}) ->
-                                    #panel{body=[
-                                            #link{text=Name,
-                                                  postback={to_group, Id},
-                                                  delegate=common}
-                                            ]}
-                            end, Groups),
-                         "</dd>"]}
+groups(Term, A) ->  % {{{1
+    case {dict:is_key(group, A), dict:is_key(contact, A)} of
+        {false, false} ->
+            {ok, Groups} = db:search_groups(Term),
+            case Groups of
+                [] ->
+                    {A, []};
+                Groups ->
+                    case lists:keyfind(Term, #db_group.name, Groups) of
+                        false ->
+                            {A, ["<dl class='dl-horizontal'>",
+                                 "<dt>Groups:</dt><dd>",
+                                 lists:map(fun(#db_group{id=Id, name=Name}) ->
+                                                   #panel{body=[
+                                                                #link{text=Name,
+                                                                      postback={search, Name},
+                                                                      delegate=common}
+                                                               ]}
+                                           end, Groups),
+                                 "</dd>"]};
+                        #db_group{name=Term} ->
+                            {dict:append_list(group, Term, A), []}
+                    end
+            end;
+        _ ->
+            {A, []}
     end.
 
 files(Files) ->  % {{{1
@@ -183,7 +201,7 @@ format_dates(Dates) ->  % {{{1
                         lists:foldl(fun(Date, A) ->
                                     A ++ [#panel{body=[
                                             #link{text=sugar:date_format(Date),
-                                                 postback={to_date, Date},
+                                                 postback={search, sugar:date_format(Date)},
                                                  delegate=common}
                                             ]}]
                             end, [], Dates),
@@ -193,18 +211,17 @@ format_dates(Dates) ->  % {{{1
 
 term(Term, {OB, OD, OG, OC, _OM, _OT, _OF}) ->  % {{{1
     {LD, D} = search:dates(Term, OB),
-    %{LG, G} = search:groups(Term, LD),
-    %{LC, C} = search:contacts(Term, LG),
-    B = LD, % ++ LG ++ LC,
-    wf:wire(#console_log{text=B}),
+    {LG, G} = search:groups(Term, LD),
+    {LC, C} = search:contacts(Term, LG),
+    %B = LD, % ++ LG ++ LC,
     {ok, M} = db:search_messages(Term),
     {ok, T} = db:search_tasks(Term),
     {ok, F} = db:search_files(Term),
 
-    {B,
+    {LC,
      lists:usort(OD ++ D),
-     lists:usort(OG), % ++ G),
-     lists:usort(OC), % ++ C),
+     lists:usort(OG ++ G),
+     lists:usort(OC ++ C),
      lists:usort(M),
      lists:usort(T),
      lists:usort(F)}.
