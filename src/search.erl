@@ -213,8 +213,8 @@ term(Term, {OB, OD, OG, OC, _OM, _OT, _OF}) ->  % {{{1
     {LD, D} = search:dates(Term, OB),
     {LG, G} = search:groups(Term, LD),
     {LC, C} = search:contacts(Term, LG),
-    {ok, M} = db:search_messages(Term),
-    {ok, T} = db:search_tasks(Term),
+    {ok, M} = db:search_messages(Term, LC),
+    {ok, T} = db:search_tasks(Term, LC),
     {ok, F} = db:search_files(Term, LC),
 
     {LC,
