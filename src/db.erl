@@ -10,7 +10,7 @@
 -define(V(Response), verify_create_table(Response)).
 
 install(Pid)->  % {{{1
-    ?V(mnesia:create_table(db_group, [{disc_copies, [node()]}, {attributes, record_info(fields, db_group)}, {type, ordered_set}])),
+    ?V(mnesia:create_table(db_group, [{disc_copies, [node()]}, {attributes, record_info(fields, db_group)}, {type, ordered_set}, {index, [name]}])),
     ?V(mnesia:create_table(db_contact, [{disc_copies, [node()]}, {attributes, record_info(fields, db_contact)}, {type, ordered_set}, {index, [address]}])),
     ?V(mnesia:create_table(db_task, [{disc_copies, [node()]}, {attributes, record_info(fields, db_task)}, {type, ordered_set}])),
     ?V(mnesia:create_table(db_file, [{disc_copies, [node()]}, {attributes, record_info(fields, db_file)}, {type, ordered_set}])),
@@ -32,7 +32,7 @@ account(Pid, {address, Address}) ->  % {{{1
             Pid ! accepted.
 
 update() ->  % {{{1
-	LastUpdate = 2,
+	LastUpdate = 3,
 	[update(N) || N <- lists:seq(1,LastUpdate)].
 
 update(1) -> % {{{1
@@ -62,7 +62,9 @@ update(2) -> % {{{1
 			mnesia:transform_table(db_task, Transform, record_info(fields, db_task));
 		_ ->
 			ok
-	end.
+	end;
+update(3) ->
+    mnesia:add_table_index(db_group, name).
 
 
 qlc_result(QH) ->  % {{{1
@@ -202,19 +204,47 @@ search_contacts(Term) ->  % {{{1
                         qlc:e(QH)
                 end).
 
-search_files(Term) ->  % {{{1
+search_files(Term, Conds) ->  % {{{1
     transaction(fun() ->
-                        Tab = mnesia:table(db_file),
-                        QH = qlc:q([G || G <- Tab, 
+                        {Uterm, UReq} = case {dict:find(group, Conds), dict:find(contact, Conds)} of
+                                            {error, error} ->
+                                                {string:tokens(Term, " "), []};
+                                            {{ok, G}, _} ->
+                                                [#db_group{id=GID}] = mnesia:index_read(db_group, G, #db_group.name),
+                                                UPT = string:tokens(Term, " "),
+                                                {UPT -- [G], 
+                                                 [list_to_tuple(['orelse' | lists:map(fun(#db_group_members{contact=UID}) ->
+                                                                               {'==', '$1', UID}
+                                                                       end, mnesia:read(db_group_members, GID))])]};
+                                            {error, {ok, U}} ->
+                                                UPT = string:tokens(Term, " "),
+                                                {ok, #db_contact{id=UID}} = get_contacts_by_name(U),
+                                                {UPT -- [U], [{'==', '$1', UID}]}
+                                        end,
+                        {DTerm, DReq} = case {dict:find(daterange, Conds), dict:find(date, Conds)} of
+                                            {error, error} ->
+                                                {string:join(Uterm, " "), []};
+                                            {{ok, {SD, ED}}, _} ->
+                                                {string:join(Uterm -- [sugar:date_format(SD), sugar:date_format(ED)], " "),
+                                                 [{'>=', '$2', {const, SD}}, {'<', '$2', {const, ED}}]};
+                                            {error, {ok, D}} ->
+                                                {string:join(Uterm -- [sugar:date_format(D)], " "),
+                                                 [{'==', '$2', {const, D}}]}
+                                        end,
+                        Request = UReq ++ DReq,
+                                
+                        Tab = mnesia:table(db_file, [{traverse, {select, [{#db_file{user='$1', date='$2', _='_'}, Request, ['$_']}]}}]),
+                        QH = qlc:q([G || G <- Tab,
                                          G#db_file.status /= archive,
-                                         re:run(G#db_file.path, Term, [caseless]) /= nomatch]),
+                                         re:run(G#db_file.path, DTerm, [caseless]) /= nomatch]),
                         qlc:e(QH)
                 end).
 
 search_messages(Term) ->  % {{{1
+    Request = [],
     transaction(fun() ->
-                        Incoming = mnesia:table(incoming),
-                        Sent = mnesia:table(sent),
+                        Incoming = mnesia:table(incoming), % [{#message{user='$1', date={'$2', '$3', '$4'}, _='_'}, Request, ['$_']}]),
+                        Sent = mnesia:table(sent), % [{#message{user='$1', date={'$2', '$3', '$4'}, _='_'}, Request, ['$_']}]),
                         QH = qlc:q([G || G <- qlc:append(Incoming, Sent), 
                                          G#message.status /= archive,
                                          G#message.enc == 3,
@@ -229,8 +259,9 @@ search_messages(Term) ->  % {{{1
                 end).
 
 search_tasks(Term) ->  % {{{1
+    Request = [],
     transaction(fun() ->
-                        Tab = mnesia:table(db_task),
+                        Tab = mnesia:table(db_task), % [{#db_task{user='$1', date={'$2', '$3', '$4'}, _='_'}, Request, ['$_']}]),
                         QH = qlc:q([G || G <- Tab, 
                                          G#db_task.status /= archive,
                                          re:run(wf:to_list(G#db_task.name) ++ wf:to_list(G#db_task.text), Term, [caseless]) /= nomatch]),

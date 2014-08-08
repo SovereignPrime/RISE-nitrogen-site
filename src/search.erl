@@ -89,7 +89,7 @@ contacts(Term, A) ->  % {{{1
                                            end, Contacts),
                                  "</dd>"]};
                         #db_contact{name=Term} ->
-                            {dict:append_list(group, Term, A), []}
+                            {dict:append_list(contact, Term, A), []}
                     end
             end;
         _ ->
@@ -215,7 +215,7 @@ term(Term, {OB, OD, OG, OC, _OM, _OT, _OF}) ->  % {{{1
     {LC, C} = search:contacts(Term, LG),
     {ok, M} = db:search_messages(Term),
     {ok, T} = db:search_tasks(Term),
-    {ok, F} = db:search_files(Term),
+    {ok, F} = db:search_files(Term, LC),
 
     {LC,
      lists:usort(OD ++ D),
