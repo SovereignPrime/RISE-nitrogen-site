@@ -293,20 +293,22 @@ search_messages(Term, Conds) ->  % {{{1
 
 search_tasks(Term, Conds) ->  % {{{1
     transaction(fun() ->
-                        {Uterm, UReq} = case {dict:find(group, Conds), dict:find(contact, Conds)} of
+                        Tab = mnesia:table(db_task),
+                        {Uterm, Tasks} = case {dict:find(group, Conds), dict:find(contact, Conds)} of
                                             {error, error} ->
-                                                {string:tokens(Term, " "), []};
+                                                {string:tokens(Term, " "),Tab}; 
                                             {{ok, G}, _} ->
                                                 [#db_group{id=GID}] = mnesia:index_read(db_group, G, #db_group.name),
                                                 UPT = string:tokens(Term, " "),
                                                 {UPT -- [G], 
-                                                 [list_to_tuple(['orelse' | lists:map(fun(#db_group_members{contact=UID}) ->
-                                                                               {'==', '$1', UID}
-                                                                       end, mnesia:read(db_group_members, GID))])]};
+                                                 lists:usort(lists:map(fun(#db_group_members{contact=UID}) ->
+                                                                   {ok, Ts} = get_tasks_by_user(UID) 
+                                                                       end, mnesia:read(db_group_members, GID)))};
                                             {error, {ok, U}} ->
                                                 UPT = string:tokens(Term, " "),
                                                 {ok, #db_contact{id=UID}} = get_contacts_by_name(U),
-                                                {UPT -- [U], [{'==', '$1', UID}]}
+                                                {ok, Ts} = get_tasks_by_user(UID) ,
+                                                {UPT -- [U], Ts}
                                         end,
                         DTerm = case {dict:find(daterange, Conds), dict:find(date, Conds)} of
                                     {error, error} ->
@@ -316,8 +318,7 @@ search_tasks(Term, Conds) ->  % {{{1
                                     {error, {ok, D}} ->
                                         string:join(Uterm -- [sugar:date_format(D)], " ")                                        end,
 
-                        Tab = mnesia:table(db_task),
-                        QH = qlc:q([G || G <- Tab, 
+                        QH = qlc:q([G || G <- Tasks, 
                                          G#db_task.status /= archive,
                                          case {dict:find(daterange, Conds), dict:find(date, Conds)} of
                                              {error, error} ->
