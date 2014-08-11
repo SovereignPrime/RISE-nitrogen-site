@@ -94,7 +94,7 @@ render_files() -> % {{{1
             ]}.
 
 sigma_search_event(search, Term) -> % {{{1
-    Terms = string:tokens(Term, " "),
+    Terms = lists:usort(string:tokens(Term, " ")),
     {Badges, D, G, C, M, T, F} = lists:foldl(fun search:term/2, {dict:new(),[],[],[],[],[],[]}, Terms),
     Ds = search:format_dates(D),
     Ms = search:messages(M),

@@ -210,14 +210,14 @@ format_dates(Dates) ->  % {{{1
 
 
 term(Term, {OB, OD, OG, OC, _OM, _OT, _OF}) ->  % {{{1
-    {LD, D} = search:dates(Term, OB),
-    {LG, G} = search:groups(Term, LD),
+    {LG, G} = search:groups(Term, OB),
     {LC, C} = search:contacts(Term, LG),
-    {ok, M} = db:search_messages(Term, LC),
-    {ok, T} = db:search_tasks(Term, LC),
-    {ok, F} = db:search_files(Term, LC),
+    {LD, D} = search:dates(Term, LC),
+    {ok, M} = db:search_messages(Term, LD),
+    {ok, T} = db:search_tasks(Term, LD),
+    {ok, F} = db:search_files(Term, LD),
 
-    {LC,
+    {LD,
      lists:usort(OD ++ D),
      lists:usort(OG ++ G),
      lists:usort(OC ++ C),
