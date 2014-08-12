@@ -193,12 +193,13 @@ event(add_group) -> %{{{1
     wf:redirect("/relationships");
 event(add_contact) -> %{{{1
     {ok, Id} = db:next_id(db_contact),
-    wf:session(current_contact, undefined),
     wf:session(current_contact_id, Id),
-    db:save(#db_contact{
+    Contact = #db_contact{
             id=Id,
             name="Contact Name"
-            }),
+            },
+    db:save(Contact),
+    wf:session(current_contact, Contact),
     wf:redirect("/relationships");
 event(add_task) -> %{{{1
     wf:session(current_task, undefined),
