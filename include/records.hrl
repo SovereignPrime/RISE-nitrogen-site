@@ -110,3 +110,8 @@
                    start=open,
                    target
     }).
+
+-record(popup, {?ELEMENT_BASE(element_popup),
+                header,
+                body
+    }).
