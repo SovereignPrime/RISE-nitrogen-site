@@ -63,7 +63,16 @@ update(2) -> % {{{1
 		_ ->
 			ok
 	end;
-update(3) ->
+update(3) ->  % {{{1
+	Fields = mnesia:table_info(db_search, attributes),
+    NFields = record_info(fields, db_search),
+    mnesia:transform_table(db_search,
+                           fun({db_search, Text, undefined}) ->
+                                   #db_search{text=Text, name="Updated"};
+                              (R) ->
+                                   R
+                           end,
+                           NFields),
     mnesia:add_table_index(db_group, name).
 
 
@@ -336,7 +345,7 @@ search_tasks(Term, Conds) ->  % {{{1
 
 get_filters() ->  % {{{1
     transaction(fun() ->
-                        mnesia:select(db_search, [{#db_search{text='$1', _='_'}, [], ['$1']}])
+                        mnesia:select(db_search, [{#db_search{_='_'}, [], ['$_']}])
                 end).
 %%%
 %% Task routines
