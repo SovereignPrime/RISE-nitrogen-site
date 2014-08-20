@@ -32,7 +32,7 @@ render_element(Record = #popup{id=Id, header=Title, body=Body}) ->  % {{{1
                 ]}.
 
 event({close, Id}) ->  % {{{1
-    wf:wire(#script{script="$(obj('" ++ Id ++ "')).modal('hide')"}),
+    wf:wire(#script{script="$(obj('" ++ wf:to_list(Id) ++ "')).modal('hide')"}),
     wf:remove(Id);
 event({show, Id}) ->  % {{{1
     wf:wire(#script{script="$(obj('" ++ wf:to_list(Id) ++ "')).modal('show')"});

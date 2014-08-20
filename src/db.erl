@@ -63,7 +63,16 @@ update(2) -> % {{{1
 		_ ->
 			ok
 	end;
-update(3) ->
+update(3) ->  % {{{1
+	Fields = mnesia:table_info(db_search, attributes),
+    NFields = record_info(fields, db_search),
+    mnesia:transform_table(db_search,
+                           fun({db_search, Text, Id}) ->
+                                   #db_search{text=Text, id=Id, name="Updated"};
+                              (R) ->
+                                   R
+                           end,
+                           NFields),
     mnesia:add_table_index(db_group, name).
 
 

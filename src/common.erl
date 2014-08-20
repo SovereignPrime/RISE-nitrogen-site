@@ -126,8 +126,7 @@ sigma_search_event(search, Term) -> % {{{1
                   #panel{body=Ms},
                   #panel{body=Ts},
                   #panel{body=Fs},
-                #panel{body=#link{body="<i class='icon icon-filter'></i> Create filter with search", postback={save_filter, Term}, delegate=?MODULE}}
-                
+                #panel{body=#link{body="<i class='icon icon-filter'></i> Create filter with search", postback={save_filter_name, Term}, delegate=?MODULE}}
                 ]}}.  
 render_filters() -> %{{{1
     {ok, Filters} = db:get_filters(),
@@ -250,7 +249,7 @@ event({search, Term}) -> %{{{1
     wf:set(".sigma_search_textbox", Term),
     sigma_search_event(search, Term),
     wf:wire(#script{script="$('.sigma_search_textbox').keydown()"});
-event({save_filter, Term}) -> %{{{1
+event({save_filter_name, Term}) -> %{{{1
     wf:insert_bottom("body",
                      #popup{id=save_filter_name,
                             header="Save filter name...",
@@ -262,16 +261,20 @@ event({save_filter, Term}) -> %{{{1
                                                       body=[
                                                             "<i class='icon icon-ok'></i>"
                                                            ],
-                                                      postback={save_filter, Term}}
+                                                      postback={save_filter, Term},
+                                                      delegate=?MODULE
+                                                     }
                                              ]}
                                   }),
     wf:wire(#event{target=save_filter_name,
                    postback={show, save_filter_name},
                    delegate=element_popup});
 
-event({save_filter, Term, Name}) -> %{{{1
+event({save_filter, Term}) -> %{{{1
+    Name = wf:q(filter_name),
     db:save(#db_search{text=Term, name=Name}),
     wf:replace(filters, render_filters()),
+    wf:wire(#event{postback={close, save_filter_name}, delegate=element_popup}),
     wf:wire(#script{script="$('.sigma_search_x_button').click()"});
 event({reply, Subject, To}) -> % {{{1
     {ok, Id} = db:next_id(db_update),
