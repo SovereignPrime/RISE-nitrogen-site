@@ -639,9 +639,16 @@ get_contact_by_address(Address) ->  % {{{1
 -spec coalesce_best_contact([#db_contact{}], boolean()) -> none | #db_contact{}.
 %% @doc Returns the first contact it comes across that has an actual name, and
 %% whether or not it's marked as Archived
-coalesce_best_contact([User], Archive) when (User#db_contact.status==archive)==Archive ->
+coalesce_best_contact([User], Archive) when (User#db_contact.status==archive)==Archive ->  % {{{1
     User;
-coalesce_best_contact([User | Rest], Archive) when (User#db_contact.status==archive)==Archive ->
+coalesce_best_contact([User | Rest], Archive) when (User#db_contact.status==archive)==Archive ->  % {{{1
+    case User#db_contact.name of
+        "unknown" -> coalesce_best_contact(Rest, Archive);
+        "" -> coalesce_best_contact(Rest, Archive);
+        _ -> User
+    end;
+coalesce_best_contact([User | Rest], Archive) ->  % {{{1 
+    %% It is needed when contact is archived, but messages not
     case User#db_contact.name of
         "unknown" -> coalesce_best_contact(Rest, Archive);
         "" -> coalesce_best_contact(Rest, Archive);
