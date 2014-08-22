@@ -82,6 +82,12 @@ add_participants(Update, Messages) ->  % {{{1
                       Id = Update#message.hash,
                       M#message{
                         hash= [Id|Ids],
+                        status=case M#message.status of 
+                                   unread ->
+                                       unread;
+                                   _ ->
+                                       Update#message.status
+                               end,
                         from=sugar:maybe_wrap_list(M#message.from) ++ [Update#message.from],
                         to=sugar:maybe_wrap_list(M#message.to) ++ [Update#message.to]
                        };
