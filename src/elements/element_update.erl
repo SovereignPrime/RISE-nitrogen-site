@@ -175,7 +175,7 @@ format_status(unread) ->  % {{{1
 format_status(ackwait) ->  % {{{1
     " (sent)";
 format_status(new) ->  % {{{1
-    " (sending)";
+    " (waiting for key)";
 format_status(wait_pubkey) ->  % {{{1
     " (waiting for key)";
 format_status(encrypt_message) ->  % {{{1
