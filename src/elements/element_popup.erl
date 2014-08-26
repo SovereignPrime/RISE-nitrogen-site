@@ -27,8 +27,9 @@ render_element(Record = #popup{id=Id, header=Title, body=Body}) ->  % {{{1
                                        delegate=?MODULE},
                                #h3{text=Title}
                               ]},
-                 #panel{ class="modal-body",
-                         body=Body}
+                 #panel{style="text-align:center;",
+                        class="modal-body",
+                        body=Body}
                 ]}.
 
 event({close, Id}) ->  % {{{1

@@ -166,7 +166,7 @@ settings_menu() -> %{{{1
 		#link{class="btn dropdown-toggle btn-link",
               body=[
                     #image{class="icon",
-                           style="height:20px;vertical-align: middle;",
+                           style="height:20px;margin-top:10px;",
                            image = "/img/id_card.svg"},
                     " My Profile"
                    ],
@@ -253,7 +253,8 @@ event({save_filter_name, Term}) -> %{{{1
     wf:insert_bottom("body",
                      #popup{id=save_filter_name,
                             header="Save filter name...",
-                            body=#panel{class="input-append",
+                            body=#panel{style="align:center;",
+                                        class="input-append",
                                         body=[
                                               #textbox{id=filter_name}, 
                                               #button{id=ok, 
