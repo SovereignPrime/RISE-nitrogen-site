@@ -166,7 +166,7 @@ settings_menu() -> %{{{1
 		#link{class="btn dropdown-toggle btn-link",
               body=[
                     #image{class="icon",
-                           style="height:20px;margin-top:10px;",
+                           style="height:20px;vertical-align:middle;margin-top:-3px;",
                            image = "/img/id_card.svg"},
                     " My Profile"
                    ],
