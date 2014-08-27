@@ -13,6 +13,13 @@ a, a:hover, a:active {
     text-decoration: none;
 }
     
+input:focus,
+select:focus,
+textarea:focus,
+button:focus {
+    outline: none !important;
+    outline-width:0 !important;
+}
 
 .dropdown {
     background-color: #fff;
@@ -98,6 +105,18 @@ a.current:hover {
 }
 .sigma_search_textbox {
     border-radius:2px 0 0 2px !important;
+    outline:none;
+    box-shadow: none;
+    -webkit-box-shadow: none;
+    outline-width:0;
+}
+
+.sigma_search_textbox:focus {
+    border-radius:2px 0 0 2px !important;
+    box-shadow: none !important;
+    -webkit-box-shadow: none !important;
+    outline:none;
+    outline-width:0;
 }
 .sigma_search_button {
     border-radius: 0 2px 2px 0 !important;
