@@ -322,7 +322,7 @@ event(restore) -> %{{{1
                                                                               ]}
                                             ]}),
     wf:wire(#script{script="$('.modal').modal('show')"});
-event({unfold, #update_element{id=Id, uid=Uid, enc=Enc}=Update}) -> % {{{1
+event({unfold, #update_element{id=Id, uid=Uid, enc=Enc, status=S}=Update}) -> % {{{1
     case Enc of
         T when T==1; T==2 ->
             Attachments = [];
@@ -332,19 +332,12 @@ event({unfold, #update_element{id=Id, uid=Uid, enc=Enc}=Update}) -> % {{{1
             {ok,Attachments} = db:get_attachments(#db_task{id=Uid})
     end,
 
-    case db:set_read(Uid) of
-        {ok, unread} ->
-                New = wf:session(unread) - 1,
-                wf:session(unread, New),
-                wf:replace(Id, Update#update_element{collapse=false, status=read, attachments=[
-                                                                                  #attachment{fid=FId, filename=File, size=Size, time=Time, status=Status} || #db_file{id=FId, path=File, size=Size, date=Time, status=Status} <- Attachments
+    wf:replace(Id,
+               Update#update_element{collapse=false, status=S, attachments=[
+                                                                                   #attachment{fid=FId, filename=File, size=Size, time=Time, status=Status} || #db_file{id=FId, path=File, size=Size, date=Time, status=Status} <- Attachments
                                                                                  ]}),
-                wf:replace(count, #span{id=count, class='label label-inverse',text=wf:f("~p new", [New])});
-        {ok, _} ->
-            wf:replace(Id, Update#update_element{collapse=false, attachments=[
-                                                                              #attachment{fid=FId, filename=File, size=Size, time=Time, status=Status} || #db_file{id=FId, path=File, size=Size, date=Time, status=Status} <- Attachments
-                                                                             ]})
-    end;
+    index:replace_left(),
+    wf:replace(count, unread());
 
 event({fold, #update_element{id=Id}=Update}) -> % {{{1
     wf:replace(Id, Update#update_element{collapse=true});

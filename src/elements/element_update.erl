@@ -63,6 +63,14 @@ render_element(#update_element{id=Id,
                                status=Status}=Record) ->
     FromName = name_from_address(From),
     ToName = name_from_address(To),
+    NStatus = case db:set_read(UID) of
+        {ok, unread} ->
+                      New = wf:session(unread) - 1,
+                      wf:session(unread, New),
+                      read;
+                  {ok, _} ->
+                      Status
+              end,
     {Text, Attachments, Timestamp, TID} = decode_enc(Enc, Data, false),
     TD = bm_types:timestamp() - Timestamp,
     #panel{id=Id,
@@ -77,7 +85,7 @@ render_element(#update_element{id=Id,
                                            ToName]},
                               #panel{class="span2 offset6", body=[
                                                                   sugar:format_timedelta(TD),
-                                                                  format_status(Status)
+                                                                  format_status(NStatus)
                                                                  ]}
                              ],
                         actions=#event{type=click,
