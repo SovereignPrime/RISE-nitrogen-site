@@ -101,7 +101,7 @@ sortheader(Label, Sortby) -> % {{{1
         if Sortby == Sort ->
                " <i class='icon icon-caret-down'></i>";
            true ->
-               ""
+               " <i class='icon icon-sort'></i>"
         end
     ]}.
 
