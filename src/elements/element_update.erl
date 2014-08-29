@@ -65,6 +65,8 @@ render_element(#update_element{id=Id,
     ToName = name_from_address(To),
     NStatus = case db:set_read(UID) of
                   {ok, unread} ->
+                      index:replace_left(),
+                      wf:replace(count, common:unread()),
                       read;
                   {ok, _} ->
                       Status
