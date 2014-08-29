@@ -165,13 +165,22 @@ render_element(#update_element{enc=Enc,
     {Text, Attachments, Timestamp, _} = decode_enc(Enc, Data, true),
     TD = bm_types:timestamp() - Timestamp,
     [
-     #panel{class="row-fluid", body=[
-                                     #panel{class="span9", body="<b>Subject: </b>" ++ Subject},
-                                     #panel{class="span2 cell-right", body=sugar:format_timedelta(TD)}
-                                    ], actions=#event{type=click, postback={to_message, Id}, delegate=common }},
-     #panel{class="row-fluid", body=[
-                                     #panel{class="span12", body=Text}
-                                    ]}
+     #panel{class="row-fluid",
+            body=[
+                  #panel{style="cursor:pointer",
+                        class="span9",
+                         body="<b>Subject: </b>" ++ Subject},
+                  #panel{class="span2 cell-right",
+                         body=sugar:format_timedelta(TD)}
+                 ],
+            actions=#event{type=click,
+                           postback={to_message, Id},
+                           delegate=common }},
+     #panel{class="row-fluid",
+            body=[
+                  #panel{class="span12",
+                         body=Text}
+                 ]}
     ].
 
 format_status(ok) ->  % {{{1
