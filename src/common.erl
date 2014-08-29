@@ -39,7 +39,6 @@ main() ->  % {{{1
 
 unread() -> % {{{1
     {ok, New} = db:get_unread_updates(),
-    wf:session(unread, length(New)),
     #span{id=count, class='label label-inverse',text=wf:f("~p new", [length(New)])}.
 
 connection_status() -> % {{{1

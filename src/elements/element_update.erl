@@ -64,9 +64,7 @@ render_element(#update_element{id=Id,
     FromName = name_from_address(From),
     ToName = name_from_address(To),
     NStatus = case db:set_read(UID) of
-        {ok, unread} ->
-                      New = wf:session(unread) - 1,
-                      wf:session(unread, New),
+                  {ok, unread} ->
                       read;
                   {ok, _} ->
                       Status
