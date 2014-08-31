@@ -40,19 +40,6 @@ left() ->  % {{{1
             []
     end,
     #panel{ class="span3", body=[
-            %#h1{html_encode=false, text="<i class='icon-usd'></i> Payment"},
-            %#addable_row{id=payment, body=
-            %            #panel{class="row-fluid", body=[
-            %                    #panel{ class="span8", body=[
-            %                            #textbox_autocomplete{id=payable,tag=contact, text="Name", next=amount, class="input-block-level", delegate=common}
-            %                            ]},
-            %                    #panel{ class="span3", body=[
-            %                            #textbox{id=amount, placeholder="300$", next=order, class="input-block-level"}
-            %                            ]}
-            %                    ]},
-            %             options=fun(Id, N) ->
-            %            []
-            %    end},
             #panel{ class="row-fluid", style="margin: 10% 0;", body=[
                     #panel{ class="span12", body=[
                             "<i class='icon-tasks'></i> Linked tasks", #br{},
