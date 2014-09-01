@@ -92,40 +92,29 @@ render_files() -> % {{{1
                 end, Attachments)
             ]}.
 
-sigma_search_event(search, Term) -> % {{{1
-    Terms = lists:usort(string:tokens(Term, " ")),
-    {Badges, D, G, C, M, T, F} = lists:foldl(fun search:term/2, {dict:new(),[],[],[],[],[],[]}, Terms),
-    Ds = search:format_dates(D),
-    Ms = search:messages(M),
-    Ts = search:tasks(T),
-    Fs = search:files(F),
-    Bs = lists:map(fun({date, Date}) ->
+sigma_search_event(search, Terms) -> % {{{1
+    TermsD = dict:from_list(Terms),
+    {NTerms, Results} = search:terms(TermsD),
+    Bs = lists:map(fun({"Date", Date}) ->
                            #sigma_search_badge{type="Date", text=sugar:date_format(Date)};
-                      ({daterange, {SDate, EDate}}) ->
-                           #sigma_search_badge{type="Date range", text=sugar:date_format(SDate) 
+                      ({"Daterange", {SDate, EDate}}) ->
+                           #sigma_search_badge{type="Daterange", text=sugar:date_format(SDate) 
                                                ++ " " ++
                                                sugar:date_format(EDate)
                                               };
-                      ({group, Group}) ->
+                      ({"Group", Group}) ->
                            #sigma_search_badge{type="Group", text=Group};
-                      ({contact, Contact}) ->
+                      ({"Contact", Contact}) ->
                            #sigma_search_badge{type="Contact", text=Contact};
-                      ({term, Str}) ->
-                           #sigma_search_badge{type="Other", text=Str};
                       (_) ->
                            ""
-                   end, dict:to_list(Badges)),
+                   end, dict:to_list(NTerms)),
 
     {Bs,
      #panel{class="",
             body=[
-                  #panel{body=Ds}, 
-                  #panel{body=G}, 
-                  #panel{body=C},
-                  #panel{body=Ms},
-                  #panel{body=Ts},
-                  #panel{body=Fs},
-                #panel{body=#link{body="<i class='icon icon-filter'></i> Create filter with search", postback={save_filter_name, Term}, delegate=?MODULE}}
+                  Results,
+                  #panel{body=#link{body="<i class='icon icon-filter'></i> Create filter with search", postback={save_filter_name, Terms}, delegate=?MODULE}}
                 ]}}.  
 render_filters() -> %{{{1
     {ok, Filters} = db:get_filters(),
@@ -246,7 +235,7 @@ event({db_file, Id}) -> %{{{1
     wf:redirect("/files");
 event({search, Term}) -> %{{{1
     wf:set(".sigma_search_textbox", Term),
-    sigma_search_event(search, Term),
+    %sigma_search_event(search, Term),
     wf:wire(#script{script="$('.sigma_search_textbox').keydown()"});
 event({save_filter_name, Term}) -> %{{{1
     wf:insert_bottom("body",

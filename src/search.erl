@@ -7,32 +7,37 @@
 -include_lib("nitrogen_core/include/wf.hrl").
 -include("records.hrl").
 
-dates(Term, A) when length(Term) == 10 ->  % {{{1
-    case dict:is_key(daterange, A) of
+dates_if(Terms) ->  % {{{1
+    case dict:is_key("Daterange", Terms) of
         true ->
-            {A, []};
+            wf:info("Test~n"),
+            {Terms, []};
         false ->
-            case dict:find(date, A) of
+            Term = get_term(Terms),
+            
+            case dict:find("Date", Terms) of
                 error ->
-                    {[{date, Date}], Ts} = dates(Term),
-                    {dict:append_list(date, Date, A),  Ts};
+            wf:info("Test~p~n", [Terms]),
+                    case  dates(Term) of
+                        {[], Ts} ->
+                            {Terms, Ts};
+                        {Date, Ts} ->
+                            {dict:append_list("Date", Date, Terms),  Ts}
+                    end;
                 {ok, Date} ->
-                    {[{date, DateN}], []} = dates(Term),
-                    ADict1 = dict:erase(date, A),
-                    if DateN > Date ->
-                           {dict:append_list(daterange, {Date, DateN}, ADict1), []};
-                       true ->
-                           {dict:append_list(daterange, {DateN, Date}, ADict1), []}
+                    case  dates(Term) of
+                        {[], Ts} ->
+                            {Terms, Ts};
+                        {DateN, Ts} ->
+                            ADict1 = dict:erase("Date", Terms),
+                            case lists:usort([Date, DateN]) of
+                                L when length(L) == 1->
+                                    {dict:append_list("Date", Date, ADict1), []};
+                                L ->
+                                    {dict:append_list("Daterange", list_to_tuple(L), ADict1), []}
+                            end
                     end
             end
-    end;
-dates(Term, A) ->  % {{{1
-    case dict:is_key(daterange, A) of
-        true ->
-            {A,  []};
-        false ->
-            {[], Ts} = dates(Term),
-            {A,  Ts}
     end.
 
 dates(Term) when length(Term) == 1 ->  % {{{1
@@ -60,7 +65,7 @@ dates(Term) when length(Term) == 10 ->  % {{{1
     try
         Date = sugar:date_from_string(Term),
         {ok,  Dates} = db:search_dates(Date),
-        {[{date, Date}], []}
+        {Date, []}
     catch 
         error:badarg ->
             {[], []}
@@ -209,19 +214,27 @@ format_dates(Dates) ->  % {{{1
 
 
 
-term(Term, {OB, OD, OG, OC, _OM, _OT, _OF}) ->  % {{{1
-    {LG, G} = search:groups(Term, OB),
-    {LC, C} = search:contacts(Term, LG),
-    {LD, D} = search:dates(Term, LC),
-    {ok, M} = db:search_messages(Term, LD),
-    {ok, T} = db:search_tasks(Term, LD),
-    {ok, F} = db:search_files(Term, LD),
+terms(Terms) ->  % {{{1
+    %GTerms = search:groups(Terms),
+    %CTerms = search:contacts(Terms),
+    {DTerms, D} = search:dates_if(Terms),
 
-    {LD,
-     lists:usort(OD ++ D),
-     lists:usort(OG ++ G),
-     lists:usort(OC ++ C),
-     lists:usort(M),
-     lists:usort(T),
-     lists:usort(F)}.
-    
+    %{ok, M} = db:search_messages(DTerms),
+    %{ok, T} = db:search_tasks(DTerms),
+    {ok, F} = db:search_files(DTerms),
+
+    {DTerms,
+     format_dates(lists:usort(D)) ++
+     %lists:usort(G),
+     %lists:usort(C),
+     %lists:usort(M),
+     %lists:usort(T),
+     files(lists:usort(F))}.
+
+get_term(Terms) ->  % {{{1
+    case dict:find("Term", Terms) of
+        error ->
+            "";
+        {ok, T} ->
+            T
+    end.
