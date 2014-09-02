@@ -216,7 +216,7 @@ search_contacts(Term) ->  % {{{1
 search_files(Terms) ->  % {{{1
     Term = search:get_term(Terms),
     transaction(fun() ->
-                        {Uterm, UReq} = case {dict:find("Group", Terms), dict:find("Contact", Terms)} of
+                        UReq = case {dict:find("Group", Terms), dict:find("Contact", Terms)} of
                                             {error, error} ->
                                                 {string:tokens(Term, " "), []};
                                             {{ok, G}, _} ->

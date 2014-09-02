@@ -235,7 +235,6 @@ event({db_file, Id}) -> %{{{1
     wf:redirect("/files");
 event({search, Term}) -> %{{{1
     wf:set(".sigma_search_textbox", Term),
-    %sigma_search_event(search, Term),
     wf:wire(#script{script="$('.sigma_search_textbox').keydown()"});
 event({save_filter_name, Term}) -> %{{{1
     wf:insert_bottom("body",
