@@ -218,35 +218,30 @@ search_files(Terms) ->  % {{{1
     transaction(fun() ->
                         UReq = case {dict:find("Group", Terms), dict:find("Contact", Terms)} of
                                             {error, error} ->
-                                                {string:tokens(Term, " "), []};
+                                                [];
                                             {{ok, G}, _} ->
                                                 [#db_group{id=GID}] = mnesia:index_read(db_group, G, #db_group.name),
-                                                UPT = string:tokens(Term, " "),
-                                                {UPT -- [G], 
                                                  [list_to_tuple(['orelse' | lists:map(fun(#db_group_members{contact=UID}) ->
                                                                                {'==', '$1', UID}
-                                                                       end, mnesia:read(db_group_members, GID))])]};
+                                                                       end, mnesia:read(db_group_members, GID))])];
                                             {error, {ok, U}} ->
-                                                UPT = string:tokens(Term, " "),
                                                 {ok, #db_contact{id=UID}} = get_contacts_by_name(U),
-                                                {UPT -- [U], [{'==', '$1', UID}]}
-                                        end,
-                        {DTerm, DReq} = case {dict:find("Daterange", Terms), dict:find("Date", Terms)} of
+                                                [{'==', '$1', UID}]
+                               end,
+                        DReq = case {dict:find("Daterange", Terms), dict:find("Date", Terms)} of
                                             {error, error} ->
-                                                {string:join(Uterm, " "), []};
+                                                [];
                                             {{ok, {SD, ED}}, _} ->
-                                                {string:join(Uterm -- [sugar:date_format(SD), sugar:date_format(ED)], " "),
-                                                 [{'>=', '$2', {const, SD}}, {'<', '$2', {const, ED}}]};
+                                                 [{'>=', '$2', {const, SD}}, {'<', '$2', {const, ED}}];
                                             {error, {ok, D}} ->
-                                                {string:join(Uterm -- [sugar:date_format(D)], " "),
-                                                 [{'==', '$2', {const, D}}]}
+                                                 [{'==', '$2', {const, D}}]
                                         end,
                         Request = UReq ++ DReq,
                                 
                         Tab = mnesia:table(db_file, [{traverse, {select, [{#db_file{user='$1', date='$2', _='_'}, Request, ['$_']}]}}]),
                         QH = qlc:q([G || G <- Tab,
                                          G#db_file.status /= archive,
-                                         re:run(G#db_file.path, DTerm, [caseless]) /= nomatch]),
+                                         re:run(G#db_file.path, Term, [caseless]) /= nomatch]),
                         qlc:e(QH)
                 end).
 

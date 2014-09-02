@@ -17,12 +17,11 @@ dates_if(Terms) ->  % {{{1
             
             case dict:find("Date", Terms) of
                 error ->
-            wf:info("Test~p~n", [Terms]),
                     case  dates(Term) of
                         {[], Ts} ->
                             {Terms, Ts};
                         {Date, Ts} ->
-                            {dict:append_list("Date", Date, Terms),  Ts}
+                            {dict:erase("Term", dict:append_list("Date", Term, Terms)), Ts}
                     end;
                 {ok, Date} ->
                     case  dates(Term) of
@@ -30,11 +29,11 @@ dates_if(Terms) ->  % {{{1
                             {Terms, Ts};
                         {DateN, Ts} ->
                             ADict1 = dict:erase("Date", Terms),
-                            case lists:usort([Date, DateN]) of
+                            case lists:usort([sugar:date_from_string(Date), DateN]) of
                                 L when length(L) == 1->
-                                    {dict:append_list("Date", Date, ADict1), []};
+                                    {dict:erase("Term", dict:append_list("Date", Date, ADict1)), []};
                                 L ->
-                                    {dict:append_list("Daterange", list_to_tuple(L), ADict1), []}
+                                    {dict:erase("Term", dict:append_list("Daterange", list_to_tuple(L), ADict1)), []}
                             end
                     end
             end
@@ -73,45 +72,47 @@ dates(Term) when length(Term) == 10 ->  % {{{1
 dates(Term) ->  % {{{1
     {[], ""}.
 
-contacts(Term, A) ->  % {{{1
-    case {dict:is_key(group, A), dict:is_key(contact, A)} of
-        {false, false} ->
+contacts(Terms) ->  % {{{1
+    Term = get_term(Terms),
+    case dict:is_key("Group", Terms) of
+        false ->
             {ok, Contacts} = db:search_contacts(Term),
             case Contacts of
                 [] ->
-                    {A, []};
+                    {Terms, []};
                 Contacts ->
                     case lists:keyfind(Term, #db_contact.name, Contacts) of
                         false ->
-                            {A, ["<dl class='dl-horizontal'>",
-                                 "<dt>Contacts:</dt><dd>",
-                                 lists:map(fun(#db_contact{id=Id, name=Name, email=Email}) ->
-                                                   #panel{body=[
-                                                                #link{text=wf:f("~s (~s)", [Name, Email]),
-                                                                      postback={search, Name},
-                                                                      delegate=common}
-                                                               ]}
-                                           end, Contacts),
-                                 "</dd>"]};
+                            {Terms, #panel{body=["<dl class='dl-horizontal'>",
+                                                 "<dt>Contacts:</dt><dd>",
+                                                 lists:map(fun(#db_contact{id=Id, name=Name, email=Email}) ->
+                                                                   #panel{body=[
+                                                                                #link{text=wf:f("~s (~s)", [Name, Email]),
+                                                                                      postback={search, Name},
+                                                                                      delegate=common}
+                                                                               ]}
+                                                           end, Contacts),
+                                                 "</dd>"]}};
                         #db_contact{name=Term} ->
-                            {dict:append_list(contact, Term, A), []}
+                            {dict:erase("Term", dict:append_list("Contact", Term, Terms)), []}
                     end
             end;
         _ ->
-            {A, []}
+            {Terms, []}
     end.
 
-groups(Term, A) ->  % {{{1
-    case {dict:is_key(group, A), dict:is_key(contact, A)} of
+groups(Terms) ->  % {{{1
+    Term = get_term(Terms),
+    case {dict:is_key("Group", Terms), dict:is_key("Contact", Terms)} of
         {false, false} ->
             {ok, Groups} = db:search_groups(Term),
             case Groups of
                 [] ->
-                    {A, []};
+                    {Terms, []};
                 Groups ->
                     case lists:keyfind(Term, #db_group.name, Groups) of
                         false ->
-                            {A, ["<dl class='dl-horizontal'>",
+                            {Terms, #panel{body=["<dl class='dl-horizontal'>",
                                  "<dt>Groups:</dt><dd>",
                                  lists:map(fun(#db_group{id=Id, name=Name}) ->
                                                    #panel{body=[
@@ -120,13 +121,13 @@ groups(Term, A) ->  % {{{1
                                                                       delegate=common}
                                                                ]}
                                            end, Groups),
-                                 "</dd>"]};
+                                 "</dd>"]}};
                         #db_group{name=Term} ->
-                            {dict:append_list(group, Term, A), []}
+                            {dict:erase("Term", dict:append_list("Group", Term, Terms)), []}
                     end
             end;
         _ ->
-            {A, []}
+            {Terms, []}
     end.
 
 files(Files) ->  % {{{1
@@ -215,21 +216,24 @@ format_dates(Dates) ->  % {{{1
 
 
 terms(Terms) ->  % {{{1
-    %GTerms = search:groups(Terms),
-    %CTerms = search:contacts(Terms),
-    {DTerms, D} = search:dates_if(Terms),
+    wf:info("Test: ~p~n", [Terms]),
+    {GTerms, G} = search:groups(Terms),
+    {CTerms, C} = search:contacts(GTerms),
+    {DTerms, D} = search:dates_if(CTerms),
+    wf:info("Test: ~p~n", [DTerms]),
 
     %{ok, M} = db:search_messages(DTerms),
     %{ok, T} = db:search_tasks(DTerms),
     {ok, F} = db:search_files(DTerms),
 
     {DTerms,
-     format_dates(lists:usort(D)) ++
-     %lists:usort(G),
-     %lists:usort(C),
-     %lists:usort(M),
-     %lists:usort(T),
-     files(lists:usort(F))}.
+     [
+      format_dates(lists:usort(D)),
+      G, C,
+      %lists:usort(M),
+      %lists:usort(T),
+      files(lists:usort(F))
+     ]}.
 
 get_term(Terms) ->  % {{{1
     case dict:find("Term", Terms) of

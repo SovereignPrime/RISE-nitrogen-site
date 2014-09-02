@@ -104,10 +104,17 @@ sigma_search_event(search, Terms) -> % {{{1
                                               };
                       ({"Group", Group}) ->
                            #sigma_search_badge{type="Group", text=Group};
-                      ({"Contact", Contact}) ->
-                           #sigma_search_badge{type="Contact", text=Contact};
-                      (_) ->
-                           ""
+                      ({"Term", _}) ->
+                           "";
+                      ({Type, Text}) ->
+                           #sigma_search_badge{type=Type,
+                                               text=Text,
+                                               dropdown=[
+                                                         "Contact",
+                                                         "Responsible",
+                                                         "Accountable",
+                                                         "Informed"
+                                                        ]}
                    end, dict:to_list(NTerms)),
 
     {Bs,
