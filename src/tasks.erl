@@ -55,9 +55,18 @@ buttons(main) ->  % {{{1
 
 left() ->  % {{{1
     CId = wf:session(current_task_id),
-    #panel{id=tasks, class="span4 scrollable", body=[
-            render_task_tree()
-    ]}.
+    case wf:session(filter) of
+        undefined ->
+            wf:session(task_tree_mode, task_tree),
+            #panel{id=tasks, class="span4 scrollable", body=[
+                                                             render_task_tree()
+                                                            ]};
+        D ->
+            wf:session(task_tree_mode, filter),
+            #panel{id=tasks, class="span4 scrollable", body=[
+                                                             render_task_tree()
+                                                            ]}
+    end.
 
 
 render_task_tree_buttons(Selected) ->  % {{{1
@@ -205,6 +214,7 @@ render_task_list(Mode, Archive) ->  % {{{1
         tasks_today -> fun db:get_tasks_due_today/1;
         tasks_soon -> fun ?MODULE:get_next_tasks_by_date/1;
         tasks_no_deadline -> fun db:get_tasks_no_deadline/1;
+        filter -> fun ?MODULE:get_tasks_by_filter/1;
         tasks_complete -> fun db:get_tasks_completed/1
     end,
     {ok, Tasks} = Function(Archive),
@@ -214,6 +224,10 @@ render_task_list(Mode, Archive) ->  % {{{1
        style=["padding-left: 10px; "],
        body=[render_flat_task(T, Archive) || T <- Tasks]
     }.
+
+get_tasks_by_filter(_) ->
+    Filter = wf:session(filter),
+    db:search_tasks(Filter).
 
 get_next_tasks_by_date(Archive) -> % {{{1
     Today = sugar:date_format(date()),

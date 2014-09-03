@@ -214,131 +214,131 @@ search_contacts(Term) ->  % {{{1
                 end).
 
 search_files(Terms) ->  % {{{1
+    check_roles(Terms, fun() ->
+                               Term = search:get_term(Terms),
+                               transaction(fun() ->
+                                                   UReq = case {dict:find("Group", Terms), dict:find("Contact", Terms)} of
+                                                              {error, error} ->
+                                                                  [];
+                                                              {{ok, G}, _} ->
+                                                                  [#db_group{id=GID}] = mnesia:index_read(db_group, G, #db_group.name),
+                                                                  [list_to_tuple(['orelse' | lists:map(fun(#db_group_members{contact=UID}) ->
+                                                                                                               {'==', '$1', UID}
+                                                                                                       end, mnesia:read(db_group_members, GID))])];
+                                                              {error, {ok, U}} ->
+                                                                  {ok, #db_contact{id=UID}} = get_contacts_by_name(U),
+                                                                  [{'==', '$1', UID}]
+                                                          end,
+                                                   DReq = case {dict:find("Daterange", Terms), dict:find("Date", Terms)} of
+                                                              {error, error} ->
+                                                                  [];
+                                                              {{ok, D}, _} when is_list(D) ->
+                                                                  [SD, ED] = string:tokens(D, " "),
+                                                                  [{'>=', '$2', {const, sugar:date_from_string(SD)}}, {'<', '$2', {const, sugar:date_from_string(ED)}}];
+                                                              {{ok, {SD, ED}}, _} ->
+                                                                  [{'>=', '$2', {const, SD}}, {'<', '$2', {const, ED}}];
+                                                              {error, {ok, D}} ->
+                                                                  [{'==', '$2', {const, D}}]
+                                                          end,
+                                                   Request = UReq ++ DReq,
+
+                                                   Tab = mnesia:table(db_file, [{traverse, {select, [{#db_file{user='$1', date='$2', _='_'}, Request, ['$_']}]}}]),
+                                                   QH = qlc:q([G || G <- Tab,
+                                                                    G#db_file.status /= archive,
+                                                                    re:run(G#db_file.path, Term, [caseless]) /= nomatch]),
+                                                   qlc:e(QH)
+                                           end)
+                       end).
+
+search_messages(Terms) ->  % {{{1
+    check_roles(Terms, fun() ->
+                        Term = search:get_term(Terms),
+                        transaction(fun() ->
+                                            UReq = case {dict:find("Group", Terms), dict:find("Contact", Terms)} of
+                                                       {error, error} ->
+                                                           [];
+                                                       {{ok, G}, _} ->
+                                                           [#db_group{id=GID}] = mnesia:index_read(db_group, G, #db_group.name),
+                                                           [list_to_tuple(['orelse' | lists:map(fun(#db_group_members{contact=UID}) ->
+                                                                                                        [#db_contact{address=A}] = mnesia:read(db_contact, UID),
+                                                                                                        {'orelse', {'==', '$1', A}, {'==', '$2', A}}
+                                                                                                end, mnesia:read(db_group_members, GID))])];
+                                                       {error, {ok, U}} ->
+                                                           {ok, #db_contact{address=A}} = get_contacts_by_name(U),
+                                                           [{'orelse', {'==', '$2', A}, {'==', '$1', A}}]
+                                                   end,
+                                            Incoming = mnesia:table(incoming, [{traverse, {select, [{#message{from='$1', to='$2', _='_'}, UReq, ['$_']}]}}]),
+                                            Sent = mnesia:table(sent, [{traverse, {select, [{#message{to='$1', from='$2', _='_'}, UReq, ['$_']}]}}]),
+                                            QH = qlc:q([G || G <- qlc:append(Incoming, Sent), 
+                                                             G#message.status /= archive,
+                                                             G#message.enc == 3,
+                                                             try
+                                                                 #message_packet{time=TS, text=Text} = binary_to_term(G#message.text),
+                                                                 CompDateRange = fun(SD1, ED1) ->
+                                                                         {DI, _} = sugar:timestamp_to_datetime(TS),
+                                                                         DI >= sugar:date_from_string(SD1) andalso DI < sugar:date_from_string(ED1)
+                                                                                 end,
+                                                                 case {dict:find("Daterange", Terms), dict:find("Date", Terms)} of
+                                                                     {error, error} ->
+                                                                         true;
+                                                                     {{ok, {SD1, ED1}}, _} ->
+                                                                         CompDateRange(SD1, ED1);
+                                                                     {{ok, D}, _} when is_list(D) ->
+                                                                         [SD1, ED1] = string:tokens(D, " "),
+                                                                         CompDateRange(SD1, ED1);
+                                                                     {error, {ok, D1}} ->
+                                                                         {DI, _} = sugar:timestamp_to_datetime(TS),
+                                                                         DI == sugar:date_from_string(D1)
+                                                                 end andalso
+                                                                 re:run(wf:to_list(G#message.subject) ++ wf:to_list(Text), Term, [caseless]) /= nomatch
+                                                             catch 
+                                                                 error:badarg ->
+                                                                     false
+                                                             end]),
+                                            qlc:e(QH)
+                                    end)
+                end).
+
+search_tasks(Terms) ->  % {{{1
     Term = search:get_term(Terms),
     transaction(fun() ->
-                        UReq = case {dict:find("Group", Terms), dict:find("Contact", Terms)} of
-                                            {error, error} ->
-                                                [];
-                                            {{ok, G}, _} ->
-                                                [#db_group{id=GID}] = mnesia:index_read(db_group, G, #db_group.name),
-                                                 [list_to_tuple(['orelse' | lists:map(fun(#db_group_members{contact=UID}) ->
-                                                                               {'==', '$1', UID}
-                                                                       end, mnesia:read(db_group_members, GID))])];
-                                            {error, {ok, U}} ->
-                                                {ok, #db_contact{id=UID}} = get_contacts_by_name(U),
-                                                [{'==', '$1', UID}]
-                               end,
-                        DReq = case {dict:find("Daterange", Terms), dict:find("Date", Terms)} of
-                                            {error, error} ->
-                                                [];
-                                            {{ok, {SD, ED}}, _} ->
-                                                 [{'>=', '$2', {const, SD}}, {'<', '$2', {const, ED}}];
-                                            {error, {ok, D}} ->
-                                                 [{'==', '$2', {const, D}}]
-                                        end,
-                        Request = UReq ++ DReq,
-                                
-                        Tab = mnesia:table(db_file, [{traverse, {select, [{#db_file{user='$1', date='$2', _='_'}, Request, ['$_']}]}}]),
-                        QH = qlc:q([G || G <- Tab,
-                                         G#db_file.status /= archive,
-                                         re:run(G#db_file.path, Term, [caseless]) /= nomatch]),
+                        Tasks = lists:foldl(fun({T, _}, A) when T=="Term";T == "Date"; T == "Daterange" ->
+                                                    A;
+                                               ({T, U}, A) when T == "Responsible"; T == "Accountable"; T == "Informed"; T =="Consulted" ->
+                                                    {ok, #db_contact{id=UID}} = get_contacts_by_name(U),
+                                                    {ok, Ts} = get_tasks_by_user(UID, string:to_lower(T)) ,
+                                                    lists:usort(A ++ Ts);
+                                               ({"Group", G}, A) ->
+                                                    [#db_group{id=GID}] = mnesia:index_read(db_group, G, #db_group.name),
+                                                    lists:usort(lists:map(fun(#db_group_members{contact=UID}) ->
+                                                                                  {ok, Ts} = get_tasks_by_user(UID) 
+                                                                          end, mnesia:read(db_group_members, GID)));
+                                               ({"Contact", U}, A) ->
+                                                    {ok, #db_contact{id=UID}} = get_contacts_by_name(U),
+                                                    {ok, Ts} = get_tasks_by_user(UID) ,
+                                                    Ts
+                                            end, [], dict:to_list(Terms)),
+
+                        QH = qlc:q([G || G <- Tasks, 
+                                         G#db_task.status /= archive,
+                                         case {dict:find("Daterange", Terms), dict:find("Date", Terms)} of
+                                             {error, error} ->
+                                                 true;
+                                             {{ok, D}, _} when is_list(D) ->
+                                                 [SD1, ED1] = string:tokens(D, " "),
+                                                 DI = sugar:date_from_string(G#db_task.due),
+                                                 DI /= "" andalso DI >= sugar:date_from_string(SD1) andalso DI < sugar:date_from_string(ED1);
+                                             {{ok, {SD1, ED1}}, _} ->
+                                                 DI = sugar:date_from_string(G#db_task.due),
+                                                 DI /= "" andalso DI >= sugar:date_from_string(SD1) andalso DI < sugar:date_from_string(ED1);
+                                             {error, {ok, D1}} ->
+                                                 DI = sugar:date_from_string(G#db_task.due),
+                                                 DI /= "" andalso DI == sugar:date_from_string(D1)
+                                         end,
+                                         re:run(wf:to_list(G#db_task.name) ++ wf:to_list(G#db_task.text), Term, [caseless]) /= nomatch]),
                         qlc:e(QH)
                 end).
 
-%search_messages(Terms) ->  % {{{1
-%    transaction(fun() ->
-%                        {Uterm, UReq} = case {dict:find("Group", Conds), dict:find("Contact", Conds)} of
-%                                            {error, error} ->
-%                                                {string:tokens(Term, " "), []};
-%                                            {{ok, G}, _} ->
-%                                                [#db_group{id=GID}] = mnesia:index_read(db_group, G, #db_group.name),
-%                                                UPT = string:tokens(Term, " "),
-%                                                {UPT -- [G], 
-%                                                 [list_to_tuple(['orelse' | lists:map(fun(#db_group_members{contact=UID}) ->
-%                                                                                              [#db_contact{address=A}] = mnesia:read(db_contact, UID),
-%                                                                                              {'orelse', {'==', '$1', A}, {'==', '$2', A}}
-%                                                                                      end, mnesia:read(db_group_members, GID))])]};
-%                                            {error, {ok, U}} ->
-%                                                UPT = string:tokens(Term, " "),
-%                                                {ok, #db_contact{address=A}} = get_contacts_by_name(U),
-%                                                {UPT -- [U], [{'orelse', {'==', '$2', A}, {'==', '$1', A}}]}
-%                                        end,
-%                        DTerm = case {dict:find(daterange, Conds), dict:find(date, Conds)} of
-%                                            {error, error} ->
-%                                                string:join(Uterm, " ");
-%                                            {{ok, {SD, ED}}, _} ->
-%                                                string:join(Uterm -- [sugar:date_format(SD), sugar:date_format(ED)], " ");
-%                                            {error, {ok, D}} ->
-%                                                string:join(Uterm -- [sugar:date_format(D)], " ")
-%                                        end,
-%                        Incoming = mnesia:table(incoming, [{traverse, {select, [{#message{from='$1', to='$2', _='_'}, UReq, ['$_']}]}}]),
-%                        Sent = mnesia:table(sent, [{traverse, {select, [{#message{to='$1', from='$2', _='_'}, UReq, ['$_']}]}}]),
-%                        QH = qlc:q([G || G <- qlc:append(Incoming, Sent), 
-%                                         G#message.status /= archive,
-%                                         G#message.enc == 3,
-%                                         try
-%                                             #message_packet{time=TS, text=Text} = binary_to_term(G#message.text),
-%                                             case {dict:find(daterange, Conds), dict:find(date, Conds)} of
-%                                                 {error, error} ->
-%                                                     true;
-%                                                 {{ok, {SD1, ED1}}, _} ->
-%                                                     {DI, _} = sugar:timestamp_to_datetime(TS),
-%                                                     DI >= SD1 andalso DI < ED1;
-%                                                 {error, {ok, D1}} ->
-%                                                     {DI, _} = sugar:timestamp_to_datetime(TS),
-%                                                     DI == D1
-%                                             end,
-%                                             re:run(wf:to_list(G#message.subject) ++ wf:to_list(Text), DTerm, [caseless]) /= nomatch
-%                                         catch 
-%                                             error:badarg ->
-%                                                 false
-%                                         end]),
-%                        qlc:e(QH)
-%                end).
-%
-%search_tasks(Term) ->  % {{{1
-%    transaction(fun() ->
-%                        Tab = mnesia:table(db_task),
-%                        {Uterm, Tasks} = case {dict:find(group, Conds), dict:find(contact, Conds)} of
-%                                            {error, error} ->
-%                                                {string:tokens(Term, " "),Tab}; 
-%                                            {{ok, G}, _} ->
-%                                                [#db_group{id=GID}] = mnesia:index_read(db_group, G, #db_group.name),
-%                                                UPT = string:tokens(Term, " "),
-%                                                {UPT -- [G], 
-%                                                 lists:usort(lists:map(fun(#db_group_members{contact=UID}) ->
-%                                                                   {ok, Ts} = get_tasks_by_user(UID) 
-%                                                                       end, mnesia:read(db_group_members, GID)))};
-%                                            {error, {ok, U}} ->
-%                                                UPT = string:tokens(Term, " "),
-%                                                {ok, #db_contact{id=UID}} = get_contacts_by_name(U),
-%                                                {ok, Ts} = get_tasks_by_user(UID) ,
-%                                                {UPT -- [U], Ts}
-%                                        end,
-%                        DTerm = case {dict:find(daterange, Conds), dict:find(date, Conds)} of
-%                                    {error, error} ->
-%                                        string:join(Uterm, " ");
-%                                    {{ok, {SD, ED}}, _} ->
-%                                        string:join(Uterm -- [sugar:date_format(SD), sugar:date_format(ED)], " ");
-%                                    {error, {ok, D}} ->
-%                                        string:join(Uterm -- [sugar:date_format(D)], " ")                                        end,
-%
-%                        QH = qlc:q([G || G <- Tasks, 
-%                                         G#db_task.status /= archive,
-%                                         case {dict:find(daterange, Conds), dict:find(date, Conds)} of
-%                                             {error, error} ->
-%                                                 true;
-%                                             {{ok, {SD1, ED1}}, _} ->
-%                                                 DI = sugar:date_from_string(G#db_task.due),
-%                                                 DI /= "" andalso DI >= SD1 andalso DI < ED1;
-%                                             {error, {ok, D1}} ->
-%                                                 DI = sugar:date_from_string(G#db_task.due),
-%                                                 DI /= "" andalso DI == D1
-%                                         end,
-%                                         re:run(wf:to_list(G#db_task.name) ++ wf:to_list(G#db_task.text), DTerm, [caseless]) /= nomatch]),
-%                        qlc:e(QH)
-%                end).
-%
 get_filters() ->  % {{{1
     transaction(fun() ->
                         mnesia:select(db_search, [{#db_search{_='_'}, [], ['$_']}])
@@ -397,8 +397,10 @@ get_task_history(Hash) ->  % {{{1
 
 
 get_tasks_by_user(UID) ->  % {{{1
+    get_tasks_by_user(UID, '_').
+get_tasks_by_user(UID, Role) ->  % {{{1
     transaction(fun() ->
-                Tasks = mnesia:match_object(#db_contact_roles{contact=UID, type=db_task, _='_'}),
+                Tasks = mnesia:match_object(#db_contact_roles{contact=UID, type=db_task, role=Role, _='_'}),
                 iterate(db_task, Tasks, fun(_, #db_contact_roles{tid=I, role=Role}) ->
                              case mnesia:read(db_task, I) of
                                   [Task] ->
@@ -1093,3 +1095,7 @@ get_by_date(FilePred, TaskRe, Date) ->  % {{{1
                         lists:usort(Incoming ++ Sent ++ Rest)
 
                 end).
+
+check_roles(Terms, Fun) ->  % {{{1
+    search:check_roles(Terms, fun() -> {ok, []} end, Fun).
+    

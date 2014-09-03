@@ -31,7 +31,7 @@ main() ->  % {{{1
                     wf:wire('new_task', #event{type=click, postback=add_task, delegate=?MODULE}),
                     wf:wire('new_expense', #event{type=click, postback=add_expense, delegate=?MODULE}),
                     wf:wire('new_update', #event{type=click, postback=add_update, delegate=?MODULE}),
-                    T
+                T
             end;
         {timeout, _} ->
             wf:redirect("/legal")
@@ -113,6 +113,7 @@ sigma_search_event(search, Terms) -> % {{{1
                                                          "Contact",
                                                          "Responsible",
                                                          "Accountable",
+                                                         "Consulted",
                                                          "Informed"
                                                         ]}
                    end, dict:to_list(NTerms)),
@@ -123,7 +124,22 @@ sigma_search_event(search, Terms) -> % {{{1
                   Results,
                   #panel{body=#link{body="<i class='icon icon-filter'></i> Create filter with search", postback={save_filter_name, Terms}, delegate=?MODULE}}
                 ]}}.  
+sigma_search_filter_event(search, Terms) ->  % {{{1
+    wf:session(filter, dict:from_list(Terms)),
+    search:check_roles(dict:from_list(Terms), fun() ->
+                                                      wf:redirect("/tasks")
+                              end,
+                       fun() -> 
+                               wf:redirect("/")
+                       end).
+                               
+sigma_search_filter_clear() ->  % {{{1
+    wf:session(filter, dict:new()),
+    wf:replace(left, (wf:page_module()):left()).
+
 render_filters() -> %{{{1
+    wf:wire(#script{script="$('.sigma_search_textbox').keydown()"}),
+    wf:wire(#event{type=timer, delay=300, actions=#script{script="$('.sigma_search_results').hide()"}}),
     {ok, Filters} = db:get_filters(),
     #panel{id=filters,
            class="btn-group",
@@ -243,7 +259,7 @@ event({db_file, Id}) -> %{{{1
 event({search, Term}) -> %{{{1
     wf:set(".sigma_search_textbox", Term),
     wf:wire(#script{script="$('.sigma_search_textbox').keydown()"});
-event({save_filter_name, Term}) -> %{{{1
+event({save_filter_name, Terms}) -> %{{{1
     wf:insert_bottom("body",
                      #popup{id=save_filter_name,
                             header="Save filter name...",
@@ -256,7 +272,7 @@ event({save_filter_name, Term}) -> %{{{1
                                                       body=[
                                                             "<i class='icon icon-ok'></i>"
                                                            ],
-                                                      postback={save_filter, Term},
+                                                      postback={save_filter, Terms},
                                                       delegate=?MODULE
                                                      }
                                              ]}

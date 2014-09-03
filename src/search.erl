@@ -216,22 +216,20 @@ format_dates(Dates) ->  % {{{1
 
 
 terms(Terms) ->  % {{{1
-    wf:info("Test: ~p~n", [Terms]),
     {GTerms, G} = search:groups(Terms),
     {CTerms, C} = search:contacts(GTerms),
     {DTerms, D} = search:dates_if(CTerms),
-    wf:info("Test: ~p~n", [DTerms]),
 
-    %{ok, M} = db:search_messages(DTerms),
-    %{ok, T} = db:search_tasks(DTerms),
+    {ok, M} = db:search_messages(DTerms),
+    {ok, T} = db:search_tasks(DTerms),
     {ok, F} = db:search_files(DTerms),
 
     {DTerms,
      [
       format_dates(lists:usort(D)),
       G, C,
-      %lists:usort(M),
-      %lists:usort(T),
+      messages(lists:usort(M)),
+      tasks(lists:usort(T)),
       files(lists:usort(F))
      ]}.
 
@@ -241,4 +239,18 @@ get_term(Terms) ->  % {{{1
             "";
         {ok, T} ->
             T
+    end.
+
+check_roles(Terms, True, False) ->  % {{{1
+    Roles = [
+             "Responsible",
+             "Accountable",
+             "Consulted",
+             "Informed"
+            ],
+    case lists:any(fun(R) -> dict:is_key(R, Terms) end, Roles) of
+        true ->
+            True();
+        false ->
+            False()
     end.

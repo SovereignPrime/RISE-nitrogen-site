@@ -32,7 +32,13 @@ buttons(main) -> % {{{1
                ]}.
 
 left() -> % {{{1
-    left(false).
+    case wf:session(filter) of
+        undefined ->
+            left(false);
+        F ->
+            {ok, Updates} = db:search_messages(F),
+            render_left(Updates)
+    end.
 
 left(Archive) -> % {{{1
     case db:get_updates(Archive) of 
