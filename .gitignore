@@ -9,3 +9,4 @@ static/photo/*
 *~
 *.sw?
 *.beam
+.rebar
