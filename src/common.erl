@@ -151,11 +151,11 @@ render_filters() -> %{{{1
                   new=false},
             #list{numbered=false,
                   class="dropdown-menu",
-                  body=lists:map(fun(#db_search{name=Name, text=Term}) ->
+                  body=lists:map(fun(#db_search{name=Name, text=Terms}) ->
                                          #listitem{ class="",
                                                     body=[
                                                           #link{text=Name,
-                                                                postback={search, Term},
+                                                                postback={filter_load, Terms},
                                                                 delegate=?MODULE}
                                                          ]}
                                  end, Filters)
@@ -281,12 +281,41 @@ event({save_filter_name, Terms}) -> %{{{1
                    postback={show, save_filter_name},
                    delegate=element_popup});
 
-event({save_filter, Term}) -> %{{{1
+event({save_filter, Terms}) -> %{{{1
     Name = wf:q(filter_name),
-    db:save(#db_search{text=Term, name=Name}),
+    db:save(#db_search{text=Terms, name=Name}),
     wf:replace(filters, render_filters()),
     wf:wire(#event{postback={close, save_filter_name}, delegate=element_popup}),
     wf:wire(#script{script="$('.sigma_search_x_button').click()"});
+event({filter_load, Terms}) ->  % {{{1
+    Bs = lists:map(fun({"Date", Date}) ->
+                           #sigma_search_badge{type="Date", text=sugar:date_format(Date)};
+                      ({"Daterange", {SDate, EDate}}) ->
+                           #sigma_search_badge{type="Daterange", text=sugar:date_format(SDate) 
+                                               ++ " " ++
+                                               sugar:date_format(EDate)
+                                              };
+                      ({"Group", Group}) ->
+                           #sigma_search_badge{type="Group", text=Group};
+                      ({"Term", T}) ->
+                           wf:set(sigma_search_textbox, T),
+                           "";
+                      ({Type, Text}) ->
+                           #sigma_search_badge{type=Type,
+                                               text=Text,
+                                               dropdown=[
+                                                         "Contact",
+                                                         "Responsible",
+                                                         "Accountable",
+                                                         "Consulted",
+                                                         "Informed"
+                                                        ]}
+                   end, Terms),
+    wf:replace(sigma_search_badges, Bs),
+    wf:wire(#script{script="$('.sigma_search_textbox').keydown()"}),
+    wf:wire(#script{script="$('.sigma_search_button').click()"});
+    
+    
 event({reply, Subject, To}) -> % {{{1
     {ok, Id} = db:next_id(db_update),
     wf:session(current_subject, Subject),

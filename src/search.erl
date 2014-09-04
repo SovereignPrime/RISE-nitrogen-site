@@ -234,7 +234,7 @@ terms(Terms) ->  % {{{1
      ]}.
 
 get_term(Terms) ->  % {{{1
-    case dict:find("Term", Terms) of
+   case dict:find("Term", Terms) of
         error ->
             "";
         {ok, T} ->
