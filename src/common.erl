@@ -126,9 +126,10 @@ sigma_search_event(search, Terms) -> % {{{1
                 ]}}.  
 sigma_search_filter_event(search, Terms) ->  % {{{1
     wf:session(filter, dict:from_list(Terms)),
-    search:check_roles(dict:from_list(Terms), fun() ->
-                                                      wf:redirect("/tasks")
-                              end,
+    search:check_roles(dict:from_list(Terms),
+                       fun() ->
+                               wf:redirect("/tasks")
+                       end,
                        fun() -> 
                                wf:redirect("/")
                        end).
@@ -178,9 +179,19 @@ render_filters(Chosen) -> %{{{1
                   body=lists:map(fun(#db_search{name=Name, text=Terms}) ->
                                          #listitem{ class="",
                                                     body=[
-                                                          #link{text=Name,
-                                                                postback={filter_load, Name, Terms},
-                                                                delegate=?MODULE}
+                                                          #link{class="pull-left", 
+                                                                style="width:70%",
+                                                                body=[#span{body=Name,
+                                                                            actions=#event{type=mouseup,
+                                                                                           postback={filter_load, Name, Terms},
+                                                                                           delegate=?MODULE}
+                                                                           },
+                                                                      #span{class="pull-right",
+                                                                            body="<i class='icon icon-remove'></i>",
+                                                                            actions=#event{type=mouseup,
+                                                                                           postback={filter_delete, Name},
+                                                                                           delegate=?MODULE}
+                                                                           }]}
                                                          ]}
                                  end, Filters)
                  }
@@ -311,6 +322,10 @@ event({save_filter, Terms}) -> %{{{1
     wf:replace(filters, render_filters()),
     wf:wire(#event{postback={close, save_filter_name}, delegate=element_popup}),
     wf:wire(#script{script="$('.sigma_search_x_button').click()"});
+event({filter_delete, Name}) ->  % {{{1
+    db:delete(db_search, Name),
+    sigma_search_filter_clear(),
+    wf:replace(filters, render_filters());
 event({filter_load, Name, Terms}) ->  % {{{1
     wf:session(filter_name, Name),
     Bs = lists:map(fun({"Date", Date}) ->
