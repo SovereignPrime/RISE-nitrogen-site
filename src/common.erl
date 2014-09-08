@@ -134,7 +134,7 @@ sigma_search_filter_event(search, Terms) ->  % {{{1
                        end).
                                
 sigma_search_filter_clear() ->  % {{{1
-    wf:session(filter, dict:new()),
+    wf:session(filter, undefined),
     wf:session(filter_name, undefined),
     wf:replace(filters, render_filters()),
     wf:replace(left, (wf:page_module()):left()).
@@ -145,7 +145,9 @@ render_filters() -> %{{{1
             render_filters(nothing);
         F ->
             wf:wire(#script{script="$('.sigma_search_textbox').keydown()"}),
-            wf:wire(#event{type=timer, delay=300, actions=#script{script="$('.sigma_search_results').hide()"}}),
+            wf:wire(#event{type=timer,
+                           delay=300,
+                           actions=#script{script="$('.sigma_search_results').hide()"}}),
             render_filters(F)
     end.
 render_filters(Chosen) -> %{{{1
