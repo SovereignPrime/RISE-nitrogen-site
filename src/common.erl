@@ -122,7 +122,7 @@ sigma_search_event(search, Terms) -> % {{{1
      #panel{class="",
             body=[
                   Results,
-                  #panel{body=#link{body="<i class='icon icon-filter'></i> Create filter with search", postback={save_filter_name, Terms}, delegate=?MODULE}}
+                  #panel{body=#link{body="<i class='icon icon-filter'></i> Create filter with search", postback={save_filter_name, dict:to_list(NTerms)}, delegate=?MODULE}}
                 ]}}.  
 sigma_search_filter_event(search, Terms) ->  % {{{1
     wf:session(filter, dict:from_list(Terms)),
@@ -328,6 +328,7 @@ event({filter_delete, Name}) ->  % {{{1
     wf:replace(filters, render_filters());
 event({filter_load, Name, Terms}) ->  % {{{1
     wf:session(filter_name, Name),
+    wf:session(filter, Terms),
     Bs = lists:map(fun({"Date", Date}) ->
                            #sigma_search_badge{type="Date", text=sugar:date_format(Date)};
                       ({"Daterange", {SDate, EDate}}) ->
@@ -351,8 +352,8 @@ event({filter_load, Name, Terms}) ->  % {{{1
                                                          "Informed"
                                                         ]}
                    end, Terms),
-    wf:replace(sigma_search_badges, Bs),
     wf:replace(filters, render_filters(Name)),
+    wf:replace(sigma_search_badges, Bs),
     wf:wire(#script{script="$('.sigma_search_textbox').keydown()"}),
     wf:wire(#script{script="$('.sigma_search_button').click()"});
     

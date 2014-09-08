@@ -222,9 +222,16 @@ search_files(Terms) ->  % {{{1
                                                                   [];
                                                               {{ok, G}, _} ->
                                                                   [#db_group{id=GID}] = mnesia:index_read(db_group, G, #db_group.name),
-                                                                  [list_to_tuple(['orelse' | lists:map(fun(#db_group_members{contact=UID}) ->
-                                                                                                               {'==', '$1', UID}
-                                                                                                       end, mnesia:read(db_group_members, GID))])];
+                                                                  case lists:map(fun(#db_group_members{contact=UID}) ->
+                                                                                         {'==', '$1', UID}
+                                                                                 end,
+                                                                                 mnesia:read(db_group_members,
+                                                                                             GID)) of
+                                                                      [] ->
+                                                                          [];
+                                                                      L ->
+                                                                          [list_to_tuple(['orelse' | L])]
+                                                                  end;
                                                               {error, {ok, U}} ->
                                                                   {ok, #db_contact{id=UID}} = get_contacts_by_name(U),
                                                                   [{'==', '$1', UID}]
@@ -259,10 +266,16 @@ search_messages(Terms) ->  % {{{1
                                                            [];
                                                        {{ok, G}, _} ->
                                                            [#db_group{id=GID}] = mnesia:index_read(db_group, G, #db_group.name),
-                                                           [list_to_tuple(['orelse' | lists:map(fun(#db_group_members{contact=UID}) ->
-                                                                                                        [#db_contact{address=A}] = mnesia:read(db_contact, UID),
-                                                                                                        {'orelse', {'==', '$1', A}, {'==', '$2', A}}
-                                                                                                end, mnesia:read(db_group_members, GID))])];
+                                                           case  lists:map(fun(#db_group_members{contact=UID}) ->
+                                                                                   [#db_contact{address=A}] = mnesia:read(db_contact, UID),
+                                                                                   {'orelse', {'==', '$1', A}, {'==', '$2', A}}
+                                                                           end,
+                                                                           mnesia:read(db_group_members, GID)) of
+                                                               [] ->
+                                                                   [];
+                                                               L ->
+                                                                   [list_to_tuple(['orelse' | L])]
+                                                           end;
                                                        {error, {ok, U}} ->
                                                            {ok, #db_contact{address=A}} = get_contacts_by_name(U),
                                                            [{'orelse', {'==', '$2', A}, {'==', '$1', A}}]
