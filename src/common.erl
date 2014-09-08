@@ -75,7 +75,7 @@ search() -> %{{{1
                   x_button_class="search-x",
                   clear_button_class="pull-right btn btn-inverse",
                   clear_button_text="<i class='icon icon-remove'></i>",
-                  results_summary_class="search-results",
+                  results_summary_class="search-results span10",
                   delegate=?MODULE}.
 
 render_files() -> % {{{1
@@ -135,17 +135,39 @@ sigma_search_filter_event(search, Terms) ->  % {{{1
                                
 sigma_search_filter_clear() ->  % {{{1
     wf:session(filter, dict:new()),
+    wf:session(filter_name, undefined),
+    wf:replace(filters, render_filters()),
     wf:replace(left, (wf:page_module()):left()).
 
 render_filters() -> %{{{1
-    wf:wire(#script{script="$('.sigma_search_textbox').keydown()"}),
-    wf:wire(#event{type=timer, delay=300, actions=#script{script="$('.sigma_search_results').hide()"}}),
+    case wf:session(filter_name) of
+        undefined ->
+            render_filters(nothing);
+        F ->
+            wf:wire(#script{script="$('.sigma_search_textbox').keydown()"}),
+            wf:wire(#event{type=timer, delay=300, actions=#script{script="$('.sigma_search_results').hide()"}}),
+            render_filters(F)
+    end.
+render_filters(Chosen) -> %{{{1
     {ok, Filters} = db:get_filters(),
     #panel{id=filters,
            class="btn-group",
            body=[
-            #link{class="btn dropdown-toggle btn-link",
-                  body="<i class='icon-filter'></i> Smart filter",
+            #link{class=["btn",
+                         "dropdown-toggle", 
+                         "btn-link"],
+                  style=case Chosen of
+                             nothing ->
+                                 "";
+                             _ ->
+                                 "color:#fff;background-color:#000;"
+                         end, 
+                  body=case Chosen of
+                           nothing ->
+                               "<i class='icon-filter'></i> Smart filter";
+                           _ ->
+                               "<i class='icon-filter'></i> " ++ Chosen
+                       end,
                   data_fields=[{toggle, "dropdown"}],
                   url="#",
                   new=false},
@@ -155,7 +177,7 @@ render_filters() -> %{{{1
                                          #listitem{ class="",
                                                     body=[
                                                           #link{text=Name,
-                                                                postback={filter_load, Terms},
+                                                                postback={filter_load, Name, Terms},
                                                                 delegate=?MODULE}
                                                          ]}
                                  end, Filters)
@@ -287,7 +309,8 @@ event({save_filter, Terms}) -> %{{{1
     wf:replace(filters, render_filters()),
     wf:wire(#event{postback={close, save_filter_name}, delegate=element_popup}),
     wf:wire(#script{script="$('.sigma_search_x_button').click()"});
-event({filter_load, Terms}) ->  % {{{1
+event({filter_load, Name, Terms}) ->  % {{{1
+    wf:session(filter_name, Name),
     Bs = lists:map(fun({"Date", Date}) ->
                            #sigma_search_badge{type="Date", text=sugar:date_format(Date)};
                       ({"Daterange", {SDate, EDate}}) ->
@@ -312,6 +335,7 @@ event({filter_load, Terms}) ->  % {{{1
                                                         ]}
                    end, Terms),
     wf:replace(sigma_search_badges, Bs),
+    wf:replace(filters, render_filters(Name)),
     wf:wire(#script{script="$('.sigma_search_textbox').keydown()"}),
     wf:wire(#script{script="$('.sigma_search_button').click()"});
     
