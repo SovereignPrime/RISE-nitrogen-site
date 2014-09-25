@@ -238,7 +238,9 @@ event(Click) ->  % {{{1
 
 inplace_textbox_event({name, Id}, Name) ->  % {{{1
     Contact = wf:session(current_contact),
-    db:save(Contact#db_contact{name=Name}),
+    ContactN = Contact#db_contact{name=Name},
+    db:save(ContactN),
+    wf:session(current_contact, ContactN),
     {ok, Contacts} = db:get_contacts_by_group(wf:session(current_group_id)),
     wf:update(user_list, render_contact_list(Contacts)),
     Name;
@@ -251,17 +253,22 @@ inplace_textbox_event({email, Id}, Name) ->  % {{{1
        true ->
            ok
     end,
+    wf:session(current_contact, ContactN),
     db:save(ContactN),
     Name;
 
 inplace_textbox_event({phone, Id}, Name) ->  % {{{1
     Contact = wf:session(current_contact),
-    db:save(Contact#db_contact{phone=Name}),
+    ContactN = Contact#db_contact{phone=Name},
+    db:save(ContactN),
+    wf:session(current_contact, ContactN),
     Name;
 
 inplace_textbox_event({address, Id}, Name) ->  % {{{1
     Contact = wf:session(current_contact),
-    db:save(Contact#db_contact{bitmessage=wf:to_binary(Name), address=wf:to_binary(Name)}),
+    ContactN = Contact#db_contact{bitmessage=wf:to_binary(Name), address=wf:to_binary(Name)},
+    db:save(ContactN),
+    wf:session(current_contact, ContactN),
     Name;
 
 inplace_textbox_event(T, Name) ->  % {{{1
