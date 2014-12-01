@@ -32,7 +32,7 @@ account(Pid, {address, Address}) ->  % {{{1
             Pid ! accepted.
 
 update() ->  % {{{1
-	LastUpdate = 3,
+	LastUpdate = 4,
 	[update(N) || N <- lists:seq(1,LastUpdate)].
 
 update(1) -> % {{{1
@@ -73,8 +73,19 @@ update(3) ->  % {{{1
                                    R
                            end,
                            NFields),
-    mnesia:add_table_index(db_group, name).
-
+    mnesia:add_table_index(db_group, name);
+update(4) ->  % {{{1
+	Fields = mnesia:table_info(pubkey, attributes),
+    NFields = record_info(fields, pubkey),
+    mnesia:transform_table(db_search,
+                           fun(In) when size(In) == 6 ->
+                                   LIn = tuple_to_list(In),
+                                   LOut = LIn ++ [1000, 1000],
+                                   list_to_tuple(LOut);
+                              (R) ->
+                                   R
+                           end,
+                           NFields).
 
 qlc_result(QH) ->  % {{{1
     transaction(fun() ->
