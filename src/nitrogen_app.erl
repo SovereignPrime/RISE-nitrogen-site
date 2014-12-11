@@ -45,6 +45,7 @@ start(_StartType, _StartArgs) ->
     application:start(nprocreg),
     application:start(ranch),
     application:start(cowboy),
+    db:update(),
     application:start(bitmessage),
     etorrent:start_app(),
     % application:start(eminer),
