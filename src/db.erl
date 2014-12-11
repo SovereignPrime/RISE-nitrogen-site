@@ -142,8 +142,7 @@ update(4) ->  % {{{1
                                                     Sent)
                               end),
            mnesia:delete_table(sent),
-           mnesia:delete_table(incoming),
-           mnesia:delete_table(db_update);
+           mnesia:delete_table(incoming);
        true ->
            ok
     end.
@@ -716,12 +715,13 @@ get_unread_ids() -> % {{{1
 set_read(Id) ->  % {{{1
     transaction(fun() ->
                         case  mnesia:wread({message, Id}) of
-                            [#message{status=S} = U] ->
+                            [#message{status=S,
+                                      folder=incoming} = U] ->
                                 mnesia:write(message,
                                              U#message{status=read},
                                              write),
                                 S;
-                            [] ->
+                            _ ->
                                 read
                         end
                 end).
@@ -1001,16 +1001,24 @@ mark_downloaded(Id) ->  % {{{1
 get_linked_messages(FID) ->  % {{{1
     transaction(fun() ->
                         Attachments = mnesia:index_read(db_attachment, FID, #db_attachment.file),
-                        iterate(db_attachment, Attachments, fun(_Ty, #db_attachment{type=T, tid=Id}) when T == db_update ->
-                                                                    [#db_update{subject=Subject}] = mnesia:read(T, Id),
-                                                                    [ <<(wf:to_binary(Subject))/bytes, "; ">> ];
-                                                               (_Ty, #db_attachment{type=T, tid=Id}) when T == db_task ->
-                                                                    [#db_task{name=Subject}] = mnesia:read(T, Id),
-                                                                    [ <<(wf:to_binary(Subject))/bytes, "; ">> ];
-                                                               (_Ty, #db_attachment{type=T, tid=Id}) when T == db_expense ->
-                                                                    [#db_expense{name=Subject}] = mnesia:read(T, Id),
-                                                                    [ <<(wf:to_binary(Subject))/bytes, "; ">> ]
-                                                            end)
+                        iterate(db_attachment,
+                                Attachments,
+                                fun(_Ty, #db_attachment{type=T,
+                                                        tid=Id}) when T == db_update ->
+                                        [#db_update{subject=Subject}] = mnesia:read(T, Id),
+                                        [ <<(wf:to_binary(Subject))/bytes,
+                                            "; ">> ];
+                                   (_Ty, #db_attachment{type=T,
+                                                        tid=Id}) when T == db_task ->
+                                        [#db_task{name=Subject}] = mnesia:read(T, Id),
+                                        [ <<(wf:to_binary(Subject))/bytes,
+                                            "; ">> ];
+                                   (_Ty, #db_attachment{type=T,
+                                                        tid=Id}) when T == db_expense ->
+                                        [#db_expense{name=Subject}] = mnesia:read(T, Id),
+                                        [ <<(wf:to_binary(Subject))/bytes,
+                                            "; ">> ]
+                                end)
                 end).
 
 
