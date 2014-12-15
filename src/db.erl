@@ -74,6 +74,7 @@ update(3) ->  % {{{1
                            NFields),
     mnesia:add_table_index(db_group, name);
 update(4) ->  % {{{1
+    application:stop(bitmessage),
     NFields = record_info(fields, pubkey),
     mnesia:transform_table(pubkey,
                            fun(In) when size(In) == 7 ->
@@ -105,7 +106,6 @@ update(4) ->  % {{{1
                                           R
                                   end,
                                   INFields),
-           ?V(mnesia:create_table(message, [{disc_copies, [node()]}, {attributes, record_info(fields, message)}, {type, set}, {record_name, message}])),
            mnesia:transaction(fun() ->
                                       Incoming = mnesia:select(incoming,
                                                                [{#message{status='$1',
