@@ -86,7 +86,7 @@ update(4) ->  % {{{1
                            NFields),
     INFields = record_info(fields, message),
     NumTables = length(mnesia:system_info(tables)),
-    if NumTables == 19 ->
+    if NumTables == 20 ->
            mnesia:transform_table(incoming,
                                   fun(In) when size(In) == 12 ->
                                           LIn = tuple_to_list(In),
