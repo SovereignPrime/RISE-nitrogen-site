@@ -13,6 +13,7 @@ install(Pid)->  % {{{1
     ?V(mnesia:create_table(db_group, [{disc_copies, [node()]}, {attributes, record_info(fields, db_group)}, {type, ordered_set}, {index, [name]}])),
     ?V(mnesia:create_table(db_contact, [{disc_copies, [node()]}, {attributes, record_info(fields, db_contact)}, {type, ordered_set}, {index, [address]}])),
     ?V(mnesia:create_table(db_task, [{disc_copies, [node()]}, {attributes, record_info(fields, db_task)}, {type, ordered_set}])),
+    ?V(mnesia:create_table(db_update, [{disc_copies, [node()]}, {attributes, record_info(fields, db_update)}, {type, set}])),
     ?V(mnesia:create_table(db_file, [{disc_copies, [node()]}, {attributes, record_info(fields, db_file)}, {type, ordered_set}])),
     ?V(mnesia:create_table(db_expense, [{disc_copies, [node()]}, {attributes, record_info(fields, db_expense)}, {type, ordered_set}])),
     ?V(mnesia:create_table(db_search, [{disc_copies, [node()]}, {attributes, record_info(fields, db_search)}])),
