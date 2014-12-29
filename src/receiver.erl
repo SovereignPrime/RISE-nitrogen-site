@@ -11,6 +11,10 @@
     start_link/0,
     register_receiver/1,
     received/1,
+    sent/1,
+    key_ready/1,
+    connected/1,
+    disconnected/1,
 	extract_task/1
     ]). % }}}
 
@@ -43,6 +47,27 @@ register_receiver(Pid) ->  % {{{1
 
 received(Hash) ->  % {{{1
     gen_server:cast(?MODULE, {msg, Hash}).
+
+sent(Hash) ->  % {{{1
+    error_logger:info_msg("Sent message: ~p~n", [bm_types:binary_to_hexstring(Hash)]),
+    ok.
+
+-spec key_ready(binary()) -> ok.
+key_ready(Address) ->  % {{{1
+    error_logger:info_msg("New address generated: ~p~n", [Address]),
+    ok.
+
+-spec connected(non_neg_integer()) -> ok.
+connected(N) ->  % {{{1
+    error_logger:info_msg("New peer. Number of peers: ~p~n",
+                          [N]),
+    ok.
+
+-spec disconnected(non_neg_integer()) -> ok.
+disconnected(N) ->  % {{{1
+    error_logger:info_msg("Peer disconnected. Number of peers: ~p~n",
+                          [N]),
+    ok.
 %%%===================================================================
 %%% gen_server callbacks
 %%%===================================================================
