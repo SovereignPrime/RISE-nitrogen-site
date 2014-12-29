@@ -49,8 +49,7 @@ received(Hash) ->  % {{{1
     gen_server:cast(?MODULE, {msg, Hash}).
 
 sent(Hash) ->  % {{{1
-    error_logger:info_msg("Sent message: ~p~n", [bm_types:binary_to_hexstring(Hash)]),
-    ok.
+    gen_server:cast(?MODULE, {sent, Hash}).
 
 -spec key_ready(binary()) -> ok.
 key_ready(Address) ->  % {{{1
@@ -59,15 +58,12 @@ key_ready(Address) ->  % {{{1
 
 -spec connected(non_neg_integer()) -> ok.
 connected(N) ->  % {{{1
-    error_logger:info_msg("New peer. Number of peers: ~p~n",
-                          [N]),
-    ok.
+    gen_server:cast(?MODULE, {connection, N}).
 
 -spec disconnected(non_neg_integer()) -> ok.
 disconnected(N) ->  % {{{1
-    error_logger:info_msg("Peer disconnected. Number of peers: ~p~n",
-                          [N]),
-    ok.
+    gen_server:cast(?MODULE, {connection, N}).
+
 %%%===================================================================
 %%% gen_server callbacks
 %%%===================================================================
@@ -117,6 +113,20 @@ handle_call(_Request, _From, State) ->  % {{{1
 %%--------------------------------------------------------------------
 handle_cast({register, Pid}, State) ->  % {{{1
     {noreply, State#state{pid=Pid}};
+handle_cast({connection, N}, State) ->  % {{{1
+    State#state.pid ! {status, N},
+    {noreply, State};
+handle_cast({sent, Hash}, State) ->  % {{{1
+    {ok, #message{enc=Enc}}= bitmessage:get_message(Hash),
+    case Enc of
+        E when E==2; 
+               E == 3;
+               E == 4 ->
+            State#state.pid ! sent,
+            {ok, State};
+        _ ->
+            {ok, State}
+    end;
 handle_cast({msg, Hash}, State) ->  % {{{1
     io:format("Receiver: ~p~n", [Hash]),
     {ok, #message{from=From,
@@ -191,7 +201,19 @@ apply_message(#message{from=BMF,
                                          bitmessage=BM,
                                          address=Address} } = db:get_contact_by_address(Data),
 
-                       bitmessage:send_message(BMT, BMF, <<"vCard">>, <<(wf:to_binary(Name))/bytes, ",", (wf:to_binary(Email))/bytes, ",", (wf:to_binary(Phone))/bytes, ",", (wf:to_binary(Address))/bytes, ",", (wf:to_binary(BM))/bytes>>, 6);
+                       bitmessage:send_message(BMT,
+                                               BMF,
+                                               <<"vCard">>,
+                                               <<(wf:to_binary(Name))/bytes,
+                                                 ",",
+                                                 (wf:to_binary(Email))/bytes,
+                                                 ",",
+                                                 (wf:to_binary(Phone))/bytes,
+                                                 ",",
+                                                 (wf:to_binary(Address))/bytes,
+                                                 ",",
+                                                 (wf:to_binary(BM))/bytes>>,
+                                               6);
 
 % vCard  {{{1
 apply_message(#message{from=BMF,

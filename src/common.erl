@@ -23,15 +23,30 @@ main() ->  % {{{1
                     end;
                 R ->
                     {ok, Pid} = wf:comet_global(fun  incoming/0, incoming),
-                    timer:send_interval(1000, Pid, status),
+                    Pid! {status, undefined},
                     receiver:register_receiver(Pid),
-                    T = #template { file=PWD ++ "/site/templates/bare.html" },
-                    wf:wire('new_contact', #event{type=click, postback=add_contact, delegate=?MODULE}),
-                    wf:wire('new_group', #event{type=click, postback=add_group, delegate=?MODULE}),
-                    wf:wire('new_task', #event{type=click, postback=add_task, delegate=?MODULE}),
-                    wf:wire('new_expense', #event{type=click, postback=add_expense, delegate=?MODULE}),
-                    wf:wire('new_update', #event{type=click, postback=add_update, delegate=?MODULE}),
-                T
+                    T = #template {file=PWD ++ "/site/templates/bare.html" },
+                    wf:wire('new_contact',
+                            #event{type=click,
+                                   postback=add_contact,
+                                   delegate=?MODULE}),
+                    wf:wire('new_group',
+                            #event{type=click,
+                                   postback=add_group,
+                                   delegate=?MODULE}),
+                    wf:wire('new_task',
+                            #event{type=click,
+                                   postback=add_task,
+                                   delegate=?MODULE}),
+                    wf:wire('new_expense',
+                            #event{type=click,
+                                   postback=add_expense,
+                                   delegate=?MODULE}),
+                    wf:wire('new_update',
+                            #event{type=click,
+                                   postback=add_update,
+                                   delegate=?MODULE}),
+                    T
             end;
         {timeout, _} ->
             wf:redirect("/legal")
@@ -41,29 +56,25 @@ unread() -> % {{{1
     {ok, New} = db:get_unread_updates(),
     #span{id=count, class='label label-inverse',text=wf:f("~p new", [length(New)])}.
 
-connection_status() -> % {{{1
-    case ets:info(addrs, size) of
-         C when C==0; C==undefined ->
-            "<script type='text/javascript'>" ++
-                "$('.tooltip').remove();" ++
-            "</script>" ++
-            %"<div class='wfid_connection span1' data-toggle='tooltip' title='not connected' style='text-align:right;margin-left:4.5%;'>" ++
-                "<i class='icon icon-circle-blank'></i> net"++
-            %"</div>" ++
-            "<script type='text/javascript'>" ++
-                "$('.wfid_connection').tooltip({placement: 'right'});" ++
-            "</script>";
-        _ ->
-            "<script type='text/javascript'>" ++
-                "$('.tooltip').remove();" ++
-            "</script>" ++
-            %"<div class='wfid_connection span1' data-toggle='tooltip' title='connected' style='text-align:right;margin-left:4.5%;'>" ++
-                "<i class='icon icon-circle'></i> net" ++
-            %"</div>" ++
-            "<script type='text/javascript'>" ++
-                "$('.wfid_connection').tooltip({placement: 'right'});" ++
-            "</script>"
-    end.
+connection_status(N) when N > 0, % {{{1
+                          N /= undefined ->
+    "<script type='text/javascript'>" ++
+    "$('.tooltip').remove();" ++
+    "</script>" ++
+    "<i class='icon icon-circle'></i> net" ++
+    "<script type='text/javascript'>" ++
+    "$('.wfid_connection').tooltip({placement: 'right'});" ++
+    "</script>";
+connection_status(undefined) -> % {{{1
+    connection_status(bitmessage:connected());
+connection_status(_N) -> % {{{1
+    "<script type='text/javascript'>" ++
+    "$('.tooltip').remove();" ++
+    "</script>" ++
+    "<i class='icon icon-circle-blank'></i> net"++
+    "<script type='text/javascript'>" ++
+    "$('.wfid_connection').tooltip({placement: 'right'});" ++
+    "</script>".
 
 search() -> %{{{1
     #sigma_search{tag=search, 
@@ -472,8 +483,8 @@ incoming() -> %{{{1
             (wf:page_module()):incoming(),
             wf:replace(count, unread()),
             wf:flush();
-        status ->
-            wf:update(connection, connection_status()),
+        {status, N} ->
+            wf:update(connection, connection_status(N)),
             wf:flush()
     end,
 	?MODULE:incoming().
