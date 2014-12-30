@@ -53,6 +53,7 @@ sent(Hash) ->  % {{{1
 
 -spec key_ready(binary()) -> ok.
 key_ready(Address) ->  % {{{1
+    {ok, U} = db:create_account("", true, Address),
     error_logger:info_msg("New address generated: ~p~n", [Address]),
     ok.
 

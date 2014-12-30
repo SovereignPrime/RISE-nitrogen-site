@@ -7,11 +7,14 @@
 
 main() ->  % {{{1
     PWD = os:getenv("ROOTDIR"),
-    {ok, Pid} = wf:comet(fun() -> counter(1) end),
+    {ok, Pid} = wf:comet(fun() -> counter(1) end, progress),
     spawn_link(db, install, [Pid]),
     timer:send_interval(1000, Pid, timeout),
     #template { file= PWD ++ "/site/templates/legal.html" }.
 	
+key_ready() ->  % {{{1
+    wf:send(progress, accepted).
+
 accept() -> % {{{1
     #link{id=accept,class="btn btn-link", body=[
                 "<i class='icon-ok'></i> Accept &nbsp;"
@@ -40,20 +43,33 @@ counter(N) -> % {{{1
                    wf:flush(),
                    counter(0);
                true ->
-                   wf:insert_bottom(progress, #panel{id=pr, text=" ", style="width:3px;background-color:#000;height:3px;display:inline-block;"}),
+                   wf:insert_bottom(progress,
+                                    #panel{id=pr,
+                                           text=" ",
+                                           style="width:3px;background-color:#000;height:3px;display:inline-block;"}),
                    wf:flush(),
                    counter(N+1)
             end;
         accepted ->
-            wf:replace(pl, #panel{style="text-align:center;", body=[
-                                                                          #panel{ style="display:inline-block;width:170px;", body=[
-
-                                                                                                                                   #link{id=accept,class="btn btn-link", body=[
-                                                                                                                                                                               "<i class='icon-ok'></i> Accept &nbsp;"
-                                                                                                                                                                              ], url="/", new=false}
-                                                                                                                                  ]},
-                                                                          #panel{ style="display:inline-block;width:170px;", body=[
-                                                                                                                                   #link{class="btn btn-link", body="<i class='icon-remove'></i> Decline", postback=decline, new=false}
-]}
-]})
+            wf:replace(pl,
+                       #panel{style="text-align:center;",
+                              body=[
+                                    #panel{style="display:inline-block;width:170px;",
+                                           body=[
+                                                 #link{id=accept,
+                                                       class="btn btn-link",
+                                                       body=[
+                                                             "<i class='icon-ok'></i> Accept &nbsp;"
+                                                            ],
+                                                       url="/",
+                                                       new=false}
+                                                ]},
+                                    #panel{ style="display:inline-block;width:170px;",
+                                            body=[
+                                                  #link{class="btn btn-link",
+                                                        body="<i class='icon-remove'></i> Decline",
+                                                        postback=decline,
+                                                        new=false}
+                                                 ]}
+                                   ]})
     end.
