@@ -234,7 +234,7 @@ settings_menu() -> %{{{1
 				#link{text="View My Profile (and RISE ID)", postback=my_profile, delegate=?MODULE}
 			]},
 			#listitem{ class="", body=[
-				#link{text="Wrap peers", postback=wrap_peers, delegate=?MODULE}
+				#link{text="Wipe peers", postback=wrap_peers, delegate=?MODULE}
 			]},
 			#listitem{ class="", body=[
 				#link{text="Backup user", postback=backup, delegate=?MODULE}
