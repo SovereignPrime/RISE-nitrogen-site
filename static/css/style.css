@@ -57,6 +57,10 @@ button:focus {
 	color: white;
 }
 
+.current img {
+    -webkit-filter: invert(100%);
+}
+
 a.current:hover {
 	color: white;
 }
