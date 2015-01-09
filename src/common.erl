@@ -472,22 +472,26 @@ finish_upload_event(filename, FName, FPath, _Node) -> %{{{1
     wf:update(files, render_files()).
 
 incoming() -> %{{{1
+    receiver:register_receiver(self()),
     receive
         received ->
             wf:wire(#script{script="received();"}),
-            wf:flush();
+            wf:flush(),
+            ?MODULE:incoming();
         sent ->
             wf:wire(#script{script="sent();"}),
-            wf:flush();
+            wf:flush(),
+            ?MODULE:incoming();
         update ->
             (wf:page_module()):incoming(),
             wf:replace(count, unread()),
-            wf:flush();
+            wf:flush(),
+            ?MODULE:incoming();
         {status, N} ->
             wf:update(connection, connection_status(N)),
-            wf:flush()
-    end,
-	?MODULE:incoming().
+            wf:flush(),
+            ?MODULE:incoming()
+    end.
 
 save_involved(Type, TId) -> %{{{1
     Involved = wf:qs(person),
