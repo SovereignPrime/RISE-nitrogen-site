@@ -491,6 +491,9 @@ incoming() -> %{{{1
             wf:update(connection, connection_status(N)),
             wf:flush(),
             ?MODULE:incoming()
+    after
+        1000 ->
+            ?MODULE:incoming()
     end.
 
 save_involved(Type, TId) -> %{{{1
