@@ -46,6 +46,12 @@ main() ->  % {{{1
                             #event{type=click,
                                    postback=add_update,
                                    delegate=?MODULE}),
+                    wf:wire(#event{type=timer,
+                                   delay=600000,
+                                   actions=#script{
+                                              script="location.reload();"
+                                             }
+                                  }),
                     T
             end;
         {timeout, _} ->
