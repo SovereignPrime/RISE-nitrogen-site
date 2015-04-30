@@ -11,7 +11,7 @@ start(_StartType, _StartArgs) ->
     application:load(mnesia),
     application:load(sasl),
     application:load(lager),
-    application:load(etorrent_core),
+    %application:load(etorrent_core),
     RiseDir = case os:type() of
         {win32, _} ->
             os:getenv("APPDATA") ++ "/RISE";
@@ -46,10 +46,9 @@ start(_StartType, _StartArgs) ->
     application:start(nprocreg),
     application:start(ranch),
     application:start(cowboy),
-    mnesia:create_table(message, [{disc_copies, [node()]}, {attributes, record_info(fields, message)}, {type, set}, {record_name, message}]),
-    application:start(bitmessage),
-    db:update(4),
-    etorrent:start_app(),
+    %application:start(bitmessage),
+    %db:update(4),
+    %etorrent:start_app(),
     % application:start(eminer),
     nitrogen_sup:start_link().
 
