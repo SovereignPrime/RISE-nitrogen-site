@@ -5,6 +5,8 @@
 
 date_format(Str) when is_list(Str)->  %{{{1
     Str;
+date_format({D, _}) ->  %{{{1
+    date_format(D);
 date_format({Y, M, D}) ->  %{{{1
 	%% might be worth replacing with qdate:to_string()
    	lists:flatten(io_lib:format("~4..0w-~2..0w-~2..0w", [Y, M, D])).

@@ -33,29 +33,30 @@ render_element(Record = #file_row{fid=FID,
             "BINARY"
     end,
     {ok, Linked} = db:get_linked_messages(FID),
-    {Stat, Percent, Uploaded} = case ets:match_object(etorrent_torrent, #torrent{display_name=wf:to_binary(FID), _='_'}) of
-                               [#torrent{state=seeding, uploaded=U, all_time_uploaded=AU}] ->
-                                          if Status == downloading ->
-                                                 db:mark_downloaded(wf:to_list(FID)),
-                                                 {downloaded, 100, AU + U};
-                                             Status == uploaded ->
-                                                 {seeding, 100,AU + U};
-                                             true ->
-                                                 {Status, 100, AU + U}
-                                          end;
-                               [#torrent{ all_time_uploaded=AU, uploaded=U, left=Left, total=Total}] ->
-                                        {ok, Pid} = wf:comet(fun() ->
-                                                                     receive 
-                                                                         update ->
-                                                                             wf:replace(Id, render_element(File)),
-                                                                             wf:flush()
-                                                                     end
-                                                             end),
-                                        timer:send_after(10000, Pid, update),
-                                   {downloading, ((Total - Left)  * 100 div Total), AU + U};
-                               _ ->
-                                   {Status, 0, 0}
-                           end,
+    {Stat, Percent, Uploaded} = {Status, 100, 0},
+    % case ets:match_object(etorrent_torrent, #torrent{display_name=wf:to_binary(FID), _='_'}) of
+                               %[#torrent{state=seeding, uploaded=U, all_time_uploaded=AU}] ->
+                               %           if Status == downloading ->
+                               %                  db:mark_downloaded(wf:to_list(FID)),
+                               %                  {downloaded, 100, AU + U};
+                               %              Status == uploaded ->
+                               %                  {seeding, 100,AU + U};
+                               %              true ->
+                               %                  {Status, 100, AU + U}
+                               %           end;
+                               %[#torrent{ all_time_uploaded=AU, uploaded=U, left=Left, total=Total}] ->
+                               %         {ok, Pid} = wf:comet(fun() ->
+                               %                                      receive 
+                               %                                          update ->
+                               %                                              wf:replace(Id, render_element(File)),
+                               %                                              wf:flush()
+                               %                                      end
+                               %                              end),
+                               %         timer:send_after(10000, Pid, update),
+                               %    {downloading, ((Total - Left)  * 100 div Total), AU + U};
+                               %_ ->
+                               %    {Status, 0, 0}
+                           %end,
     Check =  sets:is_element(FID, wf:session_default(attached_files, sets:new())),
 
     #tablerow{id=Id, cells=[

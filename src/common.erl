@@ -71,8 +71,8 @@ connection_status(N) when N > 0, % {{{1
     "<script type='text/javascript'>" ++
     "$('.wfid_connection').tooltip({placement: 'right'});" ++
     "</script>";
-connection_status(undefined) -> % {{{1
-    connection_status(bitmessage:connected());
+%connection_status(undefined) -> % {{{1
+%    connection_status(bitmessage:connected());
 connection_status(_N) -> % {{{1
     "<script type='text/javascript'>" ++
     "$('.tooltip').remove();" ++
@@ -468,7 +468,7 @@ finish_upload_event(restore, FName, FPath, _Node) -> %{{{1
 finish_upload_event(filename, FName, FPath, _Node) -> %{{{1
     FID = filename:basename(FPath),
     io:format("File uploaded: ~p to ~p for ~p~n", [FName, FPath, new]),
-    {ok, Scratch} = application:get_env(etorrent_core, dir),
+    {ok, Scratch} = application:get_env(simple_bridge, scratch_dir),
     TName = wf:f("~s/~s.torrent", [Scratch, FID]),
     etorrent_mktorrent:create(FPath, undefined, TName),
     User = wf:user(),
@@ -514,13 +514,27 @@ save_involved(Type, TId) -> %{{{1
                 db:save(P#db_contact_roles{id=NPId, contact=CID})
         end, List).
 
-send_messages(#db_update{subject=Subject, text=Text, from=FID, to=Contacts, date=Date}=U) -> %{{{1
+send_messages(#db_update{subject=Subject, % {{{1
+                         text=Text,
+                         from=FID,
+                         to=Contacts,
+                         date=Date}=U) ->
     #db_contact{address=From} = wf:user(),
     {ok, Attachments} = db:get_attachments(U),
-    MSG = term_to_binary(#message_packet{subject=Subject, text=Text, involved=[From | Contacts], attachments=Attachments, time=bm_types:timestamp()}),
+    MSG = term_to_binary(#message_packet{subject=Subject,
+                                         text=Text,
+                                         involved=[From | Contacts],
+                                         attachments=Attachments,
+                                         time=bm_types:timestamp()}),
+
+    Path = application:get_env(simple_bridge, scratch_dir, "."),
+    AttachmentsPaths = lists:map(fun(#db_file{id=AttachmentID}) ->
+                                         Path ++ "/" ++ AttachmentID
+                                 end,
+                                 Attachments),
     lists:foreach(fun(To) ->
                           error_logger:info_msg("Message to ~s sent subject ~s~n", [To, Subject]),
-                          bitmessage:send_message(From, wf:to_binary(To), wf:to_binary(Subject), MSG, 3)
+                          bitmessage:send_message(From, wf:to_binary(To), wf:to_binary(Subject), MSG, AttachmentsPaths)
                   end, Contacts);
 send_messages(#db_task{id=UID, name=Subject, text=Text, due=Date, parent=Parent, status=Status, changes=Changes } = U) -> %{{{1
     {ok, Involved} = db:get_involved(UID),
@@ -563,9 +577,8 @@ encode_attachments(Attachments) -> %{{{1
     <<"Attachments:", << <<A/bytes,";">> || A <- AttachmentsL>>/bytes, 10>>.
 
 get_torrent(FID) -> %{{{1
-    #db_contact{bitmessage=From} = wf:user(),
-    {ok, To} = db:get_owner(FID),
-    bitmessage:send_message(From, To, <<"Get torrent">>, wf:to_binary(FID), 6).
+    AttachmentID = db:get_attachment_id(FID),
+    bitmessage:get_attachment(AttachmentID).
 
 restore(FID) -> %{{{1
     {ok, Scratch} = application:get_env(etorrent_core, dir),

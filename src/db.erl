@@ -85,69 +85,26 @@ update(4) ->  % {{{1
                               (R) ->
                                    R
                            end,
-                           NFields),
-    INFields = record_info(fields, message),
-    NumTables = length(mnesia:system_info(tables)),
-    if NumTables == 20 ->
-           mnesia:transform_table(incoming,
-                                  fun(In) when size(In) == 12 ->
-                                          LIn = tuple_to_list(In),
-                                          LOut = LIn ++ [calendar:local_time()],
-                                          list_to_tuple(LOut);
-                                     (R) ->
-                                          R
-                                  end,
-                                  INFields),
-           mnesia:transform_table(sent,
-                                  fun(In) when size(In) == 12 ->
-                                          LIn = tuple_to_list(In),
-                                          LOut = LIn ++ [calendar:local_time()],
-                                          list_to_tuple(LOut);
-                                     (R) ->
-                                          R
-                                  end,
-                                  INFields),
-           ?V(mnesia:create_table(message, [{disc_copies, [node()]}, {attributes, record_info(fields, message)}, {type, set}, {record_name, message}])),
-           mnesia:transaction(fun() ->
-                                      Incoming = mnesia:select(incoming,
-                                                               [{#message{status='$1',
-                                                                          enc='$2',
-                                                                          subject='$3',
-                                                                          _='_'},
-                                                                 [{'and',
-                                                                   {'/=', '$1', archive},
-                                                                   {'/=', '$2', 6}},
-                                                                  {'/=', '$3', <<"Update223322">>}],
-                                                                 ['$_']}]),
-                                      Sent = mnesia:select(sent,
-                                                           [{#message{status='$1',
-                                                                      enc='$2',
-                                                                      subject='$3',
-                                                                      _='_'},
-                                                             [{'and',
-                                                               {'/=', '$1', archive},
-                                                               {'/=', '$2', 6}},
-                                                              {'/=', '$3', <<"Update223322">>}],
-                                                             ['$_']}]),
-                                      error_logger:info_msg("Messages: ~p sent ~p~n", [Incoming, Sent]),
-                                      lists:foreach(fun(Msg) ->
-                                                            mnesia:write(message, 
-                                                                         Msg#message{folder=incoming},
-                                                                         write)
-                                                    end,
-                                                    Incoming),
-                                      lists:foreach(fun(Msg) ->
-                                                            mnesia:write(message, 
-                                                                         Msg#message{folder=sent},
-                                                                         write)
-                                                    end,
-                                                    Sent)
-                              end),
-           mnesia:delete_table(sent),
-           mnesia:delete_table(incoming);
-       true ->
-           ok
-    end.
+                           NFields);
+update(5) ->  % {{{1
+    mnesia:transaction(fun() ->
+                        Files = mnesia:select(db_file, [{#db_file{status='$1', _='_'}, [{'/=', '$1', archive}], ['$_']}]),
+                        lists:foreach(fun(#db_file{id=Id,
+                                                   path=Path,
+                                                   status=Status,
+                                                   date=Date,
+                                                   size=Size}) ->
+                                              mnesia:write(#bm_file{
+                                                              hash=wf:to_binary(Id),
+                                                              name=Path,
+                                                              size=Size,
+                                                              time={Date, {0,0,0}},
+                                                              status=Status})
+                                      end,
+                                      Files)
+                       end).
+
+
 
 qlc_result(QH) ->  % {{{1
     transaction(fun() ->
@@ -953,7 +910,13 @@ get_attachments(Record) ->  % {{{1
     Type = element(1, Record),
     Id = element(2, Record),
     transaction(fun() ->
-                        A = mnesia:select(db_attachment, [{#db_attachment{ file='$1', type=Type, tid=Id, _='_'}, [], ['$1']}]),
+                        A = mnesia:select(db_attachment,
+                                          [{#db_attachment{ file='$1',
+                                                            type=Type,
+                                                            tid=Id,
+                                                            _='_'},
+                                            [],
+                                            ['$1']}]),
                         iterate(db_file, A)
                 end).
 
@@ -971,11 +934,18 @@ get_files(FIDs) when is_list(FIDs) ->  % {{{1
                 end);
 get_files(true)  ->  % {{{1
     transaction(fun() ->
-                        mnesia:select(db_file, [{#db_file{status=archive, _='_'}, [], ['$_']}])
+                        mnesia:select(bm_file, [{#bm_file{status=archive, _='_'}, [], ['$_']}])
                 end);
 get_files(false)  ->  % {{{1
     transaction(fun() ->
                         mnesia:select(db_file, [{#db_file{status='$1', _='_'}, [{'/=', '$1', archive}], ['$_']}])
+                end).
+
+get_download_percent(Fid) ->
+    transaction(fun() ->
+                        [#bm_file{chunks=All}] = mnesia:read(bm_file, Fid),
+                        Downloaded = mnesia:index_read(bm_filechunk, Fid, #bm_filechunk.file),
+                        Downloaded / All * 100
                 end).
 
 get_owner(FID) ->  % {{{1
@@ -1000,6 +970,8 @@ mark_downloaded(Id) ->  % {{{1
                         mnesia:write(F#db_file{status=downloaded})
                 end).
 
+get_linked_messages(FID) when is_binary(FID) ->  % {{{1
+    get_linked_messages(wf:to_list(FID));
 get_linked_messages(FID) ->  % {{{1
     transaction(fun() ->
                         Attachments = mnesia:index_read(db_attachment, FID, #db_attachment.file),

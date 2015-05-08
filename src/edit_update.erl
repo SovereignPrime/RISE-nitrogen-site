@@ -113,9 +113,12 @@ event(add_file) -> % {{{1
                     BM
             end, InvolvedS) -- [<<"">>],
     io:format("~p~n", [Involved]),
-    NUpdate = Update#db_update{subject=Subject, text=Text, from=UID, 
+    NUpdate = Update#db_update{subject=Subject,
+                               text=Text,
+                               from=UID, 
                                to=Involved,
-                               date=date(), status=new},
+                               date=date(),
+                               status=new},
     wf:session(current_update, NUpdate),
     wf:redirect("/files?from=message");
 event(save) -> % {{{1

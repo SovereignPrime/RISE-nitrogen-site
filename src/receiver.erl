@@ -15,6 +15,7 @@
     key_ready/1,
     connected/1,
     disconnected/1,
+    downloaded/1,
 	extract_task/1
     ]). % }}}
 
@@ -45,24 +46,29 @@ start_link() ->  % {{{1
 register_receiver(Pid) ->  % {{{1
     gen_server:cast(?MODULE, {register, Pid}).
 
-received(Hash) ->  % {{{1
+-spec received(binary()) -> ok. % {{{1
+received(Hash) ->
     gen_server:cast(?MODULE, {msg, Hash}).
 
-sent(Hash) ->  % {{{1
+-spec sent(binary()) -> ok. % {{{1
+sent(Hash) ->
     gen_server:cast(?MODULE, {sent, Hash}).
 
--spec key_ready(binary()) -> ok.
-key_ready(Address) ->  % {{{1
+-spec key_ready(binary()) -> ok.  % {{{1
+key_ready(Address) ->
     gen_server:cast(?MODULE, {address, Address}).
 
--spec connected(non_neg_integer()) -> ok.
-connected(N) ->  % {{{1
+-spec connected(non_neg_integer()) -> ok.  % {{{1
+connected(N) ->
     gen_server:cast(?MODULE, {connection, N}).
 
--spec disconnected(non_neg_integer()) -> ok.
-disconnected(N) ->  % {{{1
+-spec disconnected(non_neg_integer()) -> ok.  % {{{1
+disconnected(N) ->
     gen_server:cast(?MODULE, {connection, N}).
 
+-spec downloaded(binary()) -> ok. % {{{1
+downloaded(Hash) ->
+    gen_server:cast(?MODULE, {downloaded, Hash}).
 %%%===================================================================
 %%% gen_server callbacks
 %%%===================================================================
@@ -119,6 +125,9 @@ handle_cast({register, Pid}, State) ->  % {{{1
 handle_cast({connection, N}, State) ->  % {{{1
     State#state.pid ! {status, N},
     {noreply, State};
+handle_cast({downloaded, Hash}, State) ->  % {{{1
+    [#bm_file{name=Name}] = bm_db:lookup(bm_file, Hash),
+    db:mark_downloaded(Name);
 handle_cast({sent, Hash}, State) ->  % {{{1
     {ok, #message{enc=Enc}}= bitmessage:get_message(Hash),
     case Enc of

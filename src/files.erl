@@ -86,10 +86,23 @@ body(Archive) ->   % {{{1
                         sortheader("Date", #db_file.date),
                         sortheader("Status", #db_file.status)
                 ]},
-                lists:map(fun(#db_file{id=Id, path=Name, size=Size, type=Type,user=For, date=Date, status=Status} ) ->
+                lists:map(fun(#db_file{id=Id,
+                                       path=Name,
+                                       size=Size,
+                                       type=Type,
+                                       user=For,
+                                       date=Date,
+                                       status=Status} ) ->
                             {ok, #db_contact{name=U}} = db:get_contact(For),
-                            #file_row{fid=Id, name=Name, size=Size, type=Type, for=U, date=Date, status=Status}
-                    end, Files)
+                            #file_row{fid=Id,
+                                      name=Name,
+                                      size=Size,
+                                      type=Type,
+                                      for=U,
+                                      date=Date,
+                                      status=Status}
+                          end,
+                          Files)
                 ]}
 
             ]}.    
