@@ -468,11 +468,8 @@ finish_upload_event(restore, FName, FPath, _Node) -> %{{{1
 finish_upload_event(filename, FName, FPath, _Node) -> %{{{1
     FID = filename:basename(FPath),
     io:format("File uploaded: ~p to ~p for ~p~n", [FName, FPath, new]),
-    {ok, Scratch} = application:get_env(simple_bridge, scratch_dir),
-    TName = wf:f("~s/~s.torrent", [Scratch, FID]),
-    etorrent_mktorrent:create(FPath, undefined, TName),
     User = wf:user(),
-    File = db:save_file(FName, FPath,User),
+    _File = db:save_file(FName, FPath,User),
     AF = wf:session_default(attached_files, sets:new()),
     wf:session(attached_files, sets:add_element( FID , AF)),
     wf:update(files, render_files()).

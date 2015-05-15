@@ -339,8 +339,8 @@ NitrogenClass.prototype.$attach_upload_handle_dragdrop = function(form,input,set
             add: function(e,data) {
                 jQuery.each(data.files,function(i,f) {
                     // Let's add the visual list of pending files
-                    jQuery(form).children(".upload_droplist")
-                        .prepend(jQuery("<li></li>").attr("filename",f.name).text(f.name));
+                    // jQuery(form).children(".upload_droplist")
+                    //     .prepend(jQuery("<li></li>").attr("filename",f.name).text(f.name));
                     Nitrogen.$increment_pending_upload_counter(form,1);
                 });
                 if(settings.autoupload)
@@ -363,6 +363,7 @@ NitrogenClass.prototype.$attach_upload_handle_dragdrop = function(form,input,set
                     var Postback = "";
                 }
 
+                console.log(Postback);
                 jQuery.globalEval(Postback);
                 Nitrogen.$increment_pending_upload_counter(form,-1);
             }

@@ -343,6 +343,7 @@ NitrogenClass.prototype.$attach_upload_handle_dragdrop = function(form,input,set
                     jQuery(form).children(".upload_droplist")
                         .prepend(jQuery("<li></li>").attr("filename",f.name).text(f.name));
                     Nitrogen.$increment_pending_upload_counter(form,1);
+                    console.log(f.name);
                 });
                 if(settings.autoupload)
                     data.submit();
