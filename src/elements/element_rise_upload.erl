@@ -20,7 +20,10 @@ render_element(_Record = #rise_upload{
                            droppable_text=Text
                            }) ->
     PathId = wf:to_atom("upload_path_" ++ wf:to_list(Tag)),
-    wf:wire(#script{script="$.getScript('/js/upload.js', function(e) {init_upload('" ++ PathId ++ "');});"}),
+    wf:wire(#script{script= "$.getScript('/js/upload.js', function(data, status, xnr) {" ++
+                            "console.log(data);" ++
+                            "init_upload('" ++ PathId ++ "');" ++ 
+                            "});"}),
     [#panel{id=Id,
            class=["rise_upload" | Class],
            text=wf:html_encode(Text),

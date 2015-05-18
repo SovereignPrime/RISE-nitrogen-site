@@ -104,13 +104,15 @@ render_files() -> % {{{1
                          body=[
                                "<i class='icon-file-alt'></i> Attachments",
                                #br{},
-                               #upload{id=attachments,
-                                       tag=filename,
-                                       delegate=common,
-                                       droppable=true,
-                                       show_button=false,
-                                       droppable_text="Drag and drop files here",
-                                       multiple=false},
+                               #rise_upload{id=attachments,
+                               % #upload{id=attachments,
+                                        tag=filename,
+                               %         delegate=common,
+                               %         droppable=true,
+                               %         show_button=false,
+                                        droppable_text="Drag and drop files here"
+                               %         multiple=false},
+                                           },
                                #link{body="<i class='icon-th-large'></i> Select from my files",
                                      postback=add_file,
                                      new=false}
