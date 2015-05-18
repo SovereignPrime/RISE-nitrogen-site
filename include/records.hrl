@@ -115,3 +115,7 @@
                 header,
                 body
     }).
+-record(rise_upload, {?ELEMENT_BASE(element_rise_upload),
+                      droppable_text="Drag and drop files here",
+                      tag
+    }).
