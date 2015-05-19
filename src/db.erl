@@ -886,11 +886,11 @@ delete_group(Id) ->  % {{{1
 %% File routines
 %%%
 
-save_file(Name, Path, #db_contact{id=UID}) ->  % {{{1
+save_file(Path, #db_contact{id=UID}) ->  % {{{1
     Size = filelib:file_size(Path),
-    Type = filename:extension(Name),
+    Type = filename:extension(Path),
     File = #db_file{id=filename:basename(Path), 
-                    path=Name, 
+                    path=Path, 
                     size=Size,
                     date=date(),
                     status=uploaded,

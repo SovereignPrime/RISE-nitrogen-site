@@ -363,7 +363,6 @@ NitrogenClass.prototype.$attach_upload_handle_dragdrop = function(form,input,set
                     var Postback = "";
                 }
 
-                console.log(Postback);
                 jQuery.globalEval(Postback);
                 Nitrogen.$increment_pending_upload_counter(form,-1);
             }

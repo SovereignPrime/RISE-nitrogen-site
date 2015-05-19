@@ -1,11 +1,11 @@
 %% -*- mode: nitrogen -*-
 %% vim: ts=4 sw=4 et
 -module (element_rise_upload).
--include_lib("nitrogen_core/include/wf.hrl").
 -include("records.hrl").
 -export([
     reflect/0,
-    render_element/1
+    render_element/1,
+    event/1
 ]).
 
 
@@ -17,16 +17,32 @@ render_element(_Record = #rise_upload{
                            id=Id,
                            class=Class,
                            tag=Tag,
-                           droppable_text=Text
+                           droppable_text=Text,
+                           delegate=Delegate
                            }) ->
     PathId = wf:to_atom("upload_path_" ++ wf:to_list(Tag)),
-    wf:wire(#script{script= "$.getScript('/js/upload.js', function(data, status, xnr) {" ++
-                            "console.log(data);" ++
-                            "init_upload('" ++ PathId ++ "');" ++ 
-                            "});"}),
-    [#panel{id=Id,
-           class=["rise_upload" | Class],
-           text=wf:html_encode(Text),
+    wf:wire(PathId, #event{type=change,
+                           delegate=?MODULE,
+                           postback={rise_upload_event, Tag, Delegate}
+                          }),
+    wf:wire(#script{script= "init_upload('" ++ 
+                    wf:to_list(Id) ++ 
+                    "', '" ++ 
+                    wf:to_list(PathId) ++ 
+                    "');"}),
+    [
+     
+     "<script type='text/javascript' src='/js/upload.js'></script>",
+     #panel{id=Id,
+           class=["rise_upload", "upload_drop" | Class],
+           text=wf:html_encode(Text)
           },
-     #hiden{id=PathId}
+     #hidden{id=PathId}
     ].
+
+event({rise_upload_event, Tag, Delegate}) ->
+    PathId = wf:to_atom("upload_path_" ++ wf:to_list(Tag)),
+    Path = wf:q(PathId),
+    Delegate:finish_upload_event(Tag, Path);
+event(E) ->
+    error_logger:info_msg("Event ~p occured in ~p~n", [E, ?MODULE_STRING]).

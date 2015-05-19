@@ -1,4 +1,5 @@
 %% Include the automatically generated plugins directory
+-include_lib("nitrogen_core/include/wf.hrl").
 -include("plugins.hrl").
 
 %% Include any application-specific custom elements, actions, or validators below
@@ -117,5 +118,6 @@
     }).
 -record(rise_upload, {?ELEMENT_BASE(element_rise_upload),
                       droppable_text="Drag and drop files here",
-                      tag
+                      tag,
+                      delegate
     }).

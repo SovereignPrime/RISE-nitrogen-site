@@ -1,6 +1,5 @@
 -module(common).
 -compile([export_all]).
--include_lib("nitrogen_core/include/wf.hrl").
 -include_lib("bitmessage/include/bm.hrl").
 -include("records.hrl").
 -include("db.hrl").
@@ -106,8 +105,8 @@ render_files() -> % {{{1
                                #br{},
                                #rise_upload{id=attachments,
                                % #upload{id=attachments,
-                                        tag=filename,
-                               %         delegate=common,
+                                       tag=filename,
+                                        delegate=common,
                                %         droppable=true,
                                %         show_button=false,
                                         droppable_text="Drag and drop files here"
@@ -478,14 +477,13 @@ finish_upload_event(restore, FName, FPath, _Node) -> %{{{1
     FID = filename:basename(FPath),
     common:restore(FID),
     timer:sleep(100),
-    wf:redirect("/relationships");
-finish_upload_event(filename, FName, FPath, _Node) -> %{{{1
-    FID = filename:basename(FPath),
-    io:format("File uploaded: ~p to ~p for ~p~n", [FName, FPath, new]),
+    wf:redirect("/relationships").
+finish_upload_event(filename, FPath) -> %{{{1
+    io:format("File uploaded: ~p for ~p~n", [FPath, new]),
     User = wf:user(),
-    _File = db:save_file(FName, FPath,User),
+    _File = db:save_file(FPath,User),
     AF = wf:session_default(attached_files, sets:new()),
-    wf:session(attached_files, sets:add_element( FID , AF)),
+    wf:session(attached_files, sets:add_element( FPath , AF)),
     wf:update(files, render_files()).
 
 incoming() -> %{{{1
