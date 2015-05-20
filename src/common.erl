@@ -95,7 +95,7 @@ search() -> %{{{1
                   delegate=?MODULE}.
 
 render_files() -> % {{{1
-    {ok, Attachments} = db:get_files(sets:to_list(wf:session_default(attached_files, sets:new()))),
+    Attachments = sets:to_list(wf:session_default(attached_files, sets:new())),
     #panel{id=files,
            class="span12",
            body=[
@@ -104,22 +104,27 @@ render_files() -> % {{{1
                                "<i class='icon-file-alt'></i> Attachments",
                                #br{},
                                #rise_upload{id=attachments,
-                               % #upload{id=attachments,
-                                       tag=filename,
-                                        delegate=common,
-                               %         droppable=true,
-                               %         show_button=false,
-                                        droppable_text="Drag and drop files here"
-                               %         multiple=false},
+                                            tag=filename,
+                                            delegate=common,
+                                            droppable_text="Drag and drop files here"
                                            },
                                #link{body="<i class='icon-th-large'></i> Select from my files",
                                      postback=add_file,
                                      new=false}
                               ]},
                  #br{},
-                 lists:map(fun(#db_file{path=Path, size=Size, date=Date, id=Id, status=Status}) ->
-                                   #attachment{fid=Id, filename=Path, size=Size, time=Date, status=Status}
-                           end, Attachments)
+                 lists:map(fun(#db_file{path=Path,
+                                        size=Size,
+                                        date=Date,
+                                        id=Id,
+                                        status=Status}) ->
+                                   #attachment{fid=Id,
+                                               filename=Path,
+                                               size=Size,
+                                               time=Date,
+                                               status=Status}
+                           end,
+                           Attachments)
                 ]}.
 
 sigma_search_event(search, Terms) -> % {{{1
@@ -481,9 +486,9 @@ finish_upload_event(restore, FName, FPath, _Node) -> %{{{1
 finish_upload_event(filename, FPath) -> %{{{1
     io:format("File uploaded: ~p for ~p~n", [FPath, new]),
     User = wf:user(),
-    _File = db:save_file(FPath,User),
+    File = db:save_file(FPath,User),
     AF = wf:session_default(attached_files, sets:new()),
-    wf:session(attached_files, sets:add_element( FPath , AF)),
+    wf:session(attached_files, sets:add_element( File , AF)),
     wf:update(files, render_files()).
 
 incoming() -> %{{{1
