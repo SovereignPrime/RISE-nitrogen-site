@@ -538,29 +538,54 @@ send_messages(#db_update{subject=Subject, % {{{1
     MSG = term_to_binary(#message_packet{subject=Subject,
                                          text=Text,
                                          involved=[From | Contacts],
-                                         attachments=Attachments,
                                          time=bm_types:timestamp()}),
 
-    Path = application:get_env(simple_bridge, scratch_dir, "."),
-    AttachmentsPaths = lists:map(fun(#db_file{id=AttachmentID}) ->
-                                         Path ++ "/" ++ AttachmentID
+    AttachmentsPaths = lists:map(fun(#db_file{path=Path}) ->
+                                         Path
                                  end,
                                  Attachments),
     lists:foreach(fun(To) ->
-                          error_logger:info_msg("Message to ~s sent subject ~s~n", [To, Subject]),
-                          bitmessage:send_message(From, wf:to_binary(To), wf:to_binary(Subject), MSG, AttachmentsPaths)
-                  end, Contacts);
-send_messages(#db_task{id=UID, name=Subject, text=Text, due=Date, parent=Parent, status=Status, changes=Changes } = U) -> %{{{1
+                          error_logger:info_msg("Message to ~s sent subject ~s~n",
+                                                [To,
+                                                 Subject]),
+
+                          bitmessage:send_message(From,
+                                                  wf:to_binary(To),
+                                                  wf:to_binary(Subject),
+                                                  MSG,
+                                                  AttachmentsPaths)
+                  end,
+                  Contacts);
+send_messages(#db_task{id=UID,
+                       name=Subject,
+                       text=Text,
+                       due=Date,
+                       parent=Parent,
+                       status=Status,
+                       changes=Changes} = U) -> %{{{1
     {ok, Involved} = db:get_involved(UID),
     Contacts = [#role_packet{address=C, role=R} || {_, R, #db_contact{bitmessage=C}}  <- Involved],
     #db_contact{address=From} = wf:user(),
     {ok, Attachments} = db:get_attachments(U),
+    AttachmentsPaths = lists:map(fun(#db_file{path=Path}) ->
+                                         Path
+                                 end,
+                                 Attachments),
     lists:foreach(fun(#role_packet{address=To}) when To /= From ->
                 bitmessage:send_message(From,
                                         wf:to_binary(To), 
                                         wf:to_binary(Subject), 
-                                        term_to_binary(#task_packet{id=UID, name=Subject, due=Date, text=Text, parent=Parent, status=Status, attachments=Attachments, involved=Contacts, time=bm_types:timestamp(), changes=Changes}),
-                                        4);
+                                        term_to_binary(#task_packet{id=UID,
+                                                                    name=Subject,
+                                                                    due=Date,
+                                                                    text=Text,
+                                                                    parent=Parent,
+                                                                    status=Status,
+                                                                    involved=Contacts,
+                                                                    time=bm_types:timestamp(),
+                                                                    changes=Changes}),
+
+                                        AttachmentsPaths);
             (_) ->
                 ok
         end, Contacts).
@@ -583,12 +608,6 @@ send_task_tree(Id, Parent, Time) -> %{{{1
 
 
 
-encode_attachments(Attachments) -> %{{{1
-    AttachmentsL = lists:map(fun(#db_file{user=UID}=A) ->
-                    {ok, #db_contact{bitmessage=Addr}} = db:get_contact(UID),
-                    term_to_binary(A#db_file{user=Addr})
-            end, Attachments),
-    <<"Attachments:", << <<A/bytes,";">> || A <- AttachmentsL>>/bytes, 10>>.
 
 get_torrent(FID) -> %{{{1
     AttachmentID = db:get_attachment_id(FID),
