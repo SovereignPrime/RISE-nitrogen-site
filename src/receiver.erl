@@ -16,6 +16,8 @@
     connected/1,
     disconnected/1,
     downloaded/1,
+    filechunk_sent/2,
+    filechunk_received/2,
 	extract_task/1
     ]). % }}}
 
@@ -69,6 +71,13 @@ disconnected(N) ->
 -spec downloaded(binary()) -> ok. % {{{1
 downloaded(Hash) ->
     gen_server:cast(?MODULE, {downloaded, Hash}).
+-spec filechunk_received(binary(), binary()) -> ok. % {{{1
+filechunk_received(FileHash, ChunkHash) ->
+    gen_server:cast(?MODULE, {filechunk_received, FileHash, ChunkHash}).
+-spec filechunk_sent(binary(), binary()) -> ok. % {{{1
+filechunk_sent(FileHash, ChunkHash) ->
+    gen_server:cast(?MODULE, {filechunk_sent, FileHash, ChunkHash}).
+
 %%%===================================================================
 %%% gen_server callbacks
 %%%===================================================================
@@ -309,12 +318,15 @@ apply_message(#message{from=BMF,
                        to=BMT,
                        subject=Subject,
                        text=Data,
-                       enc=3}, FID, ToID, State)  ->
+                       attachments=Attachments,
+                       enc=3},
+              FID,
+              ToID,
+              State)  ->
     error_logger:info_msg("Message from ~s received subject ~s~n", [BMF, Subject]),
     {ok, Id} = db:next_id(db_update),
 
     #message_packet{text=Text,
-                    attachments=Attachments,
                     involved=Involved} = binary_to_term(Data),
 
     Message = #db_update{id=Id,
@@ -326,20 +338,19 @@ apply_message(#message{from=BMF,
                          status=unread},
 
     db:save(Message),
-    Files = lists:map(fun(#db_file{id=I}=F) ->
-                                    db:save(F#db_file{user=FID,
-                                                      status=received}),
-                                    I
-                    end, Attachments),
-    db:save_attachments(Message, sets:from_list(Files)),
+    save_attachments(FID, Message, Attachments),
     State#state.pid ! received;
 
 % Task  {{{1
 apply_message(#message{from=BMF,
                        to=BMT,
                        subject=Subject,
+                       attachments=Attachments, 
                        text=Data,
-                       enc=4}, FID, ToID, State)  ->
+                       enc=4},
+              FID,
+              ToID,
+              State)  ->
 
     #task_packet{id=UID, 
                  due=Due, 
@@ -348,7 +359,6 @@ apply_message(#message{from=BMF,
                  parent=Parent, 
                  status=Status, 
                  time=Time,
-                 attachments=AttachmentsE, 
 				 changes=Changes,
                  involved=Involved} = extract_task(Data),
 
@@ -373,12 +383,7 @@ apply_message(#message{from=BMF,
            end,
     db:save(Task),
     db:clear_roles(db_task, UID),
-    Attachments = lists:map(fun(#db_file{id=I}=F) ->
-                                    db:save(F#db_file{user=FID,
-                                                      status=received}),
-                                    I
-                    end, AttachmentsE),
-    db:save_attachments(Task, sets:from_list(Attachments)),
+    save_attachments(FID, Task, Attachments),
     lists:foreach(fun(#role_packet{address=A, role=R}) ->
                 {ok, NPUID} = db:next_id(db_contact_roles),
                 C = get_or_request_contact(A, BMF, BMT),
@@ -423,12 +428,24 @@ extract_task(Task) ->  % {{{1
 						 involved=Involved, attachments=Attachments, time=Time, changes=[]}
 	end.
 
-decode_attachments(A, BMF, BMT) ->  % {{{1
-    AT = binary:split(A, <<";">>, [global, trim]),
-    lists:map(fun(A) -> 
-                    #db_file{id=FId, user=U} = F = binary_to_term(A),
-                    C = get_or_request_contact(U, BMF, BMT),
-                    NF = F#db_file{user=C, status=received},
-                    db:save(NF),
-                    FId
-            end, AT).
+-spec save_attachments(non_neg_integer(), record(), [#bm_file{}]) -> {ok, ok}.
+save_attachments(UID, Message, Attachments) ->
+    Files = lists:map(fun(#bm_file{
+                             hash=I,
+                             name=Name,
+                             time={Date, _},
+                             size=Size
+                            }) ->
+                                    db:save(#db_file{
+                                              id=I,
+                                              type=filename:extension(Name),
+                                              path=Name,
+                                              size=Size,
+                                              date=Date,
+                                              user=UID,
+                                              status=received
+                                             }),
+                                    I
+                      end,
+                      Attachments),
+    db:save_attachments(Message, sets:from_list(Files)).
