@@ -889,7 +889,7 @@ delete_group(Id) ->  % {{{1
 save_file(Path, #db_contact{id=UID}) ->  % {{{1
     Size = filelib:file_size(Path),
     Type = filename:extension(Path),
-    File = #db_file{id=filename:basename(Path), 
+    File = #db_file{id=crypto:hash(sha256, Path),
                     path=Path, 
                     size=Size,
                     date=date(),
