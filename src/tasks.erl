@@ -450,19 +450,7 @@ render_updates(Updates) ->
         ]},
         [#update_element{
            collapse=true,
-           from=From,
-           to=To,
-           text=Text,
-           uid=Id,
-           subject=Subject,
-           enc=Enc,
-           status=Status} || #message{hash=Id,
-                                      enc=Enc,
-                                      to=To,
-                                      subject=Subject,
-                                      from=From,
-                                      text=Text,
-                                      status=Status} <- sugar:sort_by_timestamp(Updates)]
+           message=M} || M <- sugar:sort_by_timestamp(Updates)]
     ].
 
 render_task_changes([]) -> [];

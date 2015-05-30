@@ -892,7 +892,7 @@ delete_group(Id) ->  % {{{1
 save_file(Path, #db_contact{id=UID}) ->  % {{{1
     Size = filelib:file_size(Path),
     Type = filename:extension(Path),
-    FID = crypto:hash(sha256, Path),
+    <<FID:64/bytes, _/bytes>> = bm_message_encryptor:process_attachment(Path),
     File = #db_file{id=FID,
                     path=Path, 
                     size=Size,
@@ -934,11 +934,11 @@ save_attachments(Record, Files) ->  % {{{1
 
 get_files(FIDs) when is_list(FIDs) ->  % {{{1
     transaction(fun() ->
-                        iterate(db_file, FIDs)
+                        iterate(bm_file, FIDs)
                 end);
 get_files(true)  ->  % {{{1
     transaction(fun() ->
-                        mnesia:select(bm_file, [{#bm_file{status=archive, _='_'}, [], ['$_']}])
+                        mnesia:select(db_file, [{#db_file{status=archive, _='_'}, [], ['$_']}])
                 end);
 get_files(false)  ->  % {{{1
     transaction(fun() ->

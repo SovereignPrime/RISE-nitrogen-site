@@ -2,6 +2,7 @@
 %% vim: ts=4 sw=4 et
 -module (element_update).
 -include_lib("nitrogen_core/include/wf.hrl").
+-include_lib("bitmessage/include/bm.hrl").
 -include("protokol.hrl").
 -include("records.hrl").
 -include("db.hrl").
@@ -22,13 +23,15 @@ name_from_address(Address) ->  % {{{1
 -spec render_element(#update_element{}) -> body().
 %% Render collapsed update {{{1
 render_element(#update_element{id=Id,
-                               from=From,
-                               to=To,
-                               text=Data,
+                               message=#message{
+                                          from=From,
+                                          to=To,
+                                          text=Data,
+                                          enc=Enc,
+                                          status=Status}=Message,
                                age=Age,
-                               collapse=true,
-                               enc=Enc,
-                               status=Status}=Record) ->
+                               collapse=true
+                               }=Record) ->
     FromName = name_from_address(From),
     ToName = name_from_address(To),
     {Text, Timestamp, _} = decode_enc(Enc, Data, true),
@@ -52,16 +55,19 @@ render_element(#update_element{id=Id,
                               delegate=common}};
 %% Render uncollapse update  {{{1
 render_element(#update_element{id=Id,
-                               uid=UID,
-                               from=From,
-                               to=To,
-                               text=Data,
+                               message=#message{
+                                          hash=UID,
+                                          from=From,
+                                          to=To,
+                                          text=Data,
+                                          subject=Subject,
+                                          enc=Enc,
+                                          attachments=Attachments,
+                                          status=Status
+                                         } = Message,
                                age=Age,
-                               subject=Subject,
-                               collapse=false,
-                               attachments=Attachments,
-                               enc=Enc,
-                               status=Status}=Record) ->
+                               collapse=false
+                              }=Record) ->
     FromName = name_from_address(From),
     ToName = name_from_address(To),
     NStatus = case db:set_read(UID) of
@@ -84,10 +90,11 @@ render_element(#update_element{id=Id,
                                            FromName,
                                            " <i class='icon-arrow-right'></i> ",
                                            ToName]},
-                              #panel{class="span2 offset6", body=[
-                                                                  sugar:format_timedelta(TD),
-                                                                  format_status(NStatus)
-                                                                 ]}
+                              #panel{class="span2 offset6",
+                                     body=[
+                                           sugar:format_timedelta(TD),
+                                           format_status(NStatus)
+                                          ]}
                              ],
                         actions=#event{type=click,
                                        postback={fold, Record},
@@ -115,15 +122,21 @@ render_element(#update_element{id=Id,
                                                  delegate=common},
 
                                            #panel{class="btn-group", body=[
-                                                                           #link{ class="btn btn-link droppdown-toggle", body=[
+                                                                           #link{ class="btn btn-link droppdown-toggle",
+                                                                                  body=[
                                                                                                                                "<i class='icon-reorder icon-large'></i>"
-                                                                                                                              ], new=false, data_fields=[{toggle, "dropdown"}]},
-                                                                           #list{numbered=false, class="dropdown-menu pull-right",
+                                                                                                                              ],
+                                                                                  new=false,
+                                                                                  data_fields=[{toggle, "dropdown"}]},
+                                                                           #list{numbered=false,
+                                                                                 class="dropdown-menu pull-right",
+
                                                                                  body=[
                                                                                        #listitem{body=[
                                                                                                        #link{body=[
                                                                                                                    "<i class='icon-list-alt icon-large'></i> Archive"
-                                                                                                                  ], postback={archive, Enc, UID}, new=false}]}
+                                                                                                                  ],
+                                                                                                             postback={archive, Enc, UID}, new=false}]}
                                                                                       ]}
 
                                                                           ]}
@@ -134,6 +147,7 @@ render_element(#update_element{id=Id,
                      [] ->
                          [];
                      A ->
+                         {ok, Files} = db:get_files(A),
                          [
                           #panel{class="row-fluid", body=[
                                                           #panel{class="span6",
@@ -141,30 +155,37 @@ render_element(#update_element{id=Id,
                                                           #panel{class="span2 offset4",
                                                                  body="<i class='icon-download-alt'></i> Download all"}
                                                          ]},
-                          lists:map(fun(#db_file{id=FID,
-                                                 path=Path,
-                                                 size=Size,
-                                                 date=Date}) ->
-                                            {ok, [ #db_file{status=FStatus} ]} =  db:get_files([ FID ]),
+                          lists:map(fun(#bm_file{
+                                           hash=FID,
+                                           name=Path,
+                                           size=Size,
+                                           time={Date, _Time},
+                                           status=FStatus}) ->
                                             #attachment{fid=FID,
                                                         filename=Path,
                                                         size=Size,
                                                         time=Date,
                                                         status=FStatus}
-                                    end,
-                                    Attachments)
+                                    end, Files)
                          ]
                  end
 
                 ]};
 %% Render update as single paragraph for relationships {{{1
-render_element(#update_element{enc=Enc,
-                               uid=Id,
-                               from=From,
-                               subject=Subject,
-                               text=Data,
-                               age=Age,
-                               collapse=paragraph}) ->
+render_element(#update_element{
+                  id=Id,
+                  message=#message{
+                             hash=UID,
+                             from=From,
+                             to=To,
+                             text=Data,
+                             subject=Subject,
+                             enc=Enc,
+                             attachments=Attachments,
+                             status=Status
+                            } = Message,
+                  age=Age,
+                  collapse=paragraph}) ->
     {Text, Timestamp, _} = decode_enc(Enc, Data, true),
     TD = bm_types:timestamp() - Timestamp,
     [

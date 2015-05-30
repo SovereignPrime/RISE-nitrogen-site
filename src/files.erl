@@ -72,20 +72,26 @@ body(Archive) ->   % {{{1
     {ok, Files0} = db:get_files(Archive),
     Sortby = wf:state_default(sortby, #db_file.path),
     Files = lists:sort(fun(A,B) -> element(Sortby, A) =< element(Sortby, B) end, Files0),
-    #panel{id=body, class="scrollable", body=[
-        #table{ rows=[
-                #tablerow{ cells=[
-                        #tablecell{class="", body=[
-                                %#checkbox{id=check_all,  postback=check_all, checked=false, delegate=common}
-                        ]},
-                        sortheader("File name", #db_file.path),
-                        sortheader("Type", #db_file.type),
-                        sortheader("Size", #db_file.size),
-                        sortheader("From/To", #db_file.user),
-                        #tableheader{text="Linked Message"},
-                        sortheader("Date", #db_file.date),
-                        sortheader("Status", #db_file.status)
-                ]},
+    #panel{id=body,
+           class="scrollable",
+           body=[
+                 #table{rows=[
+                              #tablerow{cells=[
+                                               #tablecell{class="",
+                                                          body=[
+                                                                %#checkbox{id=check_all,
+                                                                %postback=check_all,
+                                                                %checked=false,
+                                                                %delegate=common}
+                                                               ]},
+                                               sortheader("File name", #db_file.path),
+                                               sortheader("Type", #db_file.type),
+                                               sortheader("Size", #db_file.size),
+                                               sortheader("From/To", #db_file.user),
+                                               #tableheader{text="Linked Message"},
+                                               sortheader("Date", #db_file.date),
+                                               sortheader("Status", #db_file.status)
+                                                ]},
                 lists:map(fun(#db_file{id=Id,
                                        path=Name,
                                        size=Size,

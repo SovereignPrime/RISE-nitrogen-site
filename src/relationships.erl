@@ -134,16 +134,10 @@ contact_render(#db_contact{id=Id,  % {{{1
                 body=[
                       #panel{class="span12",
                              body=[
-                                   lists:map(fun(#message{text=Text,
-                                                          hash=UID,
-                                                          subject=Subject,
-                                                          enc=Enc}) ->
+                                   lists:map(fun(M) ->
                                                      #update_element{collapse=paragraph,
-                                                                     uid=UID,
-                                                                     subject=Subject,
-                                                                     age="Age",
-                                                                     text=Text,
-                                                                     enc=Enc}
+                                                                     message=M,
+                                                                     age="Age"}
                                              end, Updates)
                                   ]}
                      ]}

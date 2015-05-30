@@ -131,20 +131,7 @@ render_body(Subject, Archive) -> % {{{1
      #h1{body=[Icon," ",wf:html_encode(Subject)]},
      [
       #update_element{collapse=(Id /= CurrentId),
-                      from=From,
-                      to=To,
-                      text=Text,
-                      uid=Id,
-                      subject=Subject,
-                      enc=Enc,
-                      status=Status} || #message{hash=Id,
-                                                 enc=Enc,
-                                                 to=To,
-                                                 subject=Subject,
-                                                 from=From,
-                                                 text=Text,
-                                                 status=Status} <- sugar:sort_by_timestamp(Updates)
-     ] 
+                      message = M} || #message{hash=Id} = M <- sugar:sort_by_timestamp(Updates)] 
     ].
 
 replace_left() -> % {{{1
