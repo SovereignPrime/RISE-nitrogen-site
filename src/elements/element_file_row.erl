@@ -57,7 +57,7 @@ render_element(Record = #file_row{fid=FID,
                                %_ ->
                                %    {Status, 0, 0}
                            %end,
-    Check =  sets:is_element(Name, wf:session_default(attached_files, sets:new())),
+    Check =  sets:is_element(FID, wf:session_default(attached_files, sets:new())),
 
     #tablerow{id=Id, cells=[
             #tablecell{body=[

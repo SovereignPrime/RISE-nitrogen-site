@@ -31,7 +31,7 @@ render_element(#update_element{id=Id,
                                status=Status}=Record) ->
     FromName = name_from_address(From),
     ToName = name_from_address(To),
-    {Text, Attachments, Timestamp, _} = decode_enc(Enc, Data, true),
+    {Text, Timestamp, _} = decode_enc(Enc, Data, true),
     TD = bm_types:timestamp() - Timestamp,
         #panel{id=Id, class="row-fluid clickable", body=[
 
@@ -165,7 +165,7 @@ render_element(#update_element{enc=Enc,
                                text=Data,
                                age=Age,
                                collapse=paragraph}) ->
-    {Text, Attachments, Timestamp, _} = decode_enc(Enc, Data, true),
+    {Text, Timestamp, _} = decode_enc(Enc, Data, true),
     TD = bm_types:timestamp() - Timestamp,
     [
      #panel{class="row-fluid",

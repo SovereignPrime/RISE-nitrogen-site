@@ -95,7 +95,8 @@ search() -> %{{{1
                   delegate=?MODULE}.
 
 render_files() -> % {{{1
-    Attachments = sets:to_list(wf:session_default(attached_files, sets:new())),
+    AttachmentsIDs = sets:to_list(wf:session_default(attached_files, sets:new())),
+    {ok, Attachments} = db:get_files(AttachmentsIDs),
     #panel{id=files,
            class="span12",
            body=[
@@ -488,7 +489,7 @@ finish_upload_event(filename, FPath) -> %{{{1
     User = wf:user(),
     File = db:save_file(FPath,User),
     AF = wf:session_default(attached_files, sets:new()),
-    wf:session(attached_files, sets:add_element( File , AF)),
+    wf:session(attached_files, sets:add_element(File , AF)),
     wf:update(files, render_files()).
 
 incoming() -> %{{{1
@@ -534,6 +535,7 @@ send_messages(#db_update{subject=Subject, % {{{1
                          to=Contacts,
                          date=Date}=U) ->
     #db_contact{address=From} = wf:user(),
+    wf:info("Sending ~p~n", [U]),
     {ok, Attachments} = db:get_attachments(U),
     MSG = term_to_binary(#message_packet{subject=Subject,
                                          text=Text,

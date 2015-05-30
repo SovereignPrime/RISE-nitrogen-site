@@ -133,11 +133,10 @@ event({show_archive, false}) ->  % {{{1
     wf:replace(body, body(false));
 event({check, FID, true}) ->  % {{{1
     AF = wf:session_default(attached_files, sets:new()),
-    wf:session(attached_files,  sets:del_element( FID, AF));
+    wf:session(attached_files,  sets:del_element(FID, AF));
 event({check, FID, false}) ->  % {{{1
     AF = wf:session_default(attached_files, sets:new()),
-    {ok, [File]} = db:get_files([FID]),
-    wf:session(attached_files,  sets:add_element( File, AF));
+    wf:session(attached_files,  sets:add_element(FID, AF));
 event({sort, Sortby}) -> % {{{1
     wf:state(sortby, Sortby),
     Archive = wf:state_default(archive, false),

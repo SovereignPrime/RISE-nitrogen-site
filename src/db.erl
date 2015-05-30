@@ -13,7 +13,7 @@ install(Pid)->  % {{{1
     ?V(mnesia:create_table(db_group, [{disc_copies, [node()]}, {attributes, record_info(fields, db_group)}, {type, ordered_set}, {index, [name]}])),
     ?V(mnesia:create_table(db_contact, [{disc_copies, [node()]}, {attributes, record_info(fields, db_contact)}, {type, ordered_set}, {index, [address]}])),
     ?V(mnesia:create_table(db_task, [{disc_copies, [node()]}, {attributes, record_info(fields, db_task)}, {type, ordered_set}])),
-    ?V(mnesia:create_table(db_update, [{disc_copies, [node()]}, {attributes, record_info(fields, db_update)}, {type, set}])),
+    ?V(mnesia:create_table(db_update, [{disc_copies, [node()]}, {attributes, record_info(fields, db_update)}, {type, ordered_set}])),
     ?V(mnesia:create_table(db_file, [{disc_copies, [node()]}, {attributes, record_info(fields, db_file)}, {type, ordered_set}])),
     ?V(mnesia:create_table(db_expense, [{disc_copies, [node()]}, {attributes, record_info(fields, db_expense)}, {type, ordered_set}])),
     ?V(mnesia:create_table(db_search, [{disc_copies, [node()]}, {attributes, record_info(fields, db_search)}])),
@@ -102,7 +102,10 @@ update(5) ->  % {{{1
                                                               status=Status})
                                       end,
                                       Files)
-                       end).
+                       end);
+update(6) ->
+    mnesia:delete_table(db_update),
+    ?V(mnesia:create_table(db_update, [{disc_copies, [node()]}, {attributes, record_info(fields, db_update)}, {type, ordered_set}])).
 
 
 
@@ -889,7 +892,8 @@ delete_group(Id) ->  % {{{1
 save_file(Path, #db_contact{id=UID}) ->  % {{{1
     Size = filelib:file_size(Path),
     Type = filename:extension(Path),
-    File = #db_file{id=crypto:hash(sha256, Path),
+    FID = crypto:hash(sha256, Path),
+    File = #db_file{id=FID,
                     path=Path, 
                     size=Size,
                     date=date(),
@@ -900,7 +904,7 @@ save_file(Path, #db_contact{id=UID}) ->  % {{{1
     transaction(fun() ->
                         mnesia:write(File)
                 end),
-    File.
+    FID.
 
 %%%
 %% Attachment routines
@@ -1099,6 +1103,8 @@ transaction(Fun) ->  % {{{1
 
 save_attachment(_Type, _Id, [], _N) ->  % {{{1
     ok;
+save_attachment(Type, Id, [#db_file{id=File}|Rest], N) ->  % {{{1
+    save_attachment(Type, Id, [File|Rest], N);
 save_attachment(Type, Id, [File|Rest], N) ->  % {{{1
     case mnesia:match_object(#db_attachment{file=File, type=Type, tid=Id, _='_'}) of
         [] ->
