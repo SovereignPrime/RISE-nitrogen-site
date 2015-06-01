@@ -224,7 +224,7 @@ format_status(encrypt_message) ->  % {{{1
 format_status(Status) ->  % {{{1
     " " ++ wf:to_list(Status).
 
-decode_enc(3, Data, Collapsed) ->  % {{{1
+decode_enc(Enc, Data, Collapsed) when Enc == 2; Enc == 3 ->  % {{{1
     try
         #message_packet{text=T, time=TS} = binary_to_term(Data),
         Text = ?WF_IF(Collapsed, wf:html_encode(T), wf:html_encode(T, whites)),
@@ -233,10 +233,10 @@ decode_enc(3, Data, Collapsed) ->  % {{{1
         error:badarg ->
             {"Decoding error", bm_types:timestamp(), empty}
     end;
-decode_enc(4, Data, _Collapsed=true) ->  % {{{1
+decode_enc(Enc, Data, _Collapsed=true) when Enc == 2; Enc == 3 ->  % {{{1
     #task_packet{id=Id, text=T, time=TS} = receiver:extract_task(Data),
     {wf:html_encode(T, whites), TS, Id};
-decode_enc(4, Data, _Collapsed=false) ->  % {{{1
+decode_enc(Enc, Data, _Collapsed=false) when Enc == 2; Enc == 3 ->  % {{{1
     #task_packet{id=Id,
                  text=T,
                  due=Due, 
