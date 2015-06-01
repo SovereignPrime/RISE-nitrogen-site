@@ -28,18 +28,15 @@ render_element(#update_preview{id=Id,
                                flag=Flag,
                                status=Status,
                                archive=Archive}) when Icon==1; Icon==2; Icon==3; Icon==5 -> 
-    {Text, Attachments, Timestamp} = case Icon of
-               T when T==1; T==2 ->
-                     {Data, [], bm_types:timestamp()};
-               3 ->
+    {Text, Timestamp} = case Icon of
+               T when T==2; T==3 ->
                    try
                        #message_packet{text=T,
-                                       attachments=A,
                                        time=TS} = binary_to_term(Data, []),
-                       {T, A, TS}
+                       {T, TS}
                    catch
                        error:badarg ->
-                           {"Decoding error", [], bm_types:timestamp()}
+                           {"Decoding error!", bm_types:timestamp()}
                    end;
 
 
