@@ -23,15 +23,20 @@ render_element(#attachment{id=I,
                            status=received} = Attachment) -> % {{{1
     {Y, M, D} = Time,
     DateS = io_lib:format("~p-~p-~p", [Y, M, D]),
+    PathId = wf:temp_id(),
     #panel{id=I, class="row-fluid", body=[
             #panel{class="span5", body=File},
             #panel{class="span1", body=sugar:format_file_size(Size)},
             #panel{class="span4", body=DateS},
             #panel{class="span2",
-                   body="<i class='icon-download-alt'></i>",
+                   body=[
+                         #hidden{id=PathId},
+                         "<i class='icon-download-alt'></i>"
+                        ],
                    style="text-align:center;",
                    actions=#event{type=click,
-                                  postback={download, Attachment}, delegate=?MODULE}}
+                                  postback={download, PathId, File},
+                                  delegate=?MODULE}}
             ]};
 
 render_element(Record=#attachment{id=I,
@@ -74,10 +79,5 @@ render_element(#attachment{id=I, fid=Id,
             #panel{class="span1", body="<i class='icon icon-save'></i>", style="text-align:center;", actions=#event{type=click, postback={save, File, Id}, delegate=?MODULE}}
             ]}.
 
-event({save, File, Id}) -> % {{{1
-    wf:redirect("/raw?id=" ++ Id ++ "&file=" ++ File);
-event({download, #attachment{id=I, fid=Id} = Attachment}) -> % {{{1
-    {ok, [ File ]} = db:get_files([Id]),
-    common:get_torrent(Id), 
-    db:save(File#db_file{status=downloading}),
-    wf:replace(I, Attachment#attachment{status=downloading}).
+event({download, Attachment, File}) -> % {{{1
+    wf:redirect("/raw?id=" ++ Attachment ++ "&file=" ++ File).
