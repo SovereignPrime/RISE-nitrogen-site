@@ -31,12 +31,12 @@ render_element(#update_preview{id=Id,
     {Text, Timestamp} = case Icon of
                T when T==2; T==3 ->
                    try
-                       #message_packet{text=T,
+                       #message_packet{text=Txt,
                                        time=TS} = binary_to_term(Data, []),
-                       {T, TS}
+                       {Txt, TS}
                    catch
                        error:badarg ->
-                           {"Decoding error!", bm_types:timestamp()}
+                           {<<"Decoding error! Data: ", Data/bytes>>, bm_types:timestamp()}
                    end;
 
 
@@ -46,7 +46,7 @@ render_element(#update_preview{id=Id,
                        {T, [], TS}
                    catch
                        error:badarg ->
-                           {"Decoding error", [], bm_types:timestamp()}
+                           {<<"Decoding error! Data: ", Data/bytes>>, bm_types:timestamp()}
                    end
            end,
     TD = bm_types:timestamp() - Timestamp,
