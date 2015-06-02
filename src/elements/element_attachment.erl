@@ -24,23 +24,26 @@ render_element(#attachment{id=I,
     {Y, M, D} = Time,
     DateS = io_lib:format("~p-~p-~p", [Y, M, D]),
     PathId = wf:to_atom(File),
-    #panel{id=I, class="row-fluid", body=[
-            #panel{class="span5", body=File},
-            #panel{class="span1", body=sugar:format_file_size(Size)},
-            #panel{class="span4", body=DateS},
-            #panel{class="span2",
-                   body=[
-                         #hidden{id=PathId,
-                                 actions=#event{type=changed, 
-                                                postback={path, Id},
-                                                delegate=?MODULE}},
-                         "<i class='icon-download-alt'></i>"
-                        ],
-                   style="text-align:center;",
-                   actions=#event{type=click,
-                                  postback={download, PathId, File},
-                                  delegate=?MODULE}}
-            ]};
+    #panel{id=I,
+           class="row-fluid",
+           body=[
+                 "<script type='text/javascript' src='/js/upload.js'></script>",
+                 #panel{class="span5", body=File},
+                 #panel{class="span1", body=sugar:format_file_size(Size)},
+                 #panel{class="span4", body=DateS},
+                 #panel{class="span2",
+                        body=[
+                              #hidden{id=PathId,
+                                      actions=#event{type=change, 
+                                                     postback={path, Id},
+                                                     delegate=?MODULE}},
+                              "<i class='icon-download-alt'></i>"
+                             ],
+                        style="text-align:center;",
+                        actions=#event{type=click,
+                                       postback={download, File},
+                                       delegate=?MODULE}}
+                ]};
 
 render_element(Record=#attachment{id=I,
                                   fid=Id,
@@ -85,5 +88,5 @@ render_element(#attachment{id=I, fid=Id,
 event({path, FID, PathId}) -> % {{{1
     Path = wf:q(PathId),
     bitmessage:get_attachment(FID, Path);
-event({download, Attachment, File}) -> % {{{1
-    wf:redirect("/raw?id=" ++ Attachment ++ "&file=" ++ File).
+event({download, File}) -> % {{{1
+    wf:redirect("/raw?file=" ++ File).
