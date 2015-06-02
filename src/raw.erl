@@ -7,7 +7,8 @@
 
 main() -> 
     File = wf:q(file),
+    Id = wf:q(id),
     wf:header("Content-type", "octet/binary"),
     wf:header("Content-Disposition",wf:f("attachment; filename=~s", [File])),
-    crypto:rand_bytes(16).
+    wf:to_binary(Id).
 
