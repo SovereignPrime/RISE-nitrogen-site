@@ -23,7 +23,7 @@ render_element(#attachment{id=I,
                            status=received} = Attachment) -> % {{{1
     {Y, M, D} = Time,
     DateS = io_lib:format("~p-~p-~p", [Y, M, D]),
-    PathId = wf:temp_id(),
+    PathId = wf:to_atom(File),
     #panel{id=I, class="row-fluid", body=[
             #panel{class="span5", body=File},
             #panel{class="span1", body=sugar:format_file_size(Size)},
@@ -33,7 +33,7 @@ render_element(#attachment{id=I,
                          #hidden{id=PathId,
                                  actions=#event{type=changed, 
                                                 postback={path, Id},
-                                                delegate=?MODULE},
+                                                delegate=?MODULE}},
                          "<i class='icon-download-alt'></i>"
                         ],
                    style="text-align:center;",
