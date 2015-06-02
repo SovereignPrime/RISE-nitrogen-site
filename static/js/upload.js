@@ -20,3 +20,9 @@ var init_upload = function(id, pathid) {
 
     };
 };
+
+function download(pathid, path) {
+        $(obj(pathid)).val(path);
+        $(obj(pathid)).trigger('change');
+    };
+

@@ -30,7 +30,10 @@ render_element(#attachment{id=I,
             #panel{class="span4", body=DateS},
             #panel{class="span2",
                    body=[
-                         #hidden{id=PathId},
+                         #hidden{id=PathId,
+                                 actions=#event{type=changed, 
+                                                postback={path, Id},
+                                                delegate=?MODULE},
                          "<i class='icon-download-alt'></i>"
                         ],
                    style="text-align:center;",
@@ -79,5 +82,8 @@ render_element(#attachment{id=I, fid=Id,
             #panel{class="span1", body="<i class='icon icon-save'></i>", style="text-align:center;", actions=#event{type=click, postback={save, File, Id}, delegate=?MODULE}}
             ]}.
 
+event({path, FID, PathId}) -> % {{{1
+    Path = wf:q(PathId),
+    bitmessage:get_attachment(FID, Path);
 event({download, Attachment, File}) -> % {{{1
     wf:redirect("/raw?id=" ++ Attachment ++ "&file=" ++ File).

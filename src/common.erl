@@ -70,8 +70,6 @@ connection_status(N) when N > 0, % {{{1
     "<script type='text/javascript'>" ++
     "$('.wfid_connection').tooltip({placement: 'right'});" ++
     "</script>";
-%connection_status(undefined) -> % {{{1
-%    connection_status(bitmessage:connected());
 connection_status(_N) -> % {{{1
     "<script type='text/javascript'>" ++
     "$('.tooltip').remove();" ++
@@ -597,13 +595,6 @@ send_task_tree(Id, Parent, Time) -> %{{{1
                      (_) ->
                           ok
                   end, Involved).
-
-
-
-
-get_torrent(FID) -> %{{{1
-    AttachmentID = db:get_attachment_id(FID),
-    bitmessage:get_attachment(AttachmentID).
 
 restore(FID) -> %{{{1
     {ok, Scratch} = application:get_env(etorrent_core, dir),
