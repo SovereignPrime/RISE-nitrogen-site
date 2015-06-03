@@ -21,8 +21,9 @@ var init_upload = function(id, pathid) {
     };
 };
 
-function download(pathid, path) {
+var init_download = function(pathid) {
+download = function (path) {
         $(obj(pathid)).val(path);
         $(obj(pathid)).trigger('change');
-    };
+    }};
 

@@ -11,6 +11,8 @@
     event/1
 ]).
 
+-define(ALPHA, "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890").
+
 -spec reflect() -> [atom()].
 reflect() -> record_info(fields, attachment).
 
@@ -23,7 +25,7 @@ render_element(#attachment{id=I,
                            status=received} = Attachment) -> % {{{1
     {Y, M, D} = Time,
     DateS = io_lib:format("~p-~p-~p", [Y, M, D]),
-    PathId = wf:to_atom(File),
+    PathId = wf:temp_id(),
     #panel{id=I,
            class="row-fluid",
            body=[
@@ -35,13 +37,13 @@ render_element(#attachment{id=I,
                         body=[
                               #hidden{id=PathId,
                                       actions=#event{type=change, 
-                                                     postback={path, Id},
+                                                     postback={path, PathId, Attachment},
                                                      delegate=?MODULE}},
                               "<i class='icon-download-alt'></i>"
                              ],
                         style="text-align:center;",
                         actions=#event{type=click,
-                                       postback={download, File},
+                                       postback={download, File, PathId},
                                        delegate=?MODULE}}
                 ]};
 
@@ -85,8 +87,10 @@ render_element(#attachment{id=I, fid=Id,
             #panel{class="span1", body="<i class='icon icon-save'></i>", style="text-align:center;", actions=#event{type=click, postback={save, File, Id}, delegate=?MODULE}}
             ]}.
 
-event({path, FID, PathId}) -> % {{{1
+event({path, PathId, #attachment{id=Id, fid=FID}=Attachment}) -> % {{{1
     Path = wf:q(PathId),
-    bitmessage:get_attachment(FID, Path);
-event({download, File}) -> % {{{1
+    bitmessage:get_attachment(FID, Path),
+    wf:update(Id, Attachment#attachment{status=downloading});
+event({download, File, PathId}) -> % {{{1
+    wf:wire(#script{script="init_download('" ++ wf:to_list(PathId) ++ "')"}),
     wf:redirect("/raw?file=" ++ File).
