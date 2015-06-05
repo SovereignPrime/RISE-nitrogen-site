@@ -530,8 +530,8 @@ send_messages(#db_update{subject=Subject, % {{{1
                                          involved=[From | Contacts],
                                          time=bm_types:timestamp()}),
 
-    AttachmentsPaths = lists:map(fun(#db_file{path=Path}) ->
-                                         Path
+    AttachmentsPaths = lists:map(fun(#db_file{id=Hash}) ->
+                                         Hash
                                  end,
                                  Attachments),
     lists:foreach(fun(To) ->
