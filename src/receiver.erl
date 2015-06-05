@@ -94,7 +94,6 @@ filechunk_sent(FileHash, ChunkHash) ->
 %% @end
 %%--------------------------------------------------------------------
 init([]) ->  % {{{1
-    bitmessage:start_link(?MODULE),
     {ok, #state{}}.
 
 %%--------------------------------------------------------------------
@@ -136,7 +135,8 @@ handle_cast({connection, N}, State) ->  % {{{1
     {noreply, State};
 handle_cast({downloaded, Hash}, State) ->  % {{{1
     [#bm_file{name=Name}] = bm_db:lookup(bm_file, Hash),
-    db:mark_downloaded(Name);
+    db:mark_downloaded(Name),
+    {noreply, State};
 handle_cast({sent, Hash}, State) ->  % {{{1
     {ok, #message{enc=Enc}}= bitmessage:get_message(Hash),
     case Enc of
@@ -144,9 +144,9 @@ handle_cast({sent, Hash}, State) ->  % {{{1
                E == 3;
                E == 4 ->
             State#state.pid ! sent,
-            {ok, State};
+            {noreply, State};
         _ ->
-            {ok, State}
+            {noreply, State}
     end;
 handle_cast({msg, Hash}, State) ->  % {{{1
     io:format("Receiver: ~p~n", [Hash]),
