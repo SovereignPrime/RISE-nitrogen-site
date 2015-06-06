@@ -89,7 +89,7 @@ render_element(#attachment{id=I, fid=Id,
 
 event({path, PathId, #attachment{id=Id, fid=FID}=Attachment}) -> % {{{1
     Path = wf:q(PathId),
-    bitmessage:get_attachment(FID, Path),
+    bitmessage:get_attachment(FID, filename:dirname(Path)),
     wf:update(Id, Attachment#attachment{status=downloading});
 event({download, File, PathId}) -> % {{{1
     wf:wire(#script{script="init_download('" ++ wf:to_list(PathId) ++ "')"}),
