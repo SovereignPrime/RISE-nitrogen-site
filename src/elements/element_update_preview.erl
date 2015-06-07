@@ -32,12 +32,12 @@ render_element(#update_preview{id=Id,
                              #message_packet{text=Txt,
                                              time=TS} ->
                                  {Txt, TS, 3};
+                             #update_packet{text=Txt, time=TS} -> 
+                                 {Txt, TS, 5};
                              Task ->
                                  #task_packet{text=Txt,
                                               time=TS} = receiver:extract_task(Task),
                                  {Txt, TS, 4};
-                             #update_packet{text=Txt, time=TS} -> 
-                                 {Txt, TS, 5};
                              _ ->
                                  {<<"Decoding error! Data: ", Data/bytes>>, bm_types:timestamp()}
                          catch

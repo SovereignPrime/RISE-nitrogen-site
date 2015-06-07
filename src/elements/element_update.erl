@@ -225,55 +225,61 @@ format_status(Status) ->  % {{{1
     " " ++ wf:to_list(Status).
 
 decode_enc(Enc, Data, Collapsed) when Enc == 2; Enc == 3 ->  % {{{1
-    try
-        #message_packet{text=T, time=TS} = binary_to_term(Data),
-        Text = ?WF_IF(Collapsed, wf:html_encode(T), wf:html_encode(T, whites)),
-        {Text, TS, empty}
+    try binary_to_term(Data) of
+        #message_packet{text=T, time=TS} ->
+            Text = ?WF_IF(Collapsed, wf:html_encode(T), wf:html_encode(T, whites)),
+            {Text, TS, empty};
+        #update_packet{text=T, time=TS} ->
+            EncodedT = wf:html_encode(T, whites),
+            TB = [EncodedT, #panel{id=command, 
+                                   body=[
+                                         #link{class="btn btn-link",
+                                               body="<i class='icon-ok'></i> Start-update",
+                                               %postback={start_update, A}, 
+                                               new=false,
+                                               delegate=common}
+                                        ]}],
+            Text = ?WF_IF(Collapsed, wf:html_encode(T), wf:html_encode(T, whites)),
+            {Text, TS, empty};
+        Task ->
+            #task_packet{id=Id,
+                         text=T,
+                         due=Due, 
+                         involved=Involved,
+                         time=TS} = receiver:extract_task(Data),
+            Body = #panel{ class="",
+                           body= [ 
+                                  #panel{ class="", 
+                                          body=["Due: ", Due]
+                                        },
+                                  lists:map(fun(#role_packet{address=Address,
+                                                             role=R}) ->
+                                                    {ok,
+                                                     #db_contact{name=Name}} = db:get_contact_by_address(Address),
+                                                    #panel{class="",
+                                                           body=[Name ++ " - " ++ R]}
+                                            end,
+                                            Involved),
+                                  #br{},
+                                  wf:html_encode(T, whites)
+                                 ]},
+            Text = ?WF_IF(Collapsed, wf:html_encode(T, whites), Body),
+            {Text, TS, Id}
     catch
         error:badarg ->
             {"Decoding error", bm_types:timestamp(), empty}
     end;
-decode_enc(Enc, Data, _Collapsed=true) when Enc == 2; Enc == 3 ->  % {{{1
-    #task_packet{id=Id, text=T, time=TS} = receiver:extract_task(Data),
-    {wf:html_encode(T, whites), TS, Id};
-decode_enc(Enc, Data, _Collapsed=false) when Enc == 2; Enc == 3 ->  % {{{1
-    #task_packet{id=Id,
-                 text=T,
-                 due=Due, 
-                 involved=Involved,
-                 time=TS} = receiver:extract_task(Data),
-
-    Body = #panel{ class="",
-                   body= [ 
-                          #panel{ class="", 
-                                  body=["Due: ", Due]
-                                },
-                          lists:map(fun(#role_packet{address=Address,
-                                                     role=R}) ->
-                                            {ok,
-                                             #db_contact{name=Name}} = db:get_contact_by_address(Address),
-                                            #panel{class="",
-                                                   body=[Name ++ " - " ++ R]}
-                                    end,
-                                    Involved),
-                          #br{},
-                          wf:html_encode(T, whites)
-                         ]},
-    {Body, TS, Id};
-decode_enc(5, Data, true) ->  % {{{1
-    #update_packet{text=T, time=TS} = binary_to_term(Data),
-    {wf:html_encode(T), TS, empty};
-decode_enc(5, Data, false) ->  % {{{1
-    #update_packet{text=T, time=TS} = binary_to_term(Data),
-    EncodedT = wf:html_encode(T, whites),
-    TB = [EncodedT, #panel{id=command, 
-                           body=[
-                                 #link{class="btn btn-link",
-                                       body="<i class='icon-ok'></i> Start-update",
-                                       %postback={start_update, A}, 
-                                       new=false,
-                                       delegate=common}
-                                ]}],
-    {EncodedT, TS, empty};
+%decode_enc(5, Data, false) ->  % {{{1
+%     = binary_to_term(Data),
+%    EncodedT = wf:html_encode(T, whites),
+%    TB = [EncodedT, #panel{id=command, 
+%                           body=[
+%                                 #link{class="btn btn-link",
+%                                       body="<i class='icon-ok'></i> Start-update",
+%                                       %postback={start_update, A}, 
+%                                       new=false,
+%                                       delegate=common}
+%                                ]}],
+%    {EncodedT, TS, empty};
 decode_enc(_, Data, _) ->  % {{{1
     {wf:html_encode(wf:to_list( Data ), whites), bm_types:timestamp(), empty}.
