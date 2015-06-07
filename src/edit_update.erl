@@ -40,7 +40,8 @@ left() -> % {{{1
                         U -> 
                             #panel{ class="span12", body=[
                                     "<i class='icon-file-alt'></i> Previous updates", #br{},
-                                    [#update_preview{flag=false, age=Age, from=From, text=Text, icon="chevron-down"} || #db_update{from=From, date=Age, text=Text} <- U]
+                                    [#update_preview{flag=false,
+                                                     message=M} || M <- U]
                                     ]}
                     end
                     ]}

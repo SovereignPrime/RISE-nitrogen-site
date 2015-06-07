@@ -51,23 +51,10 @@ left(Archive) -> % {{{1
 render_left(Updates) -> % {{{1
     SortedUpdates = sugar:sort_by_timestamp(Updates),
     GroupedUpdates = group_updates(SortedUpdates),
-    Render = [ #update_preview{uid=Id,
-                               icon=Enc,
-                               from=From,
-                               to=To,
-                               age="Age",
-                               subject=Subject,
-                               text=Text,
+    Render = [ #update_preview{message=M,
                                flag=true,
-                               status=Status,
-                               archive=(Status == archive)} || 
-               #message{hash=Id,
-                        from=From,
-                        to=To,
-                        subject=Subject,
-                        text=Text,
-                        enc=Enc,
-                        status=Status} <- GroupedUpdates],
+                               archive = (Status == archive)} || 
+               #message{status=Status} = M <- GroupedUpdates],
     #panel{id=left,class="span4 scrollable", body=Render}.
 
 group_updates(List) ->  % {{{1
