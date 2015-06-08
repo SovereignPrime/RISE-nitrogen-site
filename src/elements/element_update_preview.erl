@@ -39,10 +39,10 @@ render_element(#update_preview{id=Id,
                                               time=TS} = receiver:extract_task(Task),
                                  {Txt, TS, 4};
                              _ ->
-                                 {<<"Decoding error! Data: ", Data/bytes>>, bm_types:timestamp()}
+                                 {<<"Decoding error! Data: ", Data/bytes>>, bm_types:timestamp(), 1}
                          catch
                              error:badarg ->
-                                 {<<"Decoding error! Data: ", Data/bytes>>, bm_types:timestamp()}
+                                 {<<"Decoding error! Data: ", Data/bytes>>, bm_types:timestamp(), 1}
                          end,
     TD = bm_types:timestamp() - Timestamp,
     CurrentId = wf:session(current_update_id),
