@@ -435,7 +435,7 @@ render_attachments(Task) ->
                     #panel{class="span6", body="<i class='icon-file-alt'></i> Attachment"},
                     #panel{class="span2 offset4", body="<i class='icon-download-alt'></i> Download all"}
                 ]},
-                lists:map(fun(#db_file{path=Path, size=Size, date=Date, id=Id, status=State}) ->
+                lists:map(fun(#bm_file{name=Path, size=Size, time={Date, _Time}, hash=Id, status=State}) ->
                     #attachment{fid=Id, filename=Path, size=Size, time=Date, status=State}
                 end, Attachments)
             ]

@@ -314,7 +314,8 @@ apply_message(#message{from=BMF,
                                  status=unread},
 
             db:save(Message),
-            save_attachments(FID, Message, Attachments),
+            %save_attachments(FID, Message, Attachments),
+            db:save_attachments(Message, sets:from_list(Attachments)),
             State#state.pid ! received;
         Task when is_record(Task, task_packet) ->
             #task_packet{id=UID, 
@@ -342,7 +343,7 @@ apply_message(#message{from=BMF,
                                changes=Changes},
             db:save(NewTask),
             db:clear_roles(db_task, UID),
-            save_attachments(FID, NewTask, Attachments),
+            db:save_attachments(NewTask, sets:from_list(Attachments)),
             lists:foreach(fun(#role_packet{address=A, role=R}) ->
                                   {ok, NPUID} = db:next_id(db_contact_roles),
                                   C = get_or_request_contact(A, BMF, BMT),

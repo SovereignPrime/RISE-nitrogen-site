@@ -921,7 +921,7 @@ get_attachments(Record) ->  % {{{1
                                                             _='_'},
                                             [],
                                             ['$1']}]),
-                        iterate(db_file, A)
+                        iterate(bm_file, A)
                 end).
 
 save_attachments(Record, Files) ->  % {{{1
