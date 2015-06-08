@@ -213,9 +213,9 @@ code_change(_OldVsn, State, _Extra) ->  % {{{1
 % Get vCard % {{{1
 apply_message(#message{from=BMF,
                        to=BMT,
-                       subject= <<"Get vCard">>,
-                       text=Data,
-                       enc=6}, FID, ToID, State) ->
+                       subject= <<"$Get vCard$">>,
+                       text=Data
+                       }, FID, ToID, State) ->
                        {ok,  #db_contact{name=Name,
                                          email=Email,
                                          phone=Phone,
@@ -224,7 +224,7 @@ apply_message(#message{from=BMF,
 
                        bitmessage:send_message(BMT,
                                                BMF,
-                                               <<"vCard">>,
+                                               <<"$vCard$">>,
                                                <<(wf:to_binary(Name))/bytes,
                                                  ",",
                                                  (wf:to_binary(Email))/bytes,
@@ -239,52 +239,36 @@ apply_message(#message{from=BMF,
 % vCard  {{{1
 apply_message(#message{from=BMF,
                        to=BMT,
-                       subject= <<"vCard">>,
-                       text=Data,
-                       enc=6}, FID, ToID, State) ->
+                       subject= <<"$vCard$">>,
+                       text=Data
+                       }, FID, ToID, State) ->
     [Name, Email, Phone, Address, BM] = binary:split(Data, <<",">>, [global, trim]),
     {ok, Contact } = db:get_contact_by_address(BM),
     db:save(Contact#db_contact{name=wf:to_list(Name),
                                email=wf:to_list(Email),
                                phone=wf:to_list(Phone),
                                address=Address});
-% Get torrent {{{1
-apply_message(#message{from=BMF,
-                       to=BMT,
-                       subject= <<"Get torrent">>,
-                       text=Data,
-                       enc=6}, FID, ToID, State) ->
-    {ok, FD} = application:get_env(etorrent_core, dir),
-    {ok,  F } = file:read_file(FD ++ "/" ++ wf:to_list(Data) ++ ".torrent"),
-    bitmessage:send_message(BMT, BMF, <<"torrent">>, <<Data/bytes, ";", F/bytes>>, 6);
-
-% Torrent {{{1
-apply_message(#message{from=BMF,
-                       to=BMT,
-                       subject= <<"torrent">>,
-                       text=Data,
-                       enc=6}, FID, ToID, State) ->
-    [Id, Torrent] = binary:split(Data, <<";">>, [trim]),
-    {ok, FD} = application:get_env(etorrent_core, dir),
-    Path = wf:f("~s/~s.torrent", [FD, Id]),
-    
-    file:write_file(Path, Torrent);
 
 % Task tree  {{{1
 apply_message(#message{from=BMF,
                        to=BMT,
-                       subject= <<"Task tree">>,
-                       text=Data,
-                       enc=6}, FID, ToID, State) ->
-    #task_tree_packet{task=Task, parent=Parent, time=TS} = binary_to_term(Data),
-    db:save_subtask(Task, Parent, TS);
+                       subject= <<"$Task tree$">>,
+                       text=Data
+                       }, FID, ToID, State) ->
+    try
+        #task_tree_packet{task=Task, parent=Parent, time=TS} = binary_to_term(Data),
+        db:save_subtask(Task, Parent, TS)
+    catch 
+        _:_ ->
+            ok
+    end;
 
 % Update  {{{1
 apply_message(#message{from=BMF,
                        to=BMT,
-                       subject= <<"Update223322">>,
-                       text=Data,
-                       enc=2}, FID, ToID, State) ->
+                       subject= <<"$Update223322$">>,
+                       text=Data
+                       }, FID, ToID, State) ->
     [BVSN, Torrent] = binary:split(Data, <<";">>, [trim]),
     {ok, CVSN} = application:get_key(nitrogen, 'vsn'),
     PWD = application:get_env(nitrogen, work_dir, "."),
@@ -295,16 +279,7 @@ apply_message(#message{from=BMF,
            U = PWD ++ "/site/.update",
            file:make_dir(U),
            Path = wf:f("~s/~s.torrent", [U, BVSN]),
-           file:write_file(  Path, base64:decode( Torrent )),
-           etorrent:start(Path, {callback, fun() ->
-                                                   io:format("Updating: ~p~n", [file:get_cwd()]),
-                                                   {ok, ZData} = file:read_file(wf:f("~s/scratch/u_~s.tar.gz", [Home, BVSN])),
-                                                   erl_tar:extract({binary, ZData}, [{cwd, U}, compressed]),
-                                                   {ok, Mod} = compile:file(U ++ "/update"),
-                                                   ok = Mod:main(PWD, Home),
-                                                   file:rename(Path, wf:f("~s/scratch/~s.torrent", [Home, BVSN])),
-                                                   os:cmd("rm -rf " ++ U)
-                                           end});
+           file:write_file(  Path, base64:decode( Torrent ));
        true -> ok
     end;
 % }}}
@@ -319,85 +294,80 @@ apply_message(#message{from=BMF,
                        subject=Subject,
                        text=Data,
                        attachments=Attachments,
-                       enc=3},
+                       enc=E},
               FID,
               ToID,
-              State)  ->
+              State)  when E == 2; E == 3 ->
     error_logger:info_msg("Message from ~s received subject ~s~n", [BMF, Subject]),
     {ok, Id} = db:next_id(db_update),
 
-    #message_packet{text=Text,
-                    involved=Involved} = binary_to_term(Data),
+    try binary_to_term(Data) of
+        #message_packet{text=Text,
+                        involved=Involved}  ->
 
-    Message = #db_update{id=Id,
-                         date=date(),
-                         from=FID,
-                         to=Involved -- [BMT],
-                         subject=wf:to_list(Subject),
-                         text=Text,
-                         status=unread},
+            Message = #db_update{id=Id,
+                                 date=date(),
+                                 from=FID,
+                                 to=Involved -- [BMT],
+                                 subject=wf:to_list(Subject),
+                                 text=Text,
+                                 status=unread},
 
-    db:save(Message),
-    save_attachments(FID, Message, Attachments),
-    State#state.pid ! received;
+            db:save(Message),
+            save_attachments(FID, Message, Attachments),
+            State#state.pid ! received;
+        Task when is_record(Task, task_packet) ->
+            #task_packet{id=UID, 
+                         due=Due, 
+                         text=Text, 
+                         parent=Parent, 
+                         status=Status, 
+                         time=Time,
+                         changes=Changes,
+                         involved=Involved} = extract_task(Task),
 
-% Task  {{{1
-apply_message(#message{from=BMF,
-                       to=BMT,
-                       subject=Subject,
-                       attachments=Attachments, 
-                       text=Data,
-                       enc=4},
-              FID,
-              ToID,
-              State)  ->
-
-    #task_packet{id=UID, 
-                 due=Due, 
-                 %name=wf:to_list(Subject), 
-                 text=Text, 
-                 parent=Parent, 
-                 status=Status, 
-                 time=Time,
-				 changes=Changes,
-                 involved=Involved} = extract_task(Data),
-
-    Task = case db:get_task(Parent) of
-               {ok, []} ->
-                   {ok, P} = db:search_parent(UID, Parent),
-                   #db_task{id=UID,
-                            due=Due,
-                            name=wf:to_list(Subject),
-                            text=Text,
-                            parent=P,
-                            status=Status,
-						    changes=Changes};
-               {ok, _} ->
-                   #db_task{id=UID,
-                            due=Due,
-                            name=wf:to_list(Subject),
-                            text=Text,
-                            parent=Parent,
-                            status=Status,
-						    changes=Changes}
-           end,
-    db:save(Task),
-    db:clear_roles(db_task, UID),
-    save_attachments(FID, Task, Attachments),
-    lists:foreach(fun(#role_packet{address=A, role=R}) ->
-                {ok, NPUID} = db:next_id(db_contact_roles),
-                C = get_or_request_contact(A, BMF, BMT),
-                db:save(#db_contact_roles{id=NPUID,
-                                          type=db_task,
-                                          role=wf:to_list(R),
-                                          tid=UID,
-                                          contact=C})
-        end, Involved),
-    {ok, Children} = db:get_children(UID, Time),
-    lists:foreach(fun(#db_task_tree{task=T, time=TS}) ->
-                          db:save_subtask(T, UID, TS)
-                  end, Children),
-    State#state.pid ! received;
+            Task = case db:get_task(Parent) of
+                       {ok, []} ->
+                           {ok, P} = db:search_parent(UID, Parent),
+                           #db_task{id=UID,
+                                    due=Due,
+                                    name=wf:to_list(Subject),
+                                    text=Text,
+                                    parent=P,
+                                    status=Status,
+                                    changes=Changes};
+                       {ok, _} ->
+                           #db_task{id=UID,
+                                    due=Due,
+                                    name=wf:to_list(Subject),
+                                    text=Text,
+                                    parent=Parent,
+                                    status=Status,
+                                    changes=Changes}
+                   end,
+            db:save(Task),
+            db:clear_roles(db_task, UID),
+            save_attachments(FID, Task, Attachments),
+            lists:foreach(fun(#role_packet{address=A, role=R}) ->
+                                  {ok, NPUID} = db:next_id(db_contact_roles),
+                                  C = get_or_request_contact(A, BMF, BMT),
+                                  db:save(#db_contact_roles{id=NPUID,
+                                                            type=db_task,
+                                                            role=wf:to_list(R),
+                                                            tid=UID,
+                                                            contact=C})
+                          end, Involved),
+            {ok, Children} = db:get_children(UID, Time),
+            lists:foreach(fun(#db_task_tree{task=T, time=TS}) ->
+                                  db:save_subtask(T, UID, TS)
+                          end, Children),
+            State#state.pid ! received;
+        _ ->
+            error_logger:warning_msg("Wrong incomming message: ~p from ~p~n", [Data, FID])
+    catch
+        error:badarg ->
+            error_logger:warning_msg("Wrong incomming message: ~p from ~p~n", [Data, FID])
+    end;
 
 % Default  {{{1
 apply_message(Message, FID, ToID, State) ->
@@ -405,7 +375,7 @@ apply_message(Message, FID, ToID, State) ->
     error_logger:warning_msg("Wrong incomming message: ~p from ~p~n", [Message, FID]).
 
 get_vcard(BM, To, From) ->  % {{{1
-    bitmessage:send_message(From, To, <<"Get vCard">>, BM, 6).
+    bitmessage:send_message(From, To, <<"$Get vCard$">>, BM).
 get_or_request_contact(BM, From, To) ->  % {{{1
     case db:get_contact_by_address(BM) of
         {ok, none} ->
