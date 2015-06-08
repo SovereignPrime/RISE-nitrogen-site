@@ -546,18 +546,18 @@ send_messages(#db_update{subject=Subject, % {{{1
                                                   AttachmentsPaths)
                   end,
                   Contacts);
-send_messages(#db_task{id=UID,
+send_messages(#db_task{id=UID, %{{{1
                        name=Subject,
                        text=Text,
                        due=Date,
                        parent=Parent,
                        status=Status,
-                       changes=Changes} = U) -> %{{{1
+                       changes=Changes} = U) ->
     {ok, Involved} = db:get_involved(UID),
     Contacts = [#role_packet{address=C, role=R} || {_, R, #db_contact{bitmessage=C}}  <- Involved],
     #db_contact{address=From} = wf:user(),
     {ok, Attachments} = db:get_attachments(U),
-    AttachmentsPaths = lists:map(fun(#db_file{path=Path}) ->
+    AttachmentsPaths = lists:map(fun(#db_file{id=Path}) ->
                                          Path
                                  end,
                                  Attachments),

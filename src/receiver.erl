@@ -326,28 +326,23 @@ apply_message(#message{from=BMF,
                          changes=Changes,
                          involved=Involved} = extract_task(Task),
 
-            Task = case db:get_task(Parent) of
-                       {ok, []} ->
-                           {ok, P} = db:search_parent(UID, Parent),
-                           #db_task{id=UID,
-                                    due=Due,
-                                    name=wf:to_list(Subject),
-                                    text=Text,
-                                    parent=P,
-                                    status=Status,
-                                    changes=Changes};
-                       {ok, _} ->
-                           #db_task{id=UID,
-                                    due=Due,
-                                    name=wf:to_list(Subject),
-                                    text=Text,
-                                    parent=Parent,
-                                    status=Status,
-                                    changes=Changes}
-                   end,
-            db:save(Task),
+            NewParent = case db:get_task(Parent) of
+                            {ok, []} ->
+                                {ok, P} = db:search_parent(UID, Parent),
+                                P;
+                            {ok, _} ->
+                                Parent
+                        end,
+            NewTask = #db_task{id=UID,
+                               due=Due,
+                               name=wf:to_list(Subject),
+                               text=Text,
+                               parent=NewParent,
+                               status=Status,
+                               changes=Changes},
+            db:save(NewTask),
             db:clear_roles(db_task, UID),
-            save_attachments(FID, Task, Attachments),
+            save_attachments(FID, NewTask, Attachments),
             lists:foreach(fun(#role_packet{address=A, role=R}) ->
                                   {ok, NPUID} = db:next_id(db_contact_roles),
                                   C = get_or_request_contact(A, BMF, BMT),
