@@ -22,7 +22,8 @@ main() ->  % {{{1
                     end;
                 R ->
                     {ok, Pid} = wf:comet_global(fun  incoming/0, incoming),
-                    Pid! {status, undefined},
+                    Online = bitmessage:online(),
+                    Pid! {status, Online},
                     receiver:register_receiver(Pid),
                     T = #template {file=PWD ++ "/site/templates/bare.html" },
                     wf:wire('new_contact',
