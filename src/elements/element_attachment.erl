@@ -55,6 +55,7 @@ render_element(Record=#attachment{id=I,
                                   status=downloading}=Attachment) -> % {{{1
     {Y, M, D} = Time,
     DateS = io_lib:format("~p-~p-~p", [Y, M, D]),
+    Downloaded = bitmessage:progress(Id) * 100,
     {ok, Pid} = wf:comet(fun() ->
                                  receive 
                                      update ->
@@ -68,12 +69,13 @@ render_element(Record=#attachment{id=I,
             #panel{class="span1", body=wf:to_list(Size)},
             #panel{class="span4", body=DateS},
             #panel{class="span2", body=[
-                            wf:to_list(0)
+                            wf:to_list(wf:to_integer(Downloaded))
                     ], style="text-align:center;"}
 
             ]};
 
-render_element(#attachment{id=I, fid=Id,
+render_element(#attachment{id=I,
+                           fid=Id,
                            filename=File,
                            size=Size,
                            time=Time,
@@ -84,7 +86,12 @@ render_element(#attachment{id=I, fid=Id,
             #panel{class="span6", body=File},
             #panel{class="span2", body=sugar:format_file_size(Size)},
             #panel{class="span3", body=DateS},
-            #panel{class="span1", body="<i class='icon icon-save'></i>", style="text-align:center;", actions=#event{type=click, postback={save, File, Id}, delegate=?MODULE}}
+            #panel{class="span1",
+                   body="<i class='icon icon-save'></i>",
+                   style="text-align:center;",
+                   actions=#event{type=click,
+                                  postback={save, File, Id},
+                                  delegate=?MODULE}}
             ]}.
 
 event({path, PathId, #attachment{id=Id, fid=FID}=Attachment}) -> % {{{1
