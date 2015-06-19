@@ -938,18 +938,11 @@ get_files(FIDs) when is_list(FIDs) ->  % {{{1
                 end);
 get_files(true)  ->  % {{{1
     transaction(fun() ->
-                        mnesia:select(db_file, [{#db_file{status=archive, _='_'}, [], ['$_']}])
+                        mnesia:select(bm_file, [{#bm_file{status=archive, _='_'}, [], ['$_']}])
                 end);
 get_files(false)  ->  % {{{1
     transaction(fun() ->
-                        mnesia:select(db_file, [{#db_file{status='$1', _='_'}, [{'/=', '$1', archive}], ['$_']}])
-                end).
-
-get_download_percent(Fid) ->
-    transaction(fun() ->
-                        [#bm_file{chunks=All}] = mnesia:read(bm_file, Fid),
-                        Downloaded = mnesia:index_read(bm_filechunk, Fid, #bm_filechunk.file),
-                        Downloaded / All * 100
+                        mnesia:select(bm_file, [{#bm_file{status='$1', _='_'}, [{'/=', '$1', archive}], ['$_']}])
                 end).
 
 get_owner(FID) ->  % {{{1

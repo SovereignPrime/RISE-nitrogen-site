@@ -4,7 +4,6 @@
 -include_lib("nitrogen_core/include/wf.hrl").
 -include("records.hrl").
 -include("db.hrl").
--include("torrent.hrl").
 -export([
     reflect/0,
     render_element/1,

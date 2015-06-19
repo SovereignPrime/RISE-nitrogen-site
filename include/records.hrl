@@ -55,13 +55,14 @@
                     due
     }).
 -record(file_row, {?ELEMENT_BASE(element_file_row),
-                   name,
-                   type,
-                   size,
-                   for,
-                   date,
-                   fid,
-                   status
+                   file
+                   %name,
+                   %type,
+                   %size,
+                   %for,
+                   %date,
+                   %fid,
+                   %status
     }).
 -record(payment_row, {?ELEMENT_BASE(element_payment_row),
                       pid,
