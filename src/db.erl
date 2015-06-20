@@ -172,9 +172,9 @@ archive(#db_contact{address=Address}) ->  % {{{1
         end);
 archive(Rec) when is_list(Rec) ->  % {{{1
     transaction(fun() ->
-                iterate(db_file, Rec, fun(_T, R) ->
-                            [R1] = mnesia:wread({db_file, R}),
-                            mnesia:write(R1#db_file{status=archive}),
+                iterate(bm_file, Rec, fun(_T, R) ->
+                            [R1] = mnesia:wread({bm_file, R}),
+                            mnesia:write(R1#bm_file{status=archive}),
                             [R1]
                     end)
         end);
@@ -197,7 +197,7 @@ get_archive(Type) when Type == db_contact ->  % {{{1
         end);
 get_archive(Type) when Type == db_file ->  % {{{1
     transaction(fun() ->
-                mnesia:index_read(Type, archive, #db_file.status)
+                mnesia:index_read(Type, archive, #bm_file.status)
         end);
 get_archive(Type) when Type == db_expense ->  % {{{1
     transaction(fun() ->

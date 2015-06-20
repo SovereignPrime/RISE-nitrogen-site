@@ -26,7 +26,6 @@ render_element(Record = #file_row{
                                    name=Name,
                                    path=Path,
                                    size=Size,
-                                   %for=For,
                                    time=Date,
                                    status=Status
                                   }

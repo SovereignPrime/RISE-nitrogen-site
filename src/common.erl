@@ -531,7 +531,9 @@ send_messages(#db_update{subject=Subject, % {{{1
                                          involved=[From | Contacts],
                                          time=bm_types:timestamp()}),
 
-    AttachmentsPaths = lists:map(fun(#db_file{id=Hash}) ->
+    AttachmentsPaths = lists:map(fun(#bm_file{hash=Hash}) ->
+                                         Hash;
+                                    (#db_file{id=Hash}) ->
                                          Hash
                                  end,
                                  Attachments),
@@ -558,8 +560,10 @@ send_messages(#db_task{id=UID, %{{{1
     Contacts = [#role_packet{address=C, role=R} || {_, R, #db_contact{bitmessage=C}}  <- Involved],
     #db_contact{address=From} = wf:user(),
     {ok, Attachments} = db:get_attachments(U),
-    AttachmentsPaths = lists:map(fun(#db_file{id=Path}) ->
-                                         Path
+    AttachmentsPaths = lists:map(fun(#db_file{id=Hash}) ->
+                                         Hash;
+                                    (#bm_file{hash=Hash}) ->
+                                         Hash
                                  end,
                                  Attachments),
     lists:foreach(fun(#role_packet{address=To}) when To /= From ->
