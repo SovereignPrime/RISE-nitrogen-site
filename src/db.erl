@@ -968,10 +968,8 @@ mark_downloaded(Id) ->  % {{{1
                 end).
 
 get_linked_messages(FID) when is_list(FID) ->  % {{{1
-    error_logger:info_msg("Fid1: ~p~n", [FID]),
     get_linked_messages(wf:to_binary(FID));
 get_linked_messages(FID) ->  % {{{1
-    error_logger:info_msg("Fid: ~p~n", [FID]),
     transaction(fun() ->
                         Messages = mnesia:table(message, {traverse,
                                                           {select,

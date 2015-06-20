@@ -38,12 +38,19 @@ render_element(Record = #file_row{
                    string:to_upper(tl(T))
            end,
     {ok, Messages} = db:get_linked_messages(FID),
-    Linked = lists:map(fun(#message{subject=S}) ->
-                               <<S/bytes, "; ">>
+    Linked = once_join(lists:map(fun(#message{subject=S}) ->
+                                         wf:to_list(S)
                        end,
-                       Messages),
-
-    For = <<>>,
+                       Messages)),
+    #db_contact{address=My} = wf:user(),
+    For = once_join(lists:map(fun(#message{from=M, to=A}) when M == My ->
+                            {ok, #db_contact{name=C}} = db:get_contact_by_address(A),
+                            C;
+                       (#message{from=A, to=M}) when M == My ->
+                            {ok, #db_contact{name=C}} = db:get_contact_by_address(A),
+                                                                                  C
+                       end,
+                       Messages)),
     Percent = wf:to_integer(bitmessage:progress(FID) * 100),
 
     Check =  sets:is_element(FID, wf:session_default(attached_files, sets:new())),
@@ -99,3 +106,6 @@ event({download, #file_row{id=I, file=#bm_file{hash=Id}} = Attachment}) -> % {{{
     wf:replace(I, Attachment#file_row{file=NFile});
 event(E) ->
     error_logger:warning_msg("Wrong event ~p in ~p", [E, ?MODULE]).
+
+once_join(L) ->
+    string:join(sets:to_list(sets:from_list(L)), "; ").
