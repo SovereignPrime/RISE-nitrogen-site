@@ -37,7 +37,11 @@ render_element(Record = #file_row{
                T ->
                    string:to_upper(tl(T))
            end,
-    {ok, Linked} = db:get_linked_messages(FID),
+    {ok, Messages} = db:get_linked_messages(FID),
+    Linked = lists:map(fun(#message{subject=S}) ->
+                               <<S/bytes, "; ">>
+                       end,
+                       Messages),
 
     For = <<>>,
     Percent = wf:to_integer(bitmessage:progress(FID) * 100),

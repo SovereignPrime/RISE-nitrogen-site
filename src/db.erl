@@ -967,29 +967,26 @@ mark_downloaded(Id) ->  % {{{1
                         mnesia:write(F#db_file{status=downloaded})
                 end).
 
-get_linked_messages(FID) when is_binary(FID) ->  % {{{1
-    get_linked_messages(wf:to_list(FID));
+get_linked_messages(FID) when is_list(FID) ->  % {{{1
+    error_logger:info_msg("Fid1: ~p~n", [FID]),
+    get_linked_messages(wf:to_binary(FID));
 get_linked_messages(FID) ->  % {{{1
+    error_logger:info_msg("Fid: ~p~n", [FID]),
     transaction(fun() ->
-                        Attachments = mnesia:index_read(db_attachment, FID, #db_attachment.file),
-                        iterate(db_attachment,
-                                Attachments,
-                                fun(_Ty, #db_attachment{type=T,
-                                                        tid=Id}) when T == db_update ->
-                                        [#db_update{subject=Subject}] = mnesia:read(T, Id),
-                                        [ <<(wf:to_binary(Subject))/bytes,
-                                            "; ">> ];
-                                   (_Ty, #db_attachment{type=T,
-                                                        tid=Id}) when T == db_task ->
-                                        [#db_task{name=Subject}] = mnesia:read(T, Id),
-                                        [ <<(wf:to_binary(Subject))/bytes,
-                                            "; ">> ];
-                                   (_Ty, #db_attachment{type=T,
-                                                        tid=Id}) when T == db_expense ->
-                                        [#db_expense{name=Subject}] = mnesia:read(T, Id),
-                                        [ <<(wf:to_binary(Subject))/bytes,
-                                            "; ">> ]
-                                end)
+                        Messages = mnesia:table(message, {traverse,
+                                                          {select,
+                                                          [{
+                                                            #message{status='$1',
+                                                                     _='_'},
+                                                            [{'/=', '$1', archive}],
+                                                            ['$_']
+                                                           }]
+                                                         
+                                                          }}),
+                        qlc:e(qlc:q([ M || #message{attachments=As}=M <- Messages,
+                                           As /= [],
+                                           sets:is_element(FID, sets:from_list(As))
+                                    ]))
                 end).
 
 
