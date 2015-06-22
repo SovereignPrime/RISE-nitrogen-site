@@ -364,18 +364,37 @@ render_role_edit_row(OriginalData = {ContactRole, Name}) -> % {{{1
     Rowid = wf:temp_id(),
     RoleFieldid = wf:temp_id(),
     NameFieldid = wf:temp_id(),
-    #panel{id=Rowid, class="row-fluid", body=[
-        #panel{class=span2, body=[
-            element_involved:role_dropdown(RoleFieldid, ContactRole#db_contact_roles.role)
-        ]},
-        #panel{class=span4, body=[
-            #textbox_autocomplete{id=NameFieldid, tag=contact, class="span11", text=Name, delegate=common}
-        ]},
-        #panel{class=span2, body=[
-            #button{class="btn btn-link", body="<i class='icon-ok'></i>", postback={save_role, Rowid, OriginalData, RoleFieldid, NameFieldid}},
-            #button{class="btn btn-link", body="<i class='icon-remove'></i>", postback={cancel_role, Rowid, OriginalData}}
-        ]}
-    ]}.
+    #panel{id=Rowid,
+           class="row-fluid",
+           body=[
+                 #panel{class=span2,
+                        body=[
+                              element_involved:role_dropdown(RoleFieldid, ContactRole#db_contact_roles.role)
+                             ]},
+                 #panel{class=span4,
+                        body=[
+                              #textbox_autocomplete{id=NameFieldid,
+                                                    tag=contact,
+                                                    class="span11",
+                                                    text=Name,
+                                                    delegate=common}
+                             ]},
+                 #panel{class=span2,
+                        body=[
+                              #button{class="btn btn-link",
+                                      body="<i class='icon-ok'></i>",
+                                      postback={save_role,
+                                                Rowid,
+                                                OriginalData,
+                                                RoleFieldid,
+                                                NameFieldid}},
+                              #button{class="btn btn-link",
+                                      body="<i class='icon-remove'></i>",
+                                      postback={cancel_role,
+                                                Rowid,
+                                                OriginalData}}
+                             ]}
+                ]}.
 
 
 render_top_buttons() -> % {{{1

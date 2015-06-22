@@ -18,10 +18,17 @@ render_element(_Record = #involved{person = Person, role = Text}) ->
     {ok, Users, _} = db:get_users(10), % Move from here
     #panel{ class="row-fluid", body=[
             #panel{ class="input-prepend span9", body=[
-                    #span{ class="add-on", body=[
-                            #span{html_encode=false, text="<i class='icon-user'></i>"}
-                            ]},
-                    #textbox_autocomplete{id=person, tag=contact, next=responsible, class="span11", text = Person, delegate=common}
+                    #span{class="add-on",
+                          body=[
+                           #span{html_encode=false,
+                                 text="<i class='icon-user'></i>"}
+                           ]},
+                    #textbox_autocomplete{id=person,
+                                          tag=contact,
+                                          next=responsible,
+                                          class="span11",
+                                          text = Person,
+                                          delegate=common}
                     ]},
             #panel{class="dropdown span3 input-append", 
                    style="border: #000 1px solid",
@@ -46,9 +53,9 @@ role_dropdown(Id, Value, Users) -> % {{{1
             ],
             options=[
                 #option{text="Responsible", value="responsible"},
+                #option{text="Accountable", value="accountable"},
                 #option{text="Consulted", value="consulted"},
-                #option{text="Informed", value="informed"},
-                #option{text="Accountable", value="accountable"}
+                #option{text="Informed", value="informed"}
             ]
         },
         #span{ class="add-on",
