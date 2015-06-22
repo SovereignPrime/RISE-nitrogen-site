@@ -110,36 +110,40 @@ render_element(#update_element{id=Id,
                                      body=[
                                            #link{class="btn btn-link",
                                                  body=[
-                                                       #span{class="icon-reply icon-large", text=" "}
-                                                      ], postback=case Enc of
+                                                       #span{class="icon-reply icon-large",
+                                                             text=" "}
+                                                      ],
+                                                 postback=case Enc of
 
-                                                                      E when E == 3; E == 2 -> 
-                                                                          {reply, Subject, From};
-                                                                      4 ->
-                                                                          {to_task, TID}
-                                                                  end,
+                                                              E when E == 3; E == 2 -> 
+                                                                  {reply, Subject, From};
+                                                              4 ->
+                                                                  {to_task, TID}
+                                                          end,
                                                  new=false,
                                                  delegate=common},
 
-                                           #panel{class="btn-group", body=[
-                                                                           #link{ class="btn btn-link droppdown-toggle",
-                                                                                  body=[
-                                                                                                                               "<i class='icon-reorder icon-large'></i>"
-                                                                                                                              ],
-                                                                                  new=false,
-                                                                                  data_fields=[{toggle, "dropdown"}]},
-                                                                           #list{numbered=false,
-                                                                                 class="dropdown-menu pull-right",
+                                           #panel{class="btn-group",
+                                                  body=[
+                                                        #link{ class="btn btn-link droppdown-toggle",
+                                                               body=[
+                                                                     "<i class='icon-reorder icon-large'></i>"
+                                                                    ],
+                                                               new=false,
+                                                               data_fields=[{toggle, "dropdown"}]},
+                                                        #list{numbered=false,
+                                                              class="dropdown-menu pull-right",
 
-                                                                                 body=[
-                                                                                       #listitem{body=[
-                                                                                                       #link{body=[
-                                                                                                                   "<i class='icon-list-alt icon-large'></i> Archive"
-                                                                                                                  ],
-                                                                                                             postback={archive, Enc, UID}, new=false}]}
-                                                                                      ]}
+                                                              body=[
+                                                                    #listitem{body=[
+                                                                                    #link{body=[
+                                                                                                "<i class='icon-list-alt icon-large'></i> Archive"
+                                                                                               ],
+                                                                                          postback={archive, Enc, UID},
+                                                                                          new=false}]}
+                                                                   ]}
 
-                                                                          ]}
+                                                       ]}
                                           ]}]},
                  case Attachments of
                      undefined ->
@@ -246,11 +250,15 @@ decode_enc(Enc, Data, Collapsed) when Enc == 2; Enc == 3 ->  % {{{1
                          text=T,
                          due=Due, 
                          involved=Involved,
+                         status=Status,
                          time=TS} = receiver:extract_task(Data),
             Body = #panel{ class="",
                            body= [ 
-                                  #panel{ class="", 
-                                          body=["Due: ", Due]
+                                  #panel{class="", 
+                                         body=["Due: ", Due]
+                                        },
+                                  #panel{class="", 
+                                         body=["Status: ", Status]
                                         },
                                   lists:map(fun(#role_packet{address=Address,
                                                              role=R}) ->
