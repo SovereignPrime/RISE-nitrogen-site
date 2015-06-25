@@ -49,7 +49,10 @@ event({add, #addable_row{id=Id, num=N, body=Body, options=Opt}=Record}) ->
                       body=[
                         #listitem{body=[
                                 #link{id=wf:to_atom(wf:f("~s_addable_plus~p", [Id, N])), 
-                                      body=["<i class='icon-minus'></i> Delete"], html_encode=false, postback={del,  Record}, delegate=?MODULE}
+                                      body=["<i class='icon-minus'></i> Delete"],
+                                      html_encode=false,
+                                      postback={del,  Record},
+                                      delegate=?MODULE}
                                 ]},
                         Opt(Id, N)
                         ]}
@@ -57,11 +60,11 @@ event({add, #addable_row{id=Id, num=N, body=Body, options=Opt}=Record}) ->
              ),
     wf:insert_after(wf:f("~s_addable~p", [Id, N]), 
                     #addable_row{
-            id=Id,
-            num=N+1,
-            options=Opt,
-            body=Body
-            });
+                       id=Id,
+                       num=N+1,
+                       options=Opt,
+                       body=Body
+                      });
 event({del, #addable_row{id=Id, num=N}=_Record}) ->
     wf:remove(wf:f("~s_addable~p",[Id, N]));
 event(Ev) ->

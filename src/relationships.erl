@@ -86,6 +86,7 @@ contact_render(#db_contact{id=Id,  % {{{1
                            phone=Phone,
                            address=Address,
                            photo=Photo}) ->
+    {ok, Notes} = db:get_notes_by_user(Id),
     {ok, Tasks} = db:get_tasks_by_user(Id),
     {ok, Updates} = db:get_updates_by_user(Address),
     {ok, Groups} = db:get_groups_for_user(Id),
@@ -98,6 +99,67 @@ contact_render(#db_contact{id=Id,  % {{{1
                photo=Photo,
                groups=[ N|| #db_group{name=N} <- Groups]},
 
+        #panel{class='row-fluid',
+               body=[
+                     #panel{class=span10,
+                            body=[
+                                  #h2{body=[
+                                            #image{image="/img/tasks.svg",
+                                                   class="icon",
+                                                   style="height: 20px;"},
+
+                                            " Notes"
+                                           ]}
+                                 ]},
+            #panel{class=span2,
+                   body="Show All",
+                   style="text-align:right"}
+        ]},
+        #panel{id=add_note,
+               class='row-fluid',
+               style="min-height:20px; height:20px;",
+               body=[
+                     #panel{class=span2,
+                            style="min-height:20px; height:20px;",
+                            text=sugar:date_format(calendar:local_time())},
+
+                     #panel{class=span9,
+                            style="min-height:20px; height:20px;",
+                            body=[
+                                  #textbox{id=note,
+                                           class="span10",
+                                           style="min-height:15px;",
+                                           placeholder="Your note here",
+                                           next=ok}
+                                ]},
+                #panel{class=span1,
+                       style="min-height:20px; height:20px; text-align:right",
+                       body=[
+                             #link{id=ok, 
+                                   body=["<i class='icon-ok'></i>"],
+                                   html_encode=false,
+                                   postback={add_note, Id},
+                                   delegate=?MODULE}
+                            ]}
+                    ]},
+        lists:map(fun(Note = #db_contact_note{id=NID,
+                                              datetime=Datetime,
+                                              text=Text}) ->
+                          #panel{class='row-fluid',
+                                 style="min-height:20px; height:20px;",
+                                 body=[
+                                       #panel{class=span2,
+                                              style="min-height:20px; height:20px;",
+                                              text=sugar:date_format(Datetime)},
+
+                                       #panel{class=span10,
+                                              style="min-height:20px; height:20px;",
+                                              body=[
+                                                    Text
+                                                   ]}
+                                      ]}
+                  end,
+                  Notes),
         #panel{class='row-fluid', body=[
             #panel{class=span10, body=[
                 #h2{body=[
@@ -234,6 +296,30 @@ event({task_for, Addr}) ->  % {{{1
     Me = wf:user(),
     wf:session(involved, [{0, responcible, Me},{0, concerning, Contact}]),
     common:event(add_task);
+
+event({add_note, CID}) ->  % {{{1
+    Id = db:next_id(db_contact_note),
+    Datetime = calendar:local_time(),
+    Text = wf:q(note),
+    db:save(#db_contact_note{id=Id,
+                             contact=CID,
+                             text=Text,
+                             datetime=Datetime}),
+    wf:set(note, ""),
+    wf:insert_after(add_note, 
+                    #panel{class='row-fluid',
+                           style="min-height:20px; height:20px;",
+                           body=[
+                                 #panel{class=span2,
+                                        style="min-height:20px; height:20px;",
+                                        text=sugar:date_format(Datetime)},
+
+                                 #panel{class=span10,
+                                        style="min-height:20px; height:20px;",
+                                        body=[
+                                              Text
+                                             ]}
+                                ]});
 
 event(Click) ->  % {{{1
     io:format("~p~n",[Click]).

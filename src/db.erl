@@ -22,6 +22,7 @@ install(Pid)->  % {{{1
     ?V(mnesia:create_table(db_expense_tasks, [{disc_copies, [node()]}, {attributes, record_info(fields, db_expense_tasks)}, {type, bag}])),
     ?V(mnesia:create_table(db_attachment, [{disc_copies, [node()]}, {attributes, record_info(fields, db_attachment)}, {type, ordered_set}, {index, [file]}])),
     ?V(mnesia:create_table(db_task_tree, [{disc_copies, [node()]}, {attributes, record_info(fields, db_task_tree)}, {type, bag}, {index, [parent, visible]}])),
+    ?V(mnesia:create_table(db_contact_note, [{disc_copies, [node()]}, {attributes, record_info(fields, db_contact_note)}, {type, ordered_set}, {index, [contact]}])),
     timer:sleep(60000),
     receiver:register_receiver(Pid),
     bitmessage:generate_address(),
@@ -33,7 +34,7 @@ account(Pid, Address) ->  % {{{1
             Pid ! accepted.
 
 update() ->  % {{{1
-	LastUpdate = 4,
+	LastUpdate = 6,
 	[update(N) || N <- lists:seq(1,LastUpdate)].
 
 update(1) -> % {{{1
@@ -103,8 +104,9 @@ update(5) ->  % {{{1
                                       end,
                                       Files)
                        end);
-update(6) ->
+update(6) ->  % {{{1
     mnesia:delete_table(db_update),
+    ?V(mnesia:create_table(db_contact_note, [{disc_copies, [node()]}, {attributes, record_info(fields, db_contact_note)}, {type, ordered_set}, {index, [contact]}])),
     ?V(mnesia:create_table(db_update, [{disc_copies, [node()]}, {attributes, record_info(fields, db_update)}, {type, ordered_set}])).
 
 
@@ -809,6 +811,11 @@ get_groups_for_user(UID) ->  % {{{1
     transaction(fun() ->
                         GIDS = mnesia:select(db_group_members, [{#db_group_members{group='$1', contact=UID}, [], ['$1']}]),
                         iterate(db_group, GIDS)
+                end).
+
+get_notes_by_user(UID) ->  % {{{1
+    transaction(fun() ->
+                        mnesia:index_read(db_contact_note, UID, #db_contact_note.contact)
                 end).
 
 clear_roles(Type, Id) ->  % {{{1
