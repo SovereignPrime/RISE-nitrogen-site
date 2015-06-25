@@ -55,7 +55,9 @@ role_dropdown(Id, Value, Users) -> % {{{1
                 #option{text="Responsible", value="responsible"},
                 #option{text="Accountable", value="accountable"},
                 #option{text="Consulted", value="consulted"},
-                #option{text="Informed", value="informed"}
+                #option{text="Informed", value="informed"},
+                #option{text="Concerning", value="concerning"}
+
             ]
         },
         #span{ class="add-on",

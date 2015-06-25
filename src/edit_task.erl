@@ -132,7 +132,9 @@ fix_addable_rows() ->
 
 add_existing_rows(Id) ->  % {{{1
     {ok, Involved} = db:get_involved(Id),
-    Contacts = [{C, R} || {_, R, C}  <- Involved],
+    Involved1 = wf:session_default(involved, []),
+    Contacts = [{C, R} || {_, R, C}  <- Involved ++ Involved1],
+    wf:session(involved, []),
     Tos = lists:zip(Contacts, lists:seq(1, length(Contacts))),
     lists:foreach(fun({ {#db_contact{id=I, name=C}, R  }, N }) ->
                 wf:session(wf:to_binary(C), I),
@@ -162,10 +164,10 @@ event(save) ->  % {{{1
 	Status = db:sanitize_task_status(wf:q(status)),
     #db_task{id=Id} = Task = wf:session(current_task),
     UID = case Id of
-        undefined ->
-            crypto:hash(sha512, <<TaskName/bytes, Text/bytes>>);
-        I ->
-            I
+              undefined ->
+                  crypto:hash(sha512, <<TaskName/bytes, Text/bytes>>);
+              I ->
+                  I
     end,
     NTask = Task#db_task{name= TaskName , id=UID, due=Due, text=Text, status=Status},
     db:save(NTask),

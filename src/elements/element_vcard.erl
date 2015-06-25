@@ -11,10 +11,10 @@
     finish_upload_event/4
     ]).
 
--spec reflect() -> [atom()].
+-spec reflect() -> [atom()].  % {{{1
 reflect() -> record_info(fields, vcard).
 
--spec render_element(#vcard{}) -> body().
+-spec render_element(#vcard{}) -> body(). % {{{1
 render_element(#vcard{id=Id,
                       photo=Photo,
                       name=Name,
@@ -24,78 +24,92 @@ render_element(#vcard{id=Id,
                       groups=Groups}) ->
     Photo2 = ?WF_IF(Photo=="undefined.png","/img/nophoto.png","/photo/" ++ Photo),
     {ok, AGroups} = db:get_groups(),
-    #panel{id=Id, class="vcard row-fluid", body=[
-            #panel{class="span2", body=[
-                    #image{id=img_vcard,
-                           image=Photo2,
-                           class="image-polaroid",
-                           actions=[
-                            #event{type=click,
-                                   actions=[
-                                            #event{target=upload_vcard,
-                                                   actions=#show{}},
-                                            #event{actions=#hide{}}
-                                           ]}
-                            ]},
-                    #span{id=upload_vcard,
-                          body= #upload{tag={photo, Id},
-                                        show_button=false,
-                                        droppable=true,
-                                        droppable_text="Drag and drop photo",
-                                        style="width:100%;height:100%",
-                                        delegate=?MODULE}, 
-                          actions=#hide{}} 
-                    ]},
-            #panel{class="span9",
-                   body=[
-                    #panel{class="row-fluid",
-                           body=[
-                            #h1{class="",
-                                body= #inplace_textbox{text=Name,
-                                                       tag={name, Id}}
-                               },
-                            #panel{body= [ "Email: ",
-                                          #inplace_textbox{class="inline",
-                                                           tag={ email, Id},
-                                                           text=  Email,
-                                                           validators=#is_email{text="You provided wrong e-mail address"}}
-                                         ]},
-                            #panel{body= [
-                                    "Tel: ",
-                                    #inplace_textbox{class="inline",
-                                                     text=Phone,
-                                                     tag={phone, Id}}
-                                    ]},
-                            #panel{body= [
-                                          "RISE ID: ",
-                                          #inplace_textbox{class="inline",
-                                                           text=Address,
-                                                           tag={address, Id}}
-                                    ]},
-                            #panel{body= [ [#span{class="label", text=G}, " "] || G <- Groups]}
-                            ]}
+    #panel{id=Id,
+           class="vcard row-fluid",
+           body=[
+                 #panel{class="span2",
+                        body=[
+                              #image{id=img_vcard,
+                                     image=Photo2,
+                                     class="image-polaroid",
+                                     actions=[
+                                              #event{type=click,
+                                                     actions=[
+                                                              #event{target=upload_vcard,
+                                                                     actions=#show{}},
+                                                              #event{actions=#hide{}}
+                                                             ]}
+                                             ]},
+                              #span{id=upload_vcard,
+                                    body= #upload{tag={photo, Id},
+                                                  show_button=false,
+                                                  droppable=true,
+                                                  droppable_text="Drag and drop photo",
+                                                  style="width:100%;height:100%",
+                                                  delegate=?MODULE}, 
+                                    actions=#hide{}} 
+                             ]},
+                 #panel{class="span9",
+                        body=[
+                              #panel{class="row-fluid",
+                                     body=[
+                                           #h1{class="",
+                                               body= #inplace_textbox{text=Name,
+                                                                      tag={name, Id}}
+                                              },
+                                           #panel{body= [ "Email: ",
+                                                          #inplace_textbox{class="inline",
+                                                                           tag={ email, Id},
+                                                                           text=  Email,
+                                                                           validators=#is_email{text="You provided wrong e-mail address"}}
+                                                        ]},
+                                           #panel{body= [
+                                                         "Tel: ",
+                                                         #inplace_textbox{class="inline",
+                                                                          text=Phone,
+                                                                          tag={phone, Id}}
+                                                        ]},
+                                           #panel{body= [
+                                                         "RISE ID: ",
+                                                         #inplace_textbox{class="inline",
+                                                                          text=Address,
+                                                                          tag={address, Id}}
+                                                        ]},
+                                           #panel{body= [ [#span{class="label", text=G}, " "] || G <- Groups]}
+                                          ]}
 
-                    ]},
-            #panel{class="span1",
-                   body=[
-                         #link{class="btn btn-link",
-                               body = "<i class='icon-envelope icon-large'></i>",
-                               postback={write_to, Address }},
-            #panel{class="btn-group", body=[
-                    #link{ class="btn btn-link dropdown-toggle", body=[
-                            "<i class='icon-reorder icon-large'></i>"
-                            ], new=false, data_fields=[{toggle, "dropdown"}]},
-                    #list{numbered=false, class="dropdown-menu pull-right",
-                          body=[
-                            #listitem{body=[
-                                            #link{body=[
-                                                        "<i class='icon-list-alt icon-large'></i> Archive"
-                                                       ], postback={archive, Address},
-                                                  new=false}]}
-                                    ]}
-                            ]}
-                    ]}
-            ]}.
+                             ]},
+                 #panel{class="span1",
+                        body=[
+                              #link{class="btn btn-link",
+                                    body = "<i class='icon-envelope icon-large'></i>",
+                                    postback={write_to, Address }},
+                              #link{class="btn btn-link",
+                                    body = #image{image="/img/tasks.svg",
+                                                  class="icon",
+                                                  style="height: 40px;"},
+                                    postback={task_for, Address }},
+                              #panel{class="btn-group",
+                                     body=[
+                                           #link{ class="btn btn-link dropdown-toggle",
+                                                  body=[
+                                                        "<i class='icon-reorder icon-large'></i>"
+                                                       ],
+                                                  new=false,
+                                                  data_fields=[{toggle, "dropdown"}]},
+                                           #list{numbered=false,
+                                                 class="dropdown-menu pull-right",
+                                                 body=[
+                                                       #listitem{body=[
+                                                                       #link{body=[
+                                                                                   "<i class='icon-list-alt icon-large'></i> Archive"
+                                                                                  ],
+                                                                             postback={archive, Address},
+                                                                             new=false}]}
+                                                      ]}
+                                          ]}
+                             ]}
+                ]}.
 
 event({checked, Address, GID}) ->
     {ok, Contact} = db:get_contact_by_address(Address),
@@ -103,9 +117,9 @@ event({checked, Address, GID}) ->
     case State of
         undefined ->
             mnesia:dirty_delete_object(#db_group_members{group=GID, contact=Contact#db_contact.id});
-            "on" ->
+        "on" ->
             db:save(#db_group_members{group=GID, contact=Contact#db_contact.id})
-            end,
+    end,
     wf:redirect("/relationships").
 
 

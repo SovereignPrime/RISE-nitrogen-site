@@ -101,7 +101,10 @@ contact_render(#db_contact{id=Id,  % {{{1
         #panel{class='row-fluid', body=[
             #panel{class=span10, body=[
                 #h2{body=[
-                    #image{image="/img/tasks.svg", class="icon", style="height: 20px;"},
+                    #image{image="/img/tasks.svg",
+                           class="icon",
+                           style="height: 20px;"},
+
                     " Tasks"
                 ]}
             ]},
@@ -226,6 +229,11 @@ event({write_to, Addr}) ->  % {{{1
     wf:session(current_update, #db_update{id=Id, to=[Addr]}),
     wf:redirect("/edit_update");
 
+event({task_for, Addr}) ->  % {{{1
+    {ok, Contact} = db:get_contact_by_address(Addr),
+    Me = wf:user(),
+    wf:session(involved, [{0, responcible, Me},{0, concerning, Contact}]),
+    common:event(add_task);
 
 event(Click) ->  % {{{1
     io:format("~p~n",[Click]).
