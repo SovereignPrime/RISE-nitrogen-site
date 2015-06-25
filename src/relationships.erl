@@ -128,8 +128,8 @@ contact_render(#db_contact{id=Id,  % {{{1
                             body=[
                                   #textbox{id=note,
                                            class="span10",
-                                           style="min-height:15px;",
-                                           placeholder="Your note here",
+                                           style="min-height:15px;border:0px;box-shadow:none;padding-left:0",
+                                           placeholder="Add note here",
                                            next=ok}
                                 ]},
                 #panel{class=span1,
