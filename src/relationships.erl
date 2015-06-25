@@ -104,10 +104,7 @@ contact_render(#db_contact{id=Id,  % {{{1
                      #panel{class=span10,
                             body=[
                                   #h2{body=[
-                                            #image{image="/img/tasks.svg",
-                                                   class="icon",
-                                                   style="height: 20px;"},
-
+                                            "<i class='icon-file-alt'></i>",
                                             " Notes"
                                            ]}
                                  ]},
@@ -119,11 +116,11 @@ contact_render(#db_contact{id=Id,  % {{{1
                class='row-fluid',
                style="min-height:20px; height:20px;",
                body=[
-                     #panel{class=span2,
+                     #panel{class=span3,
                             style="min-height:20px; height:20px;",
                             text=sugar:date_format(calendar:local_time())},
 
-                     #panel{class=span9,
+                     #panel{class=span8,
                             style="min-height:20px; height:20px;",
                             body=[
                                   #textbox{id=note,
@@ -148,11 +145,11 @@ contact_render(#db_contact{id=Id,  % {{{1
                           #panel{class='row-fluid',
                                  style="min-height:20px; height:20px;",
                                  body=[
-                                       #panel{class=span2,
+                                       #panel{class=span3,
                                               style="min-height:20px; height:20px;",
                                               text=sugar:date_format(Datetime)},
 
-                                       #panel{class=span10,
+                                       #panel{class=span9,
                                               style="min-height:20px; height:20px;",
                                               body=[
                                                     Text
@@ -179,33 +176,43 @@ contact_render(#db_contact{id=Id,  % {{{1
             #panel{class='row-fluid',
                    style="min-height:20px; height:20px;",
                    body=[
-                #panel{class=span2, style="min-height:20px; height:20px;", text=Responsible},
-                #panel{class=span8, style="min-height:20px; height:20px;", body=[
+                #panel{class=span2,
+                       style="min-height:20px; height:20px;",
+                       text=Responsible},
+                #panel{class=span8,
+                       style="min-height:20px; height:20px;",
+                       body=[
                     #link{text=Name, postback={to_task, TID}, delegate=common}
                 ]},
-                #panel{class=span2, style="min-height:20px; height:20px; text-align:right", text=Due}
+                #panel{class=span2,
+                       style="min-height:20px; height:20px; text-align:right",
+                       text=Due}
             ]}
         end, Tasks),
        
-        #panel{class='row-fluid', body=[
-            #panel{class=span10, body=[
-                #h2{body=[
-                    "<i class='icon-message'></i> Messages"
-                ]}  
-            ]},
-            #panel{class=span2, body="Show All", style="text-align:right"}
-        ]},
-        #panel{ class="row-fluid",
-                body=[
-                      #panel{class="span12",
-                             body=[
-                                   lists:map(fun(M) ->
-                                                     #update_element{collapse=paragraph,
-                                                                     message=M,
-                                                                     age="Age"}
-                                             end, Updates)
-                                  ]}
-                     ]}
+        #panel{class='row-fluid',
+               body=[
+                     #panel{class=span10,
+                            body=[
+                                  #h2{body=[
+                                            "<i class='icon-message'></i> Messages"
+                                           ]}  
+                                 ]},
+                     #panel{class=span2,
+                            body="Show All",
+                            style="text-align:right"}
+                    ]},
+        #panel{class="row-fluid",
+               body=[
+                     #panel{class="span12",
+                            body=[
+                                  lists:map(fun(M) ->
+                                                    #update_element{collapse=paragraph,
+                                                                    message=M,
+                                                                    age="Age"}
+                                            end, Updates)
+                                 ]}
+                    ]}
     ].
 
 %%%
@@ -300,26 +307,30 @@ event({task_for, Addr}) ->  % {{{1
 event({add_note, CID}) ->  % {{{1
     Id = db:next_id(db_contact_note),
     Datetime = calendar:local_time(),
-    Text = wf:q(note),
-    db:save(#db_contact_note{id=Id,
-                             contact=CID,
-                             text=Text,
-                             datetime=Datetime}),
-    wf:set(note, ""),
-    wf:insert_after(add_note, 
-                    #panel{class='row-fluid',
-                           style="min-height:20px; height:20px;",
-                           body=[
-                                 #panel{class=span2,
-                                        style="min-height:20px; height:20px;",
-                                        text=sugar:date_format(Datetime)},
+    case wf:q(note) of
+        "" ->
+            ok;
+        Text ->
+            db:save(#db_contact_note{id=Id,
+                                     contact=CID,
+                                     text=Text,
+                                     datetime=Datetime}),
+            wf:set(note, ""),
+            wf:insert_after(add_note, 
+                            #panel{class='row-fluid',
+                                   style="min-height:20px; height:20px;",
+                                   body=[
+                                         #panel{class=span3,
+                                                style="min-height:20px; height:20px;",
+                                                text=sugar:date_format(Datetime)},
 
-                                 #panel{class=span10,
-                                        style="min-height:20px; height:20px;",
-                                        body=[
-                                              Text
-                                             ]}
-                                ]});
+                                         #panel{class=span10,
+                                                style="min-height:20px; height:20px;",
+                                                body=[
+                                                      Text
+                                                     ]}
+                                        ]})
+    end;
 
 event(Click) ->  % {{{1
     io:format("~p~n",[Click]).
