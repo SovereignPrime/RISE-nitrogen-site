@@ -3,6 +3,24 @@
 -include_lib("bitmessage/include/bm.hrl").
 -include("protokol.hrl").
 
+time_string(DT) ->  % {{{1
+    O = date_format(DT),
+    case string:tokens(O, " ") of
+        [_D, T] ->
+            T;
+        _ ->
+            "9:00:00"
+    end.
+
+date_string(DT) ->  % {{{1
+    O = date_format(DT),
+    case string:tokens(O, " ") of
+        [D, _T] ->
+            D;
+        _ ->
+            O
+    end.
+
 date_format(Str) when is_list(Str)->  %{{{1
     Str;
 date_format({{Y, M, D}, {H, Mi, S}}) ->  %{{{1
@@ -14,8 +32,20 @@ date_format({_Y, _M, _DD}=D) ->  %{{{1
 date_from_string("") ->  % {{{1
     "";
 date_from_string(Str) when is_list(Str) ->  % {{{1
-    [Y, M, D] = string:tokens(Str, "-"),
-    {wf:to_integer(Y), wf:to_integer(M), wf:to_integer(D)};
+    case string:tokens(Str, " ") of
+        [Date] ->
+            [Y, M, D] = string:tokens(Date, "-"),
+            {H, Mi, S} = {9, 0, 0},
+            {{wf:to_integer(Y), wf:to_integer(M), wf:to_integer(D)},
+             {wf:to_integer(H), wf:to_integer(Mi), wf:to_integer(S)}};
+        [Date, Time] ->
+            [Y, M, D] = string:tokens(Date, "-"),
+            [H, Mi, S] = string:tokens(Time, ":"),
+            {{wf:to_integer(Y), wf:to_integer(M), wf:to_integer(D)},
+             {wf:to_integer(H), wf:to_integer(Mi), wf:to_integer(S)}};
+        _ ->
+            Str
+    end;
 date_from_string(Any) ->  % {{{1
     Any.
 

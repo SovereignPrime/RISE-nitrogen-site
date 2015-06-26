@@ -294,18 +294,28 @@ render_task(#db_task{id=Id, name=Name, due=Due, text=Text, parent=Parent, status
                               edit=StatusDropdown
                      }
                 ]},
-                #panel{class="row-fluid", body=[
-                    #panel{ class="span2", body="Due: "},
-                    #inplace{id=due,
-                             style="min-height:15px;",
-                             class="span6",
-                             tag=due,
-                             text=Due,
-                             view=#span{},
-                             start_mode=view,
-                             edit=#datepicker_textbox{text=Due}
-                    }
-                ]},
+                #panel{class="row-fluid",
+                       body=[
+                             #panel{ class="span2", body="Due: "},
+                             #inplace{id=due_date,
+                                      style="min-height:15px;",
+                                      class="span2",
+                                      tag=due_date,
+                                      text=sugar:date_string(Due),
+                                      view=#span{},
+                                      start_mode=view,
+                                      edit=#datepicker_textbox{text=sugar:date_format(Due)}
+                                     },
+                             #inplace{id=due_time,
+                                      style="min-height:15px;",
+                                      class="span2",
+                                      tag=due_time,
+                                      text=sugar:time_string(Due),
+                                      view=#span{},
+                                      start_mode=view,
+                                      edit=#textbox{text=sugar:time_string(Due)}
+                                     }
+                            ]},
                 render_roles(Id)
             ]},
             #panel{ class="span1", body=render_side_buttons(Id, Task)}
@@ -487,10 +497,10 @@ render_task_change(C) ->
                   none -> "Anonymous";
                   {ok, Co} -> Co#db_contact.name
               end,
-    {Date, _} = C#db_task_change.datetime,
+    Datetime = C#db_task_change.datetime,
     #panel{class="row-fluid", body=[
-        #panel{class="span2", text=sugar:date_format(Date)},
-        #panel{class="span2", text=Contact},
+        #panel{class="span3", text=sugar:date_format(Datetime)},
+        #panel{class="span3", text=Contact},
         #panel{class="span6", text=["changed ",C#db_task_change.field," to ",C#db_task_change.new_value]}
     ]}.
 
@@ -644,8 +654,22 @@ inplace_event(status, Val) ->  % {{{1
             Status
     end;
 
-inplace_event(due, Val) -> % {{{1
-    ?UPDATE_CURRENT(due, Val),
+inplace_event(due_date, Val) -> % {{{1
+    error_logger:info_msg(Val),
+    {DueDate, _DueTime} = sugar:date_from_string(Val),
+    #db_task{due=Due} = wf:state(current_task),
+    {_DueDateO, DueTimeO} = sugar:date_from_string(Due),
+    NewVal = sugar:date_format({DueDate, DueTimeO}),
+    ?UPDATE_CURRENT(due, NewVal),
+    Val;
+
+inplace_event(due_time, Val) -> % {{{1
+    error_logger:info_msg(Val),
+    {_DueDate, DueTime} = sugar:date_from_string("2015-01-01 " ++ Val),
+    #db_task{due=Due} = wf:state(current_task),
+    {DueDateO, _DueTimeO} = sugar:date_from_string(Due),
+    NewVal = sugar:date_format({DueDateO, DueTime}),
+    ?UPDATE_CURRENT(due, NewVal),
     Val;
 inplace_event(_, V) ->  % {{{1
     V.
