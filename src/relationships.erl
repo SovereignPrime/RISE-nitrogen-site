@@ -189,12 +189,12 @@ contact_render(#db_contact{id=Id,  % {{{1
                 #panel{class=span2,
                        style="min-height:20px; height:20px;",
                        text=Responsible},
-                #panel{class=span8,
+                #panel{class=span7,
                        style="min-height:20px; height:20px;",
                        body=[
                     #link{text=Name, postback={to_task, TID}, delegate=common}
                 ]},
-                #panel{class=span2,
+                #panel{class=span3,
                        style="min-height:20px; height:20px; text-align:right",
                        text=Due}
             ]}
