@@ -29,12 +29,24 @@ render_element(_Record = #group_item{gid=Id, name=Name, sub=Sub, archive=Archive
                     [] ->
                         render_group(Id, Name, "", Archive);
                     _ ->
+                        SubId = wf:f("subgroup~p", [Id]),
                         [
-                            render_group(Id, Name," <i class='icon-caret-down'></i>", Archive),
-                            #list{numbered=false,style='margin-left:15px;',body=[
-                                lists:map(fun(#db_group{id=I, name=N, subgroups=S}) ->
-                                    #group_item{gid=I, name=N, sub=S, archive=Archive}
-                                end, Sub)
+                            render_group(Id, Name, #expander{start=open,
+                                                            target=SubId
+                                                           }, Archive),
+                            #list{id=SubId,
+                                  numbered=false,
+                                  style='margin-left:15px;',
+                                  body=[
+                                        lists:map(fun(#db_group{id=I,
+                                                                name=N,
+                                                                subgroups=S}) ->
+                                                          #group_item{gid=I,
+                                                                      name=N,
+                                                                      sub=S,
+                                                                      archive=Archive}
+                                                  end,
+                                                  Sub)
                             ]}
                         ]
                 end

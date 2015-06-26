@@ -39,8 +39,12 @@ left() ->  % {{{1
     GID = wf:session_default(current_group_id, all),
     {ok, Users} = db:get_contacts_by_group(GID),
     [
-     #panel{id=group_list, class="span2", body=[render_group_list(false)]},
-     #panel{id=user_list, class="span2", body=render_contact_list(Users)}
+     #panel{id=group_list,
+            class="span2",
+            body=[render_group_list(false)]},
+     #panel{id=user_list,
+            class="span2",
+            body=render_contact_list(Users)}
     ].
 
 render_group_list(Archive) ->  % {{{1
@@ -50,11 +54,17 @@ render_group_list(Archive) ->  % {{{1
     [
      #list{numbered=false,
            body=
-           #group_item{gid=my, name="My accounts", sub=[], archive=Archive }
+           #group_item{gid=my,
+                       name="My accounts",
+                       sub=[],
+                       archive=Archive }
      },
      #list{numbered=false,
            body=
-           #group_item{gid=all, name="All contacts", sub=Groups, archive=Archive }
+           #group_item{gid=all,
+                       name="All contacts",
+                       sub=Groups,
+                       archive=Archive }
      }
     ].
 
