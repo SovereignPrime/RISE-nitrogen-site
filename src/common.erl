@@ -405,6 +405,7 @@ event({reply, Subject, To}) -> % {{{1
     wf:redirect("/edit_update");
 
 event({to_message, UID}) ->  % {{{1
+    wf:info("UID: ~p~n", [UID]),
     wf:session(current_update_id, UID),
     {ok, #message{subject=Subject}} = db:get_update(UID),
     wf:session(current_subject, Subject),

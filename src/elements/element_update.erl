@@ -202,8 +202,8 @@ render_element(#update_element{
                          body=sugar:format_timedelta(TD)}
                  ],
             actions=#event{type=click,
-                           postback={to_message, Id},
-                           delegate=common }},
+                           postback={to_message, UID},
+                           delegate=common}},
      #panel{class="row-fluid",
             body=[
                   #panel{class="span12",
