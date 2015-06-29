@@ -16,8 +16,12 @@ reflect() -> record_info(fields, update_element).
 
 name_from_address(Address) ->  % {{{1
     case db:get_contact_by_address(Address) of
-        {ok, #db_contact{name=FN}} -> FN;
-        {ok, none} -> wf:to_list(Address)
+        {ok, #db_contact{id=Id,
+                         name=FN}} -> 
+            {Id, FN};
+        {ok, none} -> 
+            {wf:to_list(Address),
+             "User " ++ sugar:date_format(calendar:local_time())}
     end.
 
 -spec render_element(#update_element{}) -> body().
@@ -32,27 +36,41 @@ render_element(#update_element{id=Id,
                                age=Age,
                                collapse=true
                                }=Record) ->
-    FromName = name_from_address(From),
-    ToName = name_from_address(To),
+    {FromId, FromName} = name_from_address(From),
+    {ToId, ToName} = name_from_address(To),
     {Text, Timestamp, _} = decode_enc(Enc, Data, true),
     TD = bm_types:timestamp() - Timestamp,
-        #panel{id=Id, class="row-fluid clickable", body=[
+    #panel{id=Id,
+           class="row-fluid clickable",
+           body=[
 
-                #panel{class="span4",
+                 #panel{class="span4",
+                        body=[
+                              #span{body="<i class='icon-chevron-down'></i> ",
+                                    actions=#event{type=click,
+                                                   postback={unfold, Record},
+                                                   delegate=common}},
+                              #span{text=FromName,
+                                    actions=#event{type=click,
+                                                   delegate=common,
+                                                   postback={to_contact, FromId}}},
+                              " <i class='icon-arrow-right'></i> ",
+                              #span{text=ToName,
+                                    actions=#event{type=click,
+                                                   postback={to_contact, ToId},
+                                                   delegate=common
+                                                  }}
+                             ]},
+
+                #panel{class="span6",
+                       body=io_lib:format("~100s",
+                                          [Text])},
+                #panel{class="span2",
                        body=[
-                            "<i class='icon-chevron-down'></i> ",
-                            FromName,
-                            " <i class='icon-arrow-right'></i> ",
-                            ToName]},
-
-                #panel{class="span6", body=io_lib:format("~100s", [Text])},
-                #panel{class="span2", body=[
-                                            sugar:format_timedelta(TD),
-                                            format_status(Status)
-                                           ]}
-            ], actions=#event{type=click,
-                              postback={unfold, Record},
-                              delegate=common}};
+                             sugar:format_timedelta(TD),
+                             format_status(Status)
+                            ]}
+            ]};
 %% Render uncollapse update  {{{1
 render_element(#update_element{id=Id,
                                message=#message{
@@ -68,8 +86,8 @@ render_element(#update_element{id=Id,
                                age=Age,
                                collapse=false
                               }=Record) ->
-    FromName = name_from_address(From),
-    ToName = name_from_address(To),
+    {FromId, FromName} = name_from_address(From),
+    {ToId, ToName} = name_from_address(To),
     NStatus = case db:set_read(UID) of
                   {ok, unread} ->
                       index:replace_left(),
@@ -86,19 +104,30 @@ render_element(#update_element{id=Id,
                         body=[
                               #panel{class="span4",
                                      body=[
-                                           "<i class='icon-chevron-down'></i> ",
-                                           FromName,
+                                           #span{body="<i class='icon-chevron-down'></i> ",
+                                                 actions=#event{type=click,
+                                                                postback={fold, Record},
+                                                                delegate=common}},
+                                           #span{text=FromName,
+                                                 style="cursor:pointer;",
+                                                 actions=#event{type=click,
+                                                                delegate=common,
+                                                                postback={to_contact, FromId}}
+                                                },
                                            " <i class='icon-arrow-right'></i> ",
-                                           ToName]},
+                                           #span{text=ToName,
+                                                 style="cursor:pointer;",
+                                                 actions=#event{type=click,
+                                                                postback={to_contact, ToId},
+                                                                delegate=common
+                                                               }}
+                                          ]},
                               #panel{class="span2 offset6",
                                      body=[
                                            sugar:format_timedelta(TD),
                                            format_status(NStatus)
                                           ]}
-                             ],
-                        actions=#event{type=click,
-                                       postback={fold, Record},
-                                       delegate=common}},
+                             ]},
                  #panel{class="row-fluid",
                         body=[
                               #panel{class="span12",
