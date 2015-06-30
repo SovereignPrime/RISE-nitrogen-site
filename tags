@@ -4,6 +4,7 @@
 #contact_li	./include/records.hrl	/^-\s\*record\s\*(\s\*contact_li\>/;"	r
 #db_attachment	./include/db.hrl	/^-\s\*record\s\*(\s\*db_attachment\>/;"	r
 #db_contact	./include/db.hrl	/^-\s\*record\s\*(\s\*db_contact\>/;"	r
+#db_contact_note	./include/db.hrl	/^-\s\*record\s\*(\s\*db_contact_note\>/;"	r
 #db_contact_roles	./include/db.hrl	/^-\s\*record\s\*(\s\*db_contact_roles\>/;"	r
 #db_expense	./include/db.hrl	/^-\s\*record\s\*(\s\*db_expense\>/;"	r
 #db_expense_tasks	./include/db.hrl	/^-\s\*record\s\*(\s\*db_expense_tasks\>/;"	r
@@ -38,10 +39,12 @@
 #update_packet	./include/protokol.hrl	/^-\s\*record\s\*(\s\*update_packet\>/;"	r
 #update_preview	./include/records.hrl	/^-\s\*record\s\*(\s\*update_preview\>/;"	r
 #vcard	./include/records.hrl	/^-\s\*record\s\*(\s\*vcard\>/;"	r
+?ALPHA	./src/elements/element_attachment.erl	/^-\s\*define\s\*(\s\*ALPHA\>/;"	d	file:
 ?CHILD	./src/nitrogen_sup.erl	/^-\s\*define\s\*(\s\*CHILD\>/;"	d	file:
 ?LISTEN	./src/nitrogen_sup.erl	/^-\s\*define\s\*(\s\*LISTEN\>/;"	d	file:
 ?UPDATE_CURRENT	./src/tasks.erl	/^-\s\*define\s\*(\s\*UPDATE_CURRENT\>/;"	d	file:
 ?V	./src/db.erl	/^-\s\*define\s\*(\s\*V\>/;"	d	file:
+ALPHA	./src/elements/element_attachment.erl	/^-\s\*define\s\*(\s\*ALPHA\>/;"	d	file:
 CHILD	./src/nitrogen_sup.erl	/^-\s\*define\s\*(\s\*CHILD\>/;"	d	file:
 LISTEN	./src/nitrogen_sup.erl	/^-\s\*define\s\*(\s\*LISTEN\>/;"	d	file:
 UPDATE_CURRENT	./src/tasks.erl	/^-\s\*define\s\*(\s\*UPDATE_CURRENT\>/;"	d	file:
@@ -113,9 +116,9 @@ common:connection_status	./src/common.erl	/^connection_status\>/;"	f
 common:dropevent	./src/common.erl	/^dropevent\>/;"	f
 common:event	./src/common.erl	/^event\>/;"	f
 common:finish_upload_event	./src/common.erl	/^finish_upload_event\>/;"	f
-common:get_torrent	./src/common.erl	/^get_torrent\>/;"	f
 common:incoming	./src/common.erl	/^incoming\>/;"	f
 common:main	./src/common.erl	/^main\>/;"	f
+common:maybe_add	./src/common.erl	/^maybe_add\>/;"	f
 common:remove_duplicates	./src/common.erl	/^remove_duplicates\>/;"	f
 common:render_files	./src/common.erl	/^render_files\>/;"	f
 common:render_filters	./src/common.erl	/^render_filters\>/;"	f
@@ -141,6 +144,7 @@ counter	./src/legal.erl	/^counter\>/;"	f	file:
 create_account	./src/db.erl	/^create_account\>/;"	f	file:
 date_format	./src/sugar.erl	/^date_format\>/;"	f	file:
 date_from_string	./src/sugar.erl	/^date_from_string\>/;"	f	file:
+date_string	./src/sugar.erl	/^date_string\>/;"	f	file:
 dates	./src/search.erl	/^dates\>/;"	f	file:
 dates_if	./src/search.erl	/^dates_if\>/;"	f	file:
 datetime_to_timestamp	./src/sugar.erl	/^datetime_to_timestamp\>/;"	f	file:
@@ -179,7 +183,6 @@ db:get_contact	./src/db.erl	/^get_contact\>/;"	f
 db:get_contact_by_address	./src/db.erl	/^get_contact_by_address\>/;"	f
 db:get_contacts_by_group	./src/db.erl	/^get_contacts_by_group\>/;"	f
 db:get_contacts_by_name	./src/db.erl	/^get_contacts_by_name\>/;"	f
-db:get_download_percent	./src/db.erl	/^get_download_percent\>/;"	f
 db:get_expense	./src/db.erl	/^get_expense\>/;"	f
 db:get_expense_tasks	./src/db.erl	/^get_expense_tasks\>/;"	f
 db:get_files	./src/db.erl	/^get_files\>/;"	f
@@ -190,6 +193,7 @@ db:get_involved	./src/db.erl	/^get_involved\>/;"	f
 db:get_involved_full	./src/db.erl	/^get_involved_full\>/;"	f
 db:get_linked_messages	./src/db.erl	/^get_linked_messages\>/;"	f
 db:get_my_accounts	./src/db.erl	/^get_my_accounts\>/;"	f
+db:get_notes_by_user	./src/db.erl	/^get_notes_by_user\>/;"	f
 db:get_orphan_tasks	./src/db.erl	/^get_orphan_tasks\>/;"	f
 db:get_owner	./src/db.erl	/^get_owner\>/;"	f
 db:get_subgroup	./src/db.erl	/^get_subgroup\>/;"	f
@@ -240,6 +244,7 @@ db:update_group_name	./src/db.erl	/^update_group_name\>/;"	f
 db:verify_create_table	./src/db.erl	/^verify_create_table\>/;"	f
 db_attachment	./include/db.hrl	/^-\s\*record\s\*(\s\*db_attachment\>/;"	r
 db_contact	./include/db.hrl	/^-\s\*record\s\*(\s\*db_contact\>/;"	r
+db_contact_note	./include/db.hrl	/^-\s\*record\s\*(\s\*db_contact_note\>/;"	r
 db_contact_roles	./include/db.hrl	/^-\s\*record\s\*(\s\*db_contact_roles\>/;"	r
 db_expense	./include/db.hrl	/^-\s\*record\s\*(\s\*db_expense\>/;"	r
 db_expense_tasks	./include/db.hrl	/^-\s\*record\s\*(\s\*db_expense_tasks\>/;"	r
@@ -332,6 +337,7 @@ element_expander:render_element	./src/elements/element_expander.erl	/^render_ele
 element_file_row	./src/elements/element_file_row.erl	1;"	M
 element_file_row.erl	./src/elements/element_file_row.erl	1;"	F
 element_file_row:event	./src/elements/element_file_row.erl	/^event\>/;"	f
+element_file_row:once_join	./src/elements/element_file_row.erl	/^once_join\>/;"	f
 element_file_row:reflect	./src/elements/element_file_row.erl	/^reflect\>/;"	f
 element_file_row:render_element	./src/elements/element_file_row.erl	/^render_element\>/;"	f
 element_group_item	./src/elements/element_group_item.erl	1;"	M
@@ -470,7 +476,6 @@ get_contact	./src/db.erl	/^get_contact\>/;"	f	file:
 get_contact_by_address	./src/db.erl	/^get_contact_by_address\>/;"	f	file:
 get_contacts_by_group	./src/db.erl	/^get_contacts_by_group\>/;"	f	file:
 get_contacts_by_name	./src/db.erl	/^get_contacts_by_name\>/;"	f	file:
-get_download_percent	./src/db.erl	/^get_download_percent\>/;"	f	file:
 get_expense	./src/db.erl	/^get_expense\>/;"	f	file:
 get_expense_tasks	./src/db.erl	/^get_expense_tasks\>/;"	f	file:
 get_files	./src/db.erl	/^get_files\>/;"	f	file:
@@ -484,6 +489,7 @@ get_linked_messages	./src/db.erl	/^get_linked_messages\>/;"	f	file:
 get_my_accounts	./src/db.erl	/^get_my_accounts\>/;"	f	file:
 get_name	./src/elements/element_update_preview.erl	/^get_name\>/;"	f	file:
 get_next_tasks_by_date	./src/tasks.erl	/^get_next_tasks_by_date\>/;"	f	file:
+get_notes_by_user	./src/db.erl	/^get_notes_by_user\>/;"	f	file:
 get_or_request_contact	./src/receiver.erl	/^get_or_request_contact\>/;"	f	file:
 get_orphan_tasks	./src/db.erl	/^get_orphan_tasks\>/;"	f	file:
 get_owner	./src/db.erl	/^get_owner\>/;"	f	file:
@@ -499,7 +505,6 @@ get_tasks_due_today	./src/db.erl	/^get_tasks_due_today\>/;"	f	file:
 get_tasks_no_deadline	./src/db.erl	/^get_tasks_no_deadline\>/;"	f	file:
 get_tasks_sorted_by_date	./src/tasks.erl	/^get_tasks_sorted_by_date\>/;"	f	file:
 get_term	./src/search.erl	/^get_term\>/;"	f	file:
-get_torrent	./src/common.erl	/^get_torrent\>/;"	f	file:
 get_unread_ids	./src/db.erl	/^get_unread_ids\>/;"	f	file:
 get_unread_updates	./src/db.erl	/^get_unread_updates\>/;"	f	file:
 get_update	./src/db.erl	/^get_update\>/;"	f	file:
@@ -605,6 +610,7 @@ main	./src/relationships.erl	/^main\>/;"	f	file:
 main	./src/tasks.erl	/^main\>/;"	f	file:
 main	./src/textb.erl	/^main\>/;"	f	file:
 mark_downloaded	./src/db.erl	/^mark_downloaded\>/;"	f	file:
+maybe_add	./src/common.erl	/^maybe_add\>/;"	f	file:
 maybe_show_top_buttons	./src/tasks.erl	/^maybe_show_top_buttons\>/;"	f	file:
 maybe_wrap_list	./src/sugar.erl	/^maybe_wrap_list\>/;"	f	file:
 md5	./src/tasks.erl	/^md5\>/;"	f	file:
@@ -638,6 +644,7 @@ nitrogen_sup:init_dispatch	./src/nitrogen_sup.erl	/^init_dispatch\>/;"	f
 nitrogen_sup:localized_dir_file	./src/nitrogen_sup.erl	/^localized_dir_file\>/;"	f
 nitrogen_sup:reformat_path	./src/nitrogen_sup.erl	/^reformat_path\>/;"	f
 nitrogen_sup:start_link	./src/nitrogen_sup.erl	/^start_link\>/;"	f
+once_join	./src/elements/element_file_row.erl	/^once_join\>/;"	f	file:
 open_or_closed	./src/elements/element_expander.erl	/^open_or_closed\>/;"	f	file:
 page	./.prototypes/page.erl	1;"	M
 page.erl	./.prototypes/page.erl	1;"	F
@@ -837,11 +844,13 @@ sugar	./src/sugar.erl	1;"	M
 sugar.erl	./src/sugar.erl	1;"	F
 sugar:date_format	./src/sugar.erl	/^date_format\>/;"	f
 sugar:date_from_string	./src/sugar.erl	/^date_from_string\>/;"	f
+sugar:date_string	./src/sugar.erl	/^date_string\>/;"	f
 sugar:datetime_to_timestamp	./src/sugar.erl	/^datetime_to_timestamp\>/;"	f
 sugar:format_file_size	./src/sugar.erl	/^format_file_size\>/;"	f
 sugar:format_timedelta	./src/sugar.erl	/^format_timedelta\>/;"	f
 sugar:maybe_wrap_list	./src/sugar.erl	/^maybe_wrap_list\>/;"	f
 sugar:sort_by_timestamp	./src/sugar.erl	/^sort_by_timestamp\>/;"	f
+sugar:time_string	./src/sugar.erl	/^time_string\>/;"	f
 sugar:timestamp_to_datetime	./src/sugar.erl	/^timestamp_to_datetime\>/;"	f
 summarize_involved	./src/tasks.erl	/^summarize_involved\>/;"	f	file:
 task_leaf	./include/records.hrl	/^-\s\*record\s\*(\s\*task_leaf\>/;"	r
@@ -909,6 +918,7 @@ textb:event	./src/textb.erl	/^event\>/;"	f
 textb:main	./src/textb.erl	/^main\>/;"	f
 textb:sigma_search_event	./src/textb.erl	/^sigma_search_event\>/;"	f
 textb:title	./src/textb.erl	/^title\>/;"	f
+time_string	./src/sugar.erl	/^time_string\>/;"	f	file:
 timestamp_to_datetime	./src/sugar.erl	/^timestamp_to_datetime\>/;"	f	file:
 title	./.prototypes/page.erl	/^title\>/;"	f	file:
 title	./src/edit_expense.erl	/^title\>/;"	f	file:

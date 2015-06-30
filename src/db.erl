@@ -523,12 +523,12 @@ save_task_tree(Id, Parent) ->  % {{{1
                         end
                 end).
 
-search_parent(Id, PId) ->
+search_parent(Id, PId) ->  % {{{1
     transaction(fun() ->
                         search_parent_rec(Id, PId)
                 end).
 
-get_children(UID, Time) ->
+get_children(UID, Time) ->  % {{{1
     transaction(fun() ->
                         CS = mnesia:select(db_task_tree, [{#db_task_tree{parent=UID,time='$1', _='_'}, [{'>', '$1', Time}], ['$_']}]),
                         CSS = lists:sort(fun(#db_task_tree{time=A}, #db_task_tree{time=B}) -> A > B end, CS),
@@ -542,19 +542,19 @@ get_children(UID, Time) ->
                                     end, [], CSS)
                 end). 
 
-task_status_list() ->
+task_status_list() ->  % {{{1
     [{new, "New"},
      {accepted, "Accepted"},
      {in_progress, "In Progress"},
      {complete, "Complete"},
      {archive, "Archived"}].
 
-nice_task_status_name(changed) ->
+nice_task_status_name(changed) ->  % {{{1
     "Changed";
-nice_task_status_name(Status) ->
+nice_task_status_name(Status) ->  % {{{1
     proplists:get_value(Status, task_status_list()).
 
-sanitize_task_status(Status) when is_list(Status) ->
+sanitize_task_status(Status) when is_list(Status) ->  % {{{1
     try 
         S = list_to_existing_atom(Status),
         {S, _} = lists:keyfind(S, 1, task_status_list()),

@@ -26,6 +26,26 @@ main() ->  % {{{1
                     Pid! {status, Online},
                     receiver:register_receiver(Pid),
                     T = #template {file=PWD ++ "/site/templates/bare.html" },
+                    wf:wire('to_files',
+                            #event{type=click,
+                                   postback={to_files, undefined},
+                                   delegate=?MODULE}),
+                    wf:wire('to_relationships',
+                            #event{type=click,
+                                   postback={to_group, undefined},
+                                   delegate=?MODULE}),
+                    wf:wire('to_tasks',
+                            #event{type=click,
+                                   postback={to_task, undefined},
+                                   delegate=?MODULE}),
+                    wf:wire('to_expenses',
+                            #event{type=click,
+                                   postback={to_expense, undefined},
+                                   delegate=?MODULE}),
+                    wf:wire('to_updates',
+                            #event{type=click,
+                                   postback={to_message, undefined},
+                                   delegate=?MODULE}),
                     wf:wire('new_contact',
                             #event{type=click,
                                    postback=add_contact,
@@ -271,45 +291,59 @@ settings_menu() -> %{{{1
 	]}.
 
 event(my_profile) -> % {{{1
-	User = #db_contact{id=Id} = wf:user(),
-	wf:session(current_contact, User),
-	wf:session(current_contact_id,Id),
-	wf:redirect("/relationships");
+    maybe_unsaved(fun() ->
+                      User = #db_contact{id=Id} = wf:user(),
+                      wf:session(current_contact, User),
+                      wf:session(current_contact_id,Id),
+                      wf:redirect("/relationships")
+              end);
 
 event(add_group) -> %{{{1
-    {ok, Id} = db:next_id(db_group),
-    db:save(#db_group{
-            id=Id,
-            name="New group",
-            subgroups=undefined
-            }),
-    wf:redirect("/relationships");
+    maybe_unsaved(fun() ->
+                      {ok, Id} = db:next_id(db_group),
+                      db:save(#db_group{
+                                 id=Id,
+                                 name="New group",
+                                 subgroups=undefined
+                                }),
+                      wf:redirect("/relationships")
+              end);
 event(add_contact) -> %{{{1
-    {ok, Id} = db:next_id(db_contact),
-    wf:session(current_contact_id, Id),
-    Contact = #db_contact{
-            id=Id,
-            name="Contact Name"
-            },
-    db:save(Contact),
-    wf:session(current_contact, Contact),
-    wf:redirect("/relationships");
+    maybe_unsaved(fun() ->
+                      {ok, Id} = db:next_id(db_contact),
+                      wf:session(current_contact_id, Id),
+                      Contact = #db_contact{
+                                   id=Id,
+                                   name="Contact Name"
+                                  },
+                      db:save(Contact),
+                      wf:session(current_contact, Contact),
+                      wf:redirect("/relationships")
+              end);
 event(add_task) -> %{{{1
-    wf:session(current_task, undefined),
-    wf:session(attached_files, sets:new()),
-    wf:redirect("/edit_task");
+    maybe_unsaved(fun() ->
+                      wf:session(current_task, undefined),
+                      wf:session(attached_files, sets:new()),
+                      wf:redirect("/edit_task")
+              end);
 event(add_expense) -> %{{{1
-    {ok, Id} = db:next_id(db_expense),
-    wf:session(current_expense_id, Id),
-    wf:session(current_expense, #db_expense{id=Id}),
-    wf:session(attached_files, sets:new()),
-    wf:redirect("/edit_expense");
+    maybe_unsaved(fun() ->
+                      {ok, Id} = db:next_id(db_expense),
+                      wf:session(current_expense_id, Id),
+                      wf:session(current_expense, #db_expense{id=Id}),
+                      wf:session(attached_files, sets:new()),
+                      wf:redirect("/edit_expense")
+              end);
 event(add_update) -> %{{{1
-    {ok, Id} = db:next_id(db_update),
-    wf:session(current_subject, undefined),
-    wf:session(current_update_id, Id),
-    wf:session(current_update, #db_update{id=Id}), wf:session(attached_files, sets:new()),
-    wf:redirect("/edit_update");
+    maybe_unsaved(fun() ->
+                      {ok, Id} = db:next_id(db_update),
+                      wf:session(current_subject, undefined),
+                      wf:session(current_update_id, Id),
+                      wf:session(current_update,
+                                 #db_update{id=Id}),
+                      wf:session(attached_files, sets:new()),
+                      wf:redirect("/edit_update")
+              end);
 event(check_all) -> %{{{1
     case wf:q(check_all) of
         "on" ->
@@ -404,26 +438,49 @@ event({reply, Subject, To}) -> % {{{1
     wf:session(attached_files, undefined),
     wf:redirect("/edit_update");
 
+event({to_message, undefined}) ->  % {{{1
+    maybe_unsaved(fun() ->
+                          wf:redirect("/")
+                  end);
+
 event({to_message, UID}) ->  % {{{1
-    wf:info("UID: ~p~n", [UID]),
-    wf:session(current_update_id, UID),
-    {ok, #message{subject=Subject}} = db:get_update(UID),
-    wf:session(current_subject, Subject),
-    wf:redirect("/");
+    maybe_unsaved(fun() ->
+                          wf:info("UID: ~p~n", [UID]),
+                          wf:session(current_update_id, UID),
+                          {ok, #message{subject=Subject}} = db:get_update(UID),
+                          wf:session(current_subject, Subject),
+                          wf:redirect("/")
+                  end);
 
 event({to_contact, ID}) ->  % {{{1
-    wf:session(current_contact_id, ID),
-    wf:redirect("/relationships");
+    maybe_unsaved(fun() ->
+                          wf:session(current_contact_id, ID),
+                          wf:redirect("/relationships")
+                  end);
 
 event({to_group, ID}) ->  % {{{1
-    wf:session(current_group_id, ID),
-    wf:redirect("/relationships");
+    maybe_unsaved(fun() ->
+                          wf:session(current_group_id, ID),
+                          wf:redirect("/relationships")
+                  end);
+
+event({to_files, _ID}) ->  % {{{1
+    maybe_unsaved(fun() ->
+                          wf:redirect("/files")
+    end);
+
+event({to_task, undefined}) -> % {{{1
+    maybe_unsaved(fun() ->
+                          wf:redirect("/tasks")
+    end);
 
 event({to_task, Id}) -> % {{{1
-    wf:session(current_task_id, Id),
-    {ok, [ Task ]} = db:get_task(Id),
-    wf:session(current_task, Task),
-    wf:redirect("/tasks");
+    maybe_unsaved(fun() ->
+                          wf:session(current_task_id, Id),
+                          {ok, [ Task ]} = db:get_task(Id),
+                          wf:session(current_task, Task),
+                          wf:redirect("/tasks")
+    end);
 
 event(wrap_peers) -> %{{{1
     mnesia:clear_table(addr);
@@ -623,4 +680,11 @@ remove_duplicates([H|T], Acc) ->  % {{{1
     case lists:member(H, Acc) of
         true -> remove_duplicates(T, Acc);
         false -> remove_duplicates(T, Acc ++ [H])
+    end.
+
+maybe_unsaved(Fun) ->  % {{{1
+    case wf:state_default(unsaved, false) of
+        true -> wf:wire(#confirm{text="The task is unsaved! Save it?",
+                                 postback=save});
+        false -> Fun()
     end.

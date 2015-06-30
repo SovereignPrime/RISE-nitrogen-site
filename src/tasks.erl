@@ -598,16 +598,18 @@ event({show_archive, false}) ->  % {{{1
     wf:replace(archive, #link{id=archive, body="<i class='icon-list-alt'></i> Archive", postback={show_archive, true}}),
     wf:update(subgroups, []);
 event({task_chosen, Id}) ->  % {{{1
-    Right = wf:session(right_parent_id),
-    {ok, [ #db_task{parent=Par, status=S} = Task ]} = db:get_task(Id),
-    wf:session(current_task_id, Id),
-    wf:session(current_task, Task),
-    wf:state(involved, undefined),
-    wf:state(current_task, Task),
-    wf:state(current_task_id, Id),
-    wf:update(body, render_task(Task)),
-    expand_task(Id),
-    highlight_selected(Id);
+    common:maybe_unsaved(fun() ->
+                                 Right = wf:session(right_parent_id),
+                                 {ok, [ #db_task{parent=Par, status=S} = Task ]} = db:get_task(Id),
+                                 wf:session(current_task_id, Id),
+                                 wf:session(current_task, Task),
+                                 wf:state(involved, undefined),
+                                 wf:state(current_task, Task),
+                                 wf:state(current_task_id, Id),
+                                 wf:update(body, render_task(Task)),
+                                 expand_task(Id),
+                                 highlight_selected(Id)
+                         end);
 event({add, ParentId}) -> % {{{1
     wf:session(current_task, #db_task{parent=ParentId}),
     wf:redirect("/edit_task");
@@ -622,10 +624,12 @@ event(save) -> % {{{1
     db:save(Task2),
     [save_contact_role(ContactRole) || {ContactRole, _} <- Involved],
     % common:send_messages(Task2),
+    wf:state(unsaved, false),
     update_task_tree(),
     event({task_chosen, Task#db_task.id});
 event(discard) -> % {{{1
     Task = wf:state(current_task),
+    wf:state(unsaved, false),
     event({task_chosen, Task#db_task.id});
     
 event(hide) ->  % {{{1
@@ -749,8 +753,12 @@ maybe_show_top_buttons(CurrentTask) -> % {{{1
     InvolvedChanged = InvolvedFromDB =/= NewInvolved,
 
     case TaskChanged orelse InvolvedChanged of
-        true -> wf:wire(top_buttons, #show{});
-        false -> wf:wire(top_buttons, #hide{})
+        true -> 
+            wf:state(unsaved, true),
+            wf:wire(top_buttons, #show{});
+        false -> 
+            wf:state(unsaved, false),
+            wf:wire(top_buttons, #hide{})
     end.
 
 calculate_changes(Task) -> % {{{1

@@ -17,9 +17,14 @@ buttons(main) ->  % {{{1
     #panel{class='row-fluid', body=[
             #panel{class='span9 offset3', body=[
                     #panel{class="row-fluid", body=[
-                            #button{ class='btn btn-link span2', body="<i class='icon-remove'></i> Discard", 
-   					click=#redirect{url="/tasks"}},
-                            #button{ class='btn btn-link span2', body="<i class='icon-ok'></i> Save", postback=save, delegate=?MODULE}
+                            #button{class='btn btn-link span2',
+                                    body="<i class='icon-remove'></i> Discard", 
+                                    postback=discard,
+                                    delegate=?MODULE},
+                            #button{class='btn btn-link span2',
+                                    body="<i class='icon-ok'></i> Save",
+                                    postback=save,
+                                    delegate=?MODULE}
                             ]}
                     ]}
             ]}.
@@ -157,6 +162,10 @@ event(add_file) ->  % {{{1
     NTask = Task#db_task{name= TaskName , due=Due, text=Text},
     wf:session(current_task, NTask),
     wf:redirect("/files/?from=task");
+event(discard) ->  % {{{1
+    wf:session(current_task, undefined),
+    wf:session(current_task_id, undefined),
+    wf:redirect("/tasks");
 event(save) ->  % {{{1
     TaskName = wf:to_binary(wf:q(name)),
     Due = wf:q(due),
