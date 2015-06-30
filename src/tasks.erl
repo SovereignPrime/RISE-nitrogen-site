@@ -272,7 +272,13 @@ body() ->  % {{{1
     end.
 
 
-render_task(#db_task{id=Id, name=Name, due=Due, text=Text, parent=Parent, status=Status, changes=Changes}=Task) ->  % {{{1
+render_task(#db_task{id=Id,  % {{{1
+                     name=Name,
+                     due=Due,
+                     text=Text,
+                     parent=Parent,
+                     status=Status,
+                     changes=Changes}=Task) ->
     TextF = re:replace(Text, "\r*\n", "<br>", [{return, list}, noteol, global]), 
     {ok, Updates} = db:get_task_history(Id),
     AllComplete = db:are_all_child_tasks_complete(Id),
@@ -280,20 +286,29 @@ render_task(#db_task{id=Id, name=Name, due=Due, text=Text, parent=Parent, status
     StatusDropdown = #dropdown{options=db:task_status_list(), value=Status},
     [
         render_top_buttons(),
-        #panel{ class="row-fluid", body=[
-            #panel{ class="span11", body=[
-                #h1{body=#inplace_textbox{id=name, tag=name, text=Name}},
-                #panel{class="row-fluid", style="min-height:15px;", body=[
-                     #panel{ class="span2", style="min-height:15px;", body=["Status: ", IncompleteWarning]},
-                     #inplace{id=status, 
-                              style="min-height:15px;",
-                              class="span6",
-                              tag=status,
-                              text=wf:to_list(Status),
-                              view=#span{},
-                              edit=StatusDropdown
-                     }
-                ]},
+        #panel{class="row-fluid",
+               body=[
+                     #panel{class="span11",
+                            body=[
+                                  #h1{body=#inplace_textbox{id=name,
+                                                            tag=name,
+                                                            text=Name}},
+                                  #panel{class="row-fluid",
+                                         style="min-height:15px;",
+                                         body=[
+                                               #panel{class="span2",
+                                                      style="min-height:15px;",
+                                                      body=["Status: ",
+                                                            IncompleteWarning]},
+                                               #inplace{id=status, 
+                                                        style="min-height:15px;",
+                                                        class="span6",
+                                                        tag=status,
+                                                        text=wf:to_list(Status),
+                                                        view=#span{},
+                                                        edit=StatusDropdown
+                                                       }
+                                              ]},
                 #panel{class="row-fluid",
                        body=[
                              #panel{ class="span2", body="Due: "},
@@ -318,16 +333,19 @@ render_task(#db_task{id=Id, name=Name, due=Due, text=Text, parent=Parent, status
                             ]},
                 render_roles(Id)
             ]},
-            #panel{ class="span1", body=render_side_buttons(Id, Task)}
-        ]},
+            #panel{class="span1",
+                   body=render_side_buttons(Id, Task)}
+                                        ]},
         #br{},
-        #panel{ class="row-fluid", body=[
-            #panel{ class="span10", body=[
-                #inplace_textarea{id=text,
-                                  class="span12",
-                                  tag=text,
-                                  html_encode=whites,
-                                  text=Text}
+        #panel{class="row-fluid",
+               body=[
+                     #panel{class="span10",
+                            body=[
+                                  #inplace_textarea{id=text,
+                                                    class="span12",
+                                                    tag=text,
+                                                    html_encode=whites,
+                                                    text=Text}
             ]}
         ]},
         render_attachments(Task),
@@ -443,9 +461,16 @@ render_side_buttons(Id, Task) -> % {{{1
             },
             #list{numbered=false, class="dropdown-menu pull-right", body=[
                 #listitem{body=[
-                    #link{postback={archive, Task}, new=false, body=[
-                        "<i class='icon-list-alt icon-large'></i> Archive"
-                    ]}
+                    #link{postback={duplicate, Task},
+                          new=false,
+                          body=[
+                                "<i class='icon-copy icon-large'></i> Duplicate"
+                               ]},
+                    #link{postback={archive, Task},
+                          new=false,
+                          body=[
+                                "<i class='icon-list-alt icon-large'></i> Archive"
+                               ]}
                 ]}
             ]}
         ]}
@@ -454,24 +479,39 @@ render_side_buttons(Id, Task) -> % {{{1
 render_attachments(Task) ->
     case db:get_attachments(Task) of 
         {ok, []} ->
+            wf:session(attached_files, sets:new()),
             [];
         {ok, [], undefined} ->
+            wf:session(attached_files, sets:new()),
             [];
         {ok, Attachments} ->
+            Att = lists:map(fun(#bm_file{hash=AID}) ->
+                                    AID
+                            end, Attachments),
+            wf:session(attached_files, sets:from_list(Att)),
             [
                 #br{},
                 #panel{class="row-fluid", body=[
                     #panel{class="span6", body="<i class='icon-file-alt'></i> Attachment"},
                     #panel{class="span2 offset4", body="<i class='icon-download-alt'></i> Download all"}
                 ]},
-                lists:map(fun(#bm_file{name=Path, size=Size, time={Date, _Time}, hash=Id, status=State}) ->
-                    #attachment{fid=Id, filename=Path, size=Size, time=Date, status=State}
+                lists:map(fun(#bm_file{name=Path,
+                                       size=Size,
+                                       time={Date,
+                                             _Time},
+                                       hash=Id,
+                                       status=State}) ->
+                    #attachment{fid=Id,
+                                filename=Path,
+                                size=Size,
+                                time=Date,
+                                status=State}
                 end, Attachments)
             ]
     end.
 
-render_updates([]) -> [];
-render_updates(Updates) ->
+render_updates([]) -> [];  % {{{1
+render_updates(Updates) -> % {{{1
     [
         #br{},
         #panel{class="row-fluid", body=[
@@ -504,18 +544,18 @@ render_task_change(C) ->
         #panel{class="span6", text=["changed ",C#db_task_change.field," to ",C#db_task_change.new_value]}
     ]}.
 
-highlight_selected() ->
+highlight_selected() ->  % {{{1
     case wf:session(current_task) of
         #db_task{id=Id} -> highlight_selected(Id);
         _ -> ok
     end.
 
-highlight_selected(Id) ->
+highlight_selected(Id) ->  % {{{1
     Md5 = md5(Id),
     wf:defer(#remove_class{target=".wfid_tasks a", class=current}),
     wf:defer(#add_class{target=".wfid_tasks a[data-link=\"" ++ Md5 ++ "\"]", class=current}).
 
-check_changing_task_status() -> ok.
+check_changing_task_status() -> ok.  % {{{1
 
 save_contact_role(CR = #db_contact_roles{id=new}) -> % {{{1
     Taskid = wf:state(current_task_id),
@@ -528,9 +568,22 @@ save_contact_role(CR = #db_contact_roles{id=new}) -> % {{{1
 save_contact_role(CR) -> % {{{1
     db:save(CR).
 
-event({change_mode, Mode}) ->
+event({change_mode, Mode}) ->  % {{{1
     wf:session(task_tree_mode, Mode),
     update_task_tree();
+event({duplicate, #db_task{name=Name, text=Text} = OTask}) ->  % {{{1
+    NName = <<Name/bytes,  " (copy)">>,
+    VID = crypto:hash(sha512, <<NName/bytes, Text/bytes>>),
+    Task = OTask#db_task{id=VID, name=NName},
+    wf:state(current_task, Task),
+    db:save(Task),
+    db:save_attachments(wf:state(current_task), wf:session_default(attached_files, sets:new())),
+    Involved = wf:state(involved),
+    wf:state(current_task_id, VID),
+    [save_contact_role(ContactRole#db_contact_roles{id=new}) || {ContactRole, _} <- Involved],
+    %save_payments(TaskName),
+    wf:session(task_attached_files, undefined),
+    wf:redirect("/tasks");
 event({archive, #db_task{id=_Id, parent=_Parent} = Rec}) ->  % {{{1
     {ok, NTask} = db:archive(Rec),
     common:send_messages(NTask),
@@ -568,7 +621,7 @@ event(save) -> % {{{1
     Task2 = calculate_changes(Task),
     db:save(Task2),
     [save_contact_role(ContactRole) || {ContactRole, _} <- Involved],
-    common:send_messages(Task2),
+    % common:send_messages(Task2),
     update_task_tree(),
     event({task_chosen, Task#db_task.id});
 event(discard) -> % {{{1
