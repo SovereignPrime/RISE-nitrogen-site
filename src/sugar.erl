@@ -27,7 +27,9 @@ date_format({{Y, M, D}, {H, Mi, S}}) ->  %{{{1
 	%% might be worth replacing with qdate:to_string()
    	lists:flatten(io_lib:format("~4..0w-~2..0w-~2..0w ~2..0w:~2..0w:~2..0w", [Y, M, D, H, Mi, S]));
 date_format({_Y, _M, _DD}=D) ->  %{{{1
-    date_format({D, {9, 0, 0}}).
+    date_format({D, {9, 0, 0}});
+date_format(Any) ->  % {{{1
+    date_format(calendar:local_time()).
 
 date_from_string("") ->  % {{{1
     "";
