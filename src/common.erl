@@ -499,15 +499,26 @@ event(cancel) -> %{{{1
     wf:wire(#script{script="$('.modal').modal('hide')"}),
     wf:remove(".modal");
 event(restore) -> %{{{1
-    wf:insert_bottom("body", #panel{ class="modal fade", body=[
-                                             #panel{ class="modal-header", body=[
-                                                                                 #button{class="btn-link pull-right", text="x", postback=cancel, delegate=?MODULE},
-                                                                                 #h3{text="Restore user"}
-                                                                                ]},
-                                             #panel{ class="modal-body", body=[
-                                                                               #upload{id=attachments, tag=restore, delegate=common, droppable=true, show_button=false, droppable_text="Drag and drop backup file here",  multiple=false}
-                                                                              ]}
-                                            ]}),
+    wf:insert_bottom("body",
+                     #panel{class="modal fade",
+                            body=[
+                                  #panel{class="modal-header",
+                                         body=[
+                                               #button{class="btn-link pull-right",
+                                                       text="x",
+                                                       postback=cancel,
+                                                       delegate=?MODULE},
+                                               #h3{text="Restore user"}
+                                              ]},
+                                  #panel{class="modal-body",
+                                         body=[
+                                               #rise_upload{id=restore,
+                                                            tag=restore,
+                                                            delegate=common,
+                                                            droppable_text="Drag and drop backup file here"
+                                                           }
+                                              ]}
+                                 ]}),
     wf:wire(#script{script="$('.modal').modal('show')"});
 event({unfold, #update_element{id=Id}=Update}) -> % {{{1
     wf:replace(Id,
@@ -532,11 +543,11 @@ autocomplete_select_event({struct, [{<<"id">>, K}, {<<"value">>, V}]} = Selected
 
 start_upload_event(_) -> %{{{1
     ok.
-finish_upload_event(restore, FName, FPath, _Node) -> %{{{1
+finish_upload_event(restore, FPath) -> %{{{1
     FID = filename:basename(FPath),
     common:restore(FID),
     timer:sleep(100),
-    wf:redirect("/relationships").
+    wf:redirect("/relationships");
 finish_upload_event(filename, FPath) -> %{{{1
     io:format("File uploaded: ~p for ~p~n", [FPath, new]),
     User = wf:user(),
@@ -672,8 +683,7 @@ send_task_tree(Id, Parent, Time) -> %{{{1
                   end, Involved).
 
 restore(FID) -> %{{{1
-    {ok, Scratch} = application:get_env(etorrent_core, dir),
-    mnesia:restore(Scratch ++ "/" ++ FID, [{clear_tables, mnesia:system_info(tables) -- [schema, addr]}, {skip_tables, [addr]}]),
+    mnesia:restore(FID, [{clear_tables, mnesia:system_info(tables) -- [schema, addr]}, {skip_tables, [addr]}]),
     {ok, [Me]} = db:get_my_accounts(),
     wf:user(Me).
 
