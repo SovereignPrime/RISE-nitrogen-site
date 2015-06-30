@@ -102,14 +102,17 @@ render_unread_icon(_) ->  % {{{1
     "".
 
 render_icon(Icon) when Icon==1; Icon==2 ->  % {{{1
-    "<i class='icon-envelope'></i>";
+    #span{style="background-color: #000;",
+          body="<i class='icon-envelope-inverse'></i>"};
 render_icon(3) ->  % {{{1
     "<i class='icon-envelope'></i>";
 render_icon(4) ->  % {{{1
+    #span{style="background-color: #000;",
+          body=
    #image{image="/img/tasks.svg",
           class="icon",
-          style="height:16px;vertical-align:middle;"
-   };
+          style="-webkit-filter: invert(100%); height:16px;vertical-align:middle;"
+   }};
 render_icon(5) ->  % {{{1
     "<i class='icon-refresh'></i>".
 

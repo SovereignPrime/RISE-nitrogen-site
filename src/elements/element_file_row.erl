@@ -54,9 +54,12 @@ render_element(Record = #file_row{
 
     Check =  sets:is_element(FID, wf:session_default(attached_files, sets:new())),
 
-    #tablerow{id=Id, cells=[
+    #tablerow{id=Id,
+              cells=[
             #tablecell{body=[
-                            #checkbox{id=check,  postback={check, FID, Check}, checked=Check}
+                            #checkbox{id=check,
+                                      postback={check, FID, Check},
+                                      checked=Check}
                     ], class=""},
             #tablecell{text=Name, class=""},
             #tablecell{text=Type, class=""},
@@ -103,8 +106,8 @@ event({download, #file_row{id=I, file=#bm_file{hash=Id}} = Attachment}) -> % {{{
     NFile = File#bm_file{status=downloading},
     db:save(NFile),
     wf:replace(I, Attachment#file_row{file=NFile});
-event(E) ->
+event(E) ->  % {{{1
     error_logger:warning_msg("Wrong event ~p in ~p", [E, ?MODULE]).
 
-once_join(L) ->
+once_join(L) ->  % {{{1
     string:join(sets:to_list(sets:from_list(L)), "; ").

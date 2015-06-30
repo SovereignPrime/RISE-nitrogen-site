@@ -26,6 +26,10 @@ main() ->  % {{{1
                     Pid! {status, Online},
                     receiver:register_receiver(Pid),
                     T = #template {file=PWD ++ "/site/templates/bare.html" },
+                    wf:wire(backup_path,
+                            #event{type=change,
+                                   postback=backup_download,
+                                   delegate=?MODULE}),
                     wf:wire('to_files',
                             #event{type=click,
                                    postback={to_files, undefined},
@@ -485,10 +489,12 @@ event({to_task, Id}) -> % {{{1
 event(wrap_peers) -> %{{{1
     mnesia:clear_table(addr);
 event(backup) -> %{{{1
-    {ok, FD} = application:get_env(etorrent_core, dir),
-    io:format("FD: ~p~n", [FD]),
-    mnesia:backup(wf:f("~s/backup.rz", [FD])),
-    wf:redirect("/raw?id=backup.rz&file=backup.rz");
+    wf:wire(#script{script="init_download('" ++ wf:to_list(backup_path) ++ "')"}),
+    wf:redirect("/raw?id=backup.rz&file=RISE_BACUP_" ++ sugar:date_string(date()) ++ ".rz");
+event(backup_download) ->
+    FD = wf:q(backup_path),
+    error_logger:info_msg("Backup to file: ~s", [FD]),
+    mnesia:backup(wf:f("~s", [FD]));
 event(cancel) -> %{{{1
     wf:wire(#script{script="$('.modal').modal('hide')"}),
     wf:remove(".modal");

@@ -82,11 +82,13 @@
             [[[common:connection_status()]]]
         </div>
     </div>
+    <input type="hidden" class='wfid_backup_path'/>
     <div class="row-fluid wfid_main" >
             [[[page:left()]]]           
             [[[page:body()]]]
     </div>
 </div>
+<script type='text/javascript' src='/js/upload.js'></script>
 <script>
 $(".wfid_main").css('height', $(window).innerHeight() - $("#top").outerHeight() - $(".wfid_buttons").outerHeight() - 10 + 'px');
 //$(function() {

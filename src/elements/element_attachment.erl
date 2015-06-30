@@ -28,7 +28,6 @@ render_element(#attachment{id=I,
     #panel{id=I,
            class="row-fluid",
            body=[
-                 "<script type='text/javascript' src='/js/upload.js'></script>",
                  #panel{class="span5", body=File},
                  #panel{class="span1", body=sugar:format_file_size(Size)},
                  #panel{class="span4", body=DateS},
