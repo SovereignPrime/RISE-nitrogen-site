@@ -181,8 +181,17 @@ archive(#db_contact{address=Address}) ->  % {{{1
                 lists:foreach(fun(M) ->
                                       db:save(M#message{status=archive})
                               end,
-                              Updates)
-                
+                              Updates),
+                Tasks = get_tasks_by_user(R#db_contact.id),
+                lists:foreach(fun(#db_task{id=TID}=T) ->
+                                      case length(get_involved(TID)) of
+                                          1 ->
+                                              save(T#db_task{status=archive});
+                                          _ ->
+                                              ok
+                                      end
+                              end,
+                              Tasks)
         end);
 archive(Rec) when is_list(Rec) ->  % {{{1
     transaction(fun() ->
@@ -454,15 +463,21 @@ get_tasks_by_user(UID) ->  % {{{1
     get_tasks_by_user(UID, '_').
 get_tasks_by_user(UID, Role) ->  % {{{1
     transaction(fun() ->
-                        Tasks = mnesia:match_object(#db_contact_roles{contact=UID, type=db_task, role=Role, _='_'}),
-                        iterate(db_task, Tasks, fun(_, #db_contact_roles{tid=I, role=Role}) ->
-                                                        case mnesia:read(db_task, I) of
-                                                            [Task] ->
-                                                                [ Task#db_task{parent=Role} ];
-                                                            [] ->
-                                                                []
-                                                        end
-                                                end)
+                        Tasks = mnesia:match_object(#db_contact_roles{contact=UID,
+                                                                      type=db_task,
+                                                                      role=Role,
+                                                                      _='_'}),
+
+                        iterate(db_task,
+                                Tasks,
+                                fun(_, #db_contact_roles{tid=I, role=Role}) ->
+                                        case mnesia:read(db_task, I) of
+                                            [Task] ->
+                                                [ Task#db_task{parent=Role} ];
+                                            [] ->
+                                                []
+                                        end
+                                end)
                 end).
 
 archive_op(true) -> '==';  % {{{1
