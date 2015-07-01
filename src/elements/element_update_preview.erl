@@ -59,7 +59,7 @@ render_element(#update_preview{id=Id,
                  #panel{class="row-fluid no-padding",
                         body=[
 
-                              #panel{class="span1 no-padding",body=render_icon(Icon)},
+                              #panel{class="span1 no-padding",body=render_icon(Icon, Status)},
                               #panel{class='span9 no-padding update-participant-list',
                                      text=participant_list([From] ++ [To])},
                               #panel{class='span2 cell-right no-padding update-age',
@@ -79,10 +79,7 @@ render_element(#update_preview{id=Id,
                         body=[
                               if Flag == true ->
                                      [
-                                      #panel{class='span1', body=[
-                                        render_unread_icon(Status)
-                                      ]},
-                                      #panel{class='span11 shorten-text',
+                                      #panel{class='span11 shorten-text offset1',
                                              style="-webkit-line-clamp:2;",
                                              text=[Text]}
                                      ];
@@ -96,25 +93,53 @@ render_element(#update_preview{id=Id,
            actions=#event{type=click,
                           postback={selected, sugar:maybe_wrap_list(UID), Subject, Archive}}}.
 
-render_unread_icon(unread) ->  % {{{1
-    "<i class='icon icon-sign-blank'></i>";
-render_unread_icon(_) ->  % {{{1
-    "".
+render_icon(Icon) ->  % {{{1
+    render_icon(Icon, true).
 
-render_icon(Icon) when Icon==1; Icon==2 ->  % {{{1
-    #span{style="background-color: #000;",
-          body="<i class='icon-envelope-inverse'></i>"};
-render_icon(3) ->  % {{{1
-    "<i class='icon-envelope'></i>";
-render_icon(4) ->  % {{{1
-    #span{style="background-color: #000;",
-          body=
-   #image{image="/img/tasks.svg",
-          class="icon",
-          style="-webkit-filter: invert(100%); height:16px;vertical-align:middle;"
-   }};
-render_icon(5) ->  % {{{1
-    "<i class='icon-refresh'></i>".
+render_icon(Icon, State) when Icon==1; Icon==2 ->  % {{{1
+    #panel{
+       class=["update-preview-icon",
+              case State of
+                  unread ->
+                      "current";
+                  _ ->
+                      ""
+              end],
+       body="<i class='icon-envelope'></i>"
+      };
+render_icon(3, State) ->  % {{{1
+    #panel{
+       class=["update-preview-icon",
+              case State of
+                  unread ->
+                      "current";
+                  _ ->
+                      ""
+              end],
+       body="<i class='icon-envelope'></i>"
+      };
+render_icon(4, State) ->  % {{{1
+    #panel{
+          class=["update-preview-icon",
+              case State of
+                  unread ->
+                      "current";
+                  _ ->
+                      ""
+              end],
+          body=#image{image="/img/tasks.svg"}
+      };
+render_icon(5, State) ->  % {{{1
+    #panel{
+       class=["update-preview-icon",
+              case State of
+                  unread ->
+                      "current";
+                  _ ->
+                      ""
+              end],
+       body="<i class='icon-refresh'></i>"
+      }.
 
 participant_list(List) ->  % {{{1
     Deduped = common:remove_duplicates(lists:flatten(List)),

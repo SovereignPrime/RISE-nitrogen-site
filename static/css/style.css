@@ -329,6 +329,14 @@ img.wfid_img_vcard {
 	background: url(/img/message16w.png);
 }
 
+.update-preview-icon {
+    height: 25px;
+    width: 25px;
+    display:inline-block;
+    padding: 2px 4px;
+    box-sizing: border-box;
+}
+
 .update-participant-list {
 	overflow: hidden;
 	text-overflow: ellipsis;
