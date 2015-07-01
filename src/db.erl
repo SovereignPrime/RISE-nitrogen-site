@@ -170,7 +170,19 @@ archive(Rec) when is_record(Rec, message) ->  % {{{1
 archive(#db_contact{address=Address}) ->  % {{{1
     transaction(fun() ->
                 [R] = mnesia:index_read(db_contact, Address, #db_contact.address),
-                mnesia:write(R#db_contact{status=archive})
+                mnesia:write(R#db_contact{status=archive}),
+                Updates = mnesia:select(message,
+                                        [{#message{status='$1',
+                                                   folder=incoming,
+                                                   from=Address,
+                                                   _='_'},
+                                          [{'/=', '$1', archive}],
+                                          ['$_']}]),
+                lists:foreach(fun(M) ->
+                                      db:save(M#message{status=archive})
+                              end,
+                              Updates)
+                
         end);
 archive(Rec) when is_list(Rec) ->  % {{{1
     transaction(fun() ->
@@ -453,8 +465,8 @@ get_tasks_by_user(UID, Role) ->  % {{{1
                                                 end)
                 end).
 
-archive_op(true) -> '==';
-archive_op(false) -> '/='.
+archive_op(true) -> '==';  % {{{1
+archive_op(false) -> '/='.  % {{{1
 
 get_tasks(Parent) when not is_boolean(Parent) ->  % {{{1
     get_tasks(Parent, false);
@@ -652,11 +664,16 @@ get_updates_by_user(UID) ->   % {{{1
     transaction(fun() ->
                         mnesia:select(message,
                                       [{#message{status='$1',
-                                                 enc=3,
+                                                 enc='$2',
                                                  folder=incoming,
                                                  from=UID,
                                                  _='_'},
-                                        [{'/=', '$1', archive}], ['$_']}])
+                                        [{'/=', '$1', archive},
+                                         {'or', 
+                                          {'==', '$2', 3},
+                                          {'==', '$2', 2}
+                                         }],
+                                        ['$_']}])
                 end).
 
 get_unread_updates() ->  % {{{1
