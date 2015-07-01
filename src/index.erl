@@ -111,7 +111,12 @@ body(Archive) -> % {{{1
 render_body(Subject, Archive) -> % {{{1
     wf:session(current_subject, Subject),
     {ok, Updates} = db:get_updates_by_subject(Subject, Archive),
-    Type = (hd(Updates))#message.enc,
+    Type = case Updates of
+               [] -> 2;
+               [#message{text=Data}|_] ->
+                   {_, _, T} = element_update_preview:decode_type(Data),
+                   T
+           end,
     Icon = element_update_preview:render_icon(Type),
     CurrentId = wf:session(current_update_id),
     [

@@ -9,7 +9,8 @@
 -export([
          reflect/0,
          render_element/1,
-         render_icon/1
+         render_icon/1,
+         decode_type/1
         ]).
 
 -spec reflect() -> [atom()].
@@ -28,22 +29,7 @@ render_element(#update_preview{id=Id,
                                           status=Status},
                                flag=Flag,
                                archive=Archive}) -> 
-    {Text, Timestamp, Icon} = try binary_to_term(Data, []) of
-                             #message_packet{text=Txt,
-                                             time=TS} ->
-                                 {Txt, TS, 3};
-                             #update_packet{text=Txt, time=TS} -> 
-                                 {Txt, TS, 5};
-                             Task ->
-                                 #task_packet{text=Txt,
-                                              time=TS} = receiver:extract_task(Task),
-                                 {Txt, TS, 4};
-                             _ ->
-                                 {<<"Decoding error! Data: ", Data/bytes>>, bm_types:timestamp(), 1}
-                         catch
-                             error:badarg ->
-                                 {<<"Decoding error! Data: ", Data/bytes>>, bm_types:timestamp(), 1}
-                         end,
+    {Text, Timestamp, Icon} = decode_type(Data),
     TD = bm_types:timestamp() - Timestamp,
     CurrentId = wf:session(current_update_id),
     HasCurrent = lists:any(fun(I) -> (I == CurrentId) end, sugar:maybe_wrap_list(UID)),
@@ -150,6 +136,25 @@ get_name(UID) ->  % {{{1
         {ok, #db_contact{name=FN}} ->
             FN;
         {ok, none} ->
-            "Anonymous"
+            "User " ++ sugar:date_string(date())
             %wf:to_list(UID)
     end.
+
+decode_type(Data) ->  % {{{1
+    try binary_to_term(Data, []) of
+        #message_packet{text=Txt,
+                        time=TS} ->
+            {Txt, TS, 3};
+        #update_packet{text=Txt, time=TS} -> 
+            {Txt, TS, 5};
+        Task ->
+            #task_packet{text=Txt,
+                         time=TS} = receiver:extract_task(Task),
+            {Txt, TS, 4};
+        _ ->
+            {<<"Decoding error! Data: ", Data/bytes>>, bm_types:timestamp(), 1}
+    catch
+        error:badarg ->
+            {<<"Decoding error! Data: ", Data/bytes>>, bm_types:timestamp(), 1}
+    end.
+
