@@ -45,7 +45,8 @@ render_element(#update_preview{id=Id,
                  #panel{class="row-fluid no-padding",
                         body=[
 
-                              #panel{class="span1 no-padding",body=render_icon(Icon, Status)},
+                              #panel{class="span1 no-padding",
+                                     body=render_icon(Icon, Status)},
                               #panel{class='span9 no-padding update-participant-list',
                                      text=participant_list([From] ++ [To])},
                               #panel{class='span2 cell-right no-padding update-age',
@@ -82,49 +83,40 @@ render_element(#update_preview{id=Id,
 render_icon(Icon) ->  % {{{1
     render_icon(Icon, true).
 
-render_icon(Icon, State) when Icon==1; Icon==2 ->  % {{{1
-    #panel{
-       class=["update-preview-icon",
-              case State of
-                  unread ->
-                      "current";
-                  _ ->
-                      ""
-              end],
-       body="<i class='icon-envelope'></i>"
+render_icon(Icon, unread) when Icon==1; Icon==2; Icon==3 ->  % {{{1
+    #span{
+       class="icon-stack",
+       body="<i class='icon-sign-blank icon-stack-base'></i><i class='icon-envelope' style='color:#fff'></i>"
       };
-render_icon(3, State) ->  % {{{1
-    #panel{
-       class=["update-preview-icon",
-              case State of
-                  unread ->
-                      "current";
-                  _ ->
-                      ""
-              end],
-       body="<i class='icon-envelope'></i>"
+render_icon(Icon, State) when Icon==1; Icon==2; Icon==3 ->  % {{{1
+    #span{
+       class="icon-stack",
+       body="<i class='icon-sign icon-stack-base'></i><i class='icon-envelope'></i>"
+      };
+render_icon(4, unread) ->  % {{{1
+    #span{
+          body=[
+                "<i class='icon-sign-blank icon-stack-blank icon-2x'>",
+                "</i>",
+                #image{image="/img/tasks.svg", class='icon-task-unread'}
+               ]
       };
 render_icon(4, State) ->  % {{{1
-    #panel{
-          class=["update-preview-icon",
-              case State of
-                  unread ->
-                      "current";
-                  _ ->
-                      ""
-              end],
-          body=#image{image="/img/tasks.svg"}
+    #span{
+          body=[
+                #image{image="/img/tasks.svg",
+                       style="-webkit-filter:invert(0);top:2px;",
+                       class='icon-task-unread'}
+               ]
+      };
+render_icon(5, unread) ->  % {{{1
+    #span{
+       body="<i class='icon-sign-blank icon-stack-base'></i><i class='icon-refresh'></i>"
       };
 render_icon(5, State) ->  % {{{1
-    #panel{
-       class=["update-preview-icon",
-              case State of
-                  unread ->
-                      "current";
-                  _ ->
-                      ""
-              end],
-       body="<i class='icon-refresh'></i>"
+    #span{
+       class="icon-stack",
+       body="<i class='icon-sign icon-stack-base'></i><i class='icon-refresh' style='color:#fff'></i>"
       }.
 
 participant_list(List) ->  % {{{1
