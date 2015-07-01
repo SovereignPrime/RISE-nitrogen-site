@@ -81,7 +81,11 @@ add_existing_rows(To) when is_list(To) -> % {{{1
                 case db:get_contact_by_address(T) of
                     {ok, #db_contact{id=CID, name=Name} } ->
                         wf:session(wf:to_binary(Name), CID),
-                        element_addable_row:event({add, #addable_row{id=roles, num= N - 1, body=#to{text=Name} }}), 
+                        element_addable_row:event({add,
+                                                   #addable_row{id=roles,
+                                                                num= N - 1,
+                                                                body=#to{text=Name}
+                                                               }}), 
                         true;
                     _ ->
                         false
@@ -130,10 +134,23 @@ event(save) -> % {{{1
     #db_contact{id=UID} = wf:user(),
     Involved = lists:map(fun([]) ->
                     <<"">>;
+                (<<"BM-", _/bytes>> = N) ->
+                                 lagger:info("Adding BM address ~p~n", [N]),
+                                 case db:get_contact_by_address(N) of
+                                     {ok, #db_contact{address=N}} ->
+                                         N;
+                                     _ ->
+                                         mnesia:write(#db_contact{
+                                                         name="User " ++ sugar:date_string(date()),
+                                                         address=N,
+                                                         bitmessage=N,
+                                                         id=db:next_id(db_contact)
+                                                        }),
+
+                                         N
+                                 end;
                 (N) ->
-                    io:format("~p~n", [N]),
                     I = wf:session(wf:to_binary(N)),
-                    io:format("~p~n", [I]),
                     {ok,  #db_contact{bitmessage=BM}} = db:get_contact(I),
                     BM
             end, InvolvedS) -- [<<"">>],
