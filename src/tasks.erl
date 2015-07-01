@@ -43,7 +43,10 @@ buttons(main) ->  % {{{1
         %    #panel{ class='span2', body="<i class='icon-sort'></i> Sort"},
         %]},
         #listitem{body=[
-            #link{id=archive, body="<i class='icon-list-alt'></i> Archive", postback={show_archive, true}}
+            #link{id=archive,
+                  body="<i class='icon-list-alt'></i> Archive",
+                  postback={show_archive, true},
+                  delegate=?MODULE}
         ]},
         #listitem{body=[
             common:settings_menu()
@@ -590,7 +593,7 @@ event({archive, #db_task{id=_Id, parent=_Parent} = Rec}) ->  % {{{1
     update_task_tree(),
     wf:update(body, render_task(Rec));
 event({show_archive, true}) ->  % {{{1
-    update_task_tree(),
+    update_task_tree(true),
     wf:replace(archive, #link{id=archive, body="<i class='icon-list-alt'></i> Actual", postback={show_archive, false}}),
     wf:update(subgroups, []);
 event({show_archive, false}) ->  % {{{1
