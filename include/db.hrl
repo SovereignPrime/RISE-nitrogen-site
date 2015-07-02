@@ -1,7 +1,16 @@
 -record(db_group,{id, name, subgroups}).
 -record(db_group_members, {group, contact}).
 
--record(db_contact,{id, name="unknown", email="", phone="", photo="undefined.png", bitmessage, address, my=false, status}).
+-record(db_contact,
+        {id,
+         name="User ",
+         email="",
+         phone="",
+         photo="undefined.png",
+         bitmessage,
+         address,
+         my=false,
+         status}).
 -record(db_contact_note, {id, contact, datetime, text=""}).
 -record(db_contact_roles,{id, type, tid, role, contact}).
 

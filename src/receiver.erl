@@ -376,7 +376,10 @@ get_or_request_contact(BM, From, To) ->  % {{{1
     case db:get_contact_by_address(BM) of
         {ok, none} ->
             {ok, CID} = db:next_id(db_contact),
-            db:save(#db_contact{id=CID, bitmessage=BM, address=BM}),
+            db:save(#db_contact{id=CID,
+                                name="User " ++ sugar:date_format(calendar:local_time()),
+                                bitmessage=BM,
+                                address=BM}),
             get_vcard(BM, From, To),
             CID;
         {ok, Contact} ->
