@@ -61,14 +61,18 @@ left() ->  % {{{1
     case wf:session(filter) of
         undefined ->
             wf:session(task_tree_mode, task_tree),
-            #panel{id=tasks, class="span4 scrollable", body=[
-                                                             render_task_tree()
-                                                            ]};
+            #panel{id=tasks,
+                   class="span4 scrollable",
+                   body=[
+                         render_task_tree()
+                        ]};
         D ->
             wf:session(task_tree_mode, filter),
-            #panel{id=tasks, class="span4 scrollable", body=[
-                                                             render_task_tree()
-                                                            ]}
+            #panel{id=tasks,
+                   class="span4 scrollable",
+                   body=[
+                         render_task_tree()
+                        ]}
     end.
 
 
@@ -77,18 +81,22 @@ render_task_tree_buttons(Selected) ->  % {{{1
     %%  { Label, postback, width }
         {"Tree", task_tree, 2},
         {"Today", tasks_today, 2},
-        {"Next", tasks_soon, 2},
+        {"Next", tasks_soon, 1},
+        {"Overdue", tasks_overdue, 2},
         {"No Deadline", tasks_no_deadline, 3},
-        {"Complete", tasks_complete, 3}
+        {"Complete", tasks_complete, 2}
     ],
-    lists:map(fun({Label, Postback, Size}) ->
+    #panel{body=lists:map(fun({Label, Postback, Size}) ->
         SizeClass = wf:to_atom(["span",wf:to_list(Size)]),
         #link{
-           class=[SizeClass, 'task-tree-button', ?WF_IF(Postback==Selected, 'task-tree-button-selected', 'task-tree-button-unselected')],
+           class=[SizeClass, 'task-tree-button',
+                  ?WF_IF(Postback==Selected,
+                         'task-tree-button-selected',
+                         'task-tree-button-unselected')],
            text=Label,
            postback={change_mode, Postback}
         }
-    end, Buttons).
+    end, Buttons)}.
 
 update_task_tree() ->  % {{{1
     update_task_tree(false).
@@ -128,9 +136,12 @@ render_task_tree(ParentId, Archive, First) ->  % {{{1
     end,
     case First of
         true ->
-            #droppable{tag=task_root, accept_groups=[task_groups], style="", body=[
-                #panel{body=["Tasks",Body]}
-            ]};
+            #droppable{tag=task_root,
+                       accept_groups=[task_groups],
+                       style="",
+                       body=[
+                             #panel{body=["Tasks",Body]}
+                            ]};
         false ->
             Body
     end.
@@ -215,6 +226,7 @@ expand_task(Taskid) ->  % {{{1
 render_task_list(Mode, Archive) ->  % {{{1
     Function = case Mode of
         tasks_today -> fun db:get_tasks_due_today/1;
+        tasks_overdue -> fun db:get_tasks_overdue/1;
         tasks_soon -> fun ?MODULE:get_next_tasks_by_date/1;
         tasks_no_deadline -> fun db:get_tasks_no_deadline/1;
         filter -> fun ?MODULE:get_tasks_by_filter/1;
