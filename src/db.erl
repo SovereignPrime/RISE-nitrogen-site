@@ -750,6 +750,8 @@ get_contact(Id) ->  % {{{1
                         U
                 end).
 
+get_contact_by_address(Address) when is_list(Address) ->  % {{{1
+    get_contact_by_address(list_to_binary(string:strip(Address)));
 get_contact_by_address(Address) ->  % {{{1
     transaction(fun() ->
                         case mnesia:index_read(db_contact, Address, #db_contact.address) of

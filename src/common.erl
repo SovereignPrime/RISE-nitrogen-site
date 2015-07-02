@@ -532,6 +532,22 @@ event(E) -> %{{{1
 dropevent(A, P) -> %{{{1
     io:format("Drag ~p drop ~p~n", [A, P]).
 
+autocomplete_enter_event([ $B, $M,  $- |_] = Addr, contact) -> %{{{1
+    error_logger:info_msg("BM: ~p~n", [Addr]),
+    case db:get_contact_by_address(Addr) of
+        {ok, #db_contact{id=Id,
+                         name=Name,
+                         email=Email}} ->
+            List = [{struct,
+                     [
+                      {id, Id},
+                      {label, wf:to_binary(Name ++ " - " ++ wf:to_list(Email))},
+                      {value, wf:to_binary(Name)}
+                     ]}],
+            mochijson2:encode(List);
+        _ ->
+            mochijson2:encode([])
+    end;
 autocomplete_enter_event(Term, _Tag) -> %{{{1
     io:format("Term ~p~n", [Term]),
     {ok, Contacts} = db:get_contacts_by_group(all),

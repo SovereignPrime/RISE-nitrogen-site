@@ -96,7 +96,9 @@ add_existing_rows(To) when is_list(To) -> % {{{1
             ok;
         _ ->
             element_addable_row:event({del, #addable_row{id=roles, num= 0}}),
-            element_addable_row:event({add, #addable_row{id=roles, num= length(Tos), body=#to{} }})
+            element_addable_row:event({add, #addable_row{id=roles,
+                                                         num= length(Tos),
+                                                         body=#to{} }})
     end,
     [];
 add_existing_rows(_To) -> % {{{1
@@ -134,20 +136,22 @@ event(save) -> % {{{1
     #db_contact{id=UID} = wf:user(),
     Involved = lists:map(fun([]) ->
                     <<"">>;
-                (<<"BM-", _/bytes>> = N) ->
-                                 lagger:info("Adding BM address ~p~n", [N]),
-                                 case db:get_contact_by_address(N) of
-                                     {ok, #db_contact{address=N}} ->
+                ([$B, $M, $- |_] = N) ->
+                                 error_logger:info_msg("Adding BM address ~p~n", [N]),
+                                 Addr = wf:to_binary(N),
+                                 case db:get_contact_by_address(Addr) of
+                                     {ok, #db_contact{address=Addr}} ->
                                          N;
                                      _ ->
-                                         mnesia:write(#db_contact{
-                                                         name="User " ++ sugar:date_string(date()),
-                                                         address=N,
-                                                         bitmessage=N,
-                                                         id=db:next_id(db_contact)
-                                                        }),
+                                         {ok, Id} = db:next_id(db_contact),
+                                         db:save(#db_contact{
+                                                    name="User " ++ sugar:date_format(calendar:local_time()),
+                                                    address=Addr,
+                                                    bitmessage=Addr,
+                                                    id=Id
+                                                   }),
 
-                                         N
+                                         Addr
                                  end;
                 (N) ->
                     I = wf:session(wf:to_binary(N)),
