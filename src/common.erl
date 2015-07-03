@@ -158,9 +158,10 @@ sigma_search_event(search, Terms) -> % {{{1
     Bs = lists:map(fun({"Date", Date}) ->
                            #sigma_search_badge{type="Date", text=sugar:date_format(Date)};
                       ({"Daterange", {SDate, EDate}}) ->
-                           #sigma_search_badge{type="Daterange", text=sugar:date_format(SDate) 
+                           #sigma_search_badge{type="Daterange",
+                                               text=sugar:date_string(SDate) 
                                                ++ " " ++
-                                               sugar:date_format(EDate)
+                                               sugar:date_string(EDate)
                                               };
                       ({"Group", Group}) ->
                            #sigma_search_badge{type="Group", text=Group};
