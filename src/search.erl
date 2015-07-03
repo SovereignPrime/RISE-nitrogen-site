@@ -29,7 +29,8 @@ dates_if(Terms) ->  % {{{1
                             {Terms, Ts};
                         {DateN, Ts} ->
                             ADict1 = dict:erase("Date", Terms),
-                            case lists:usort([sugar:date_from_string(Date), DateN]) of
+                            DT = sugar:date_from_string(Date),
+                            case lists:usort([DT, DateN]) of
                                 L when length(L) == 1->
                                     {dict:erase("Term", dict:append_list("Date", Date, ADict1)), []};
                                 L ->
@@ -137,17 +138,16 @@ files(Files) ->  % {{{1
         Files ->
             ["<dl class='dl-horizontal'>",
                         "<dt>Files:</dt><dd>",
-                        lists:map(fun(#db_file{id=Id,
-                                               path=Name,
-                                               user=UID,
-                                               date=Date,
+                        lists:map(fun(#bm_file{hash=Id,
+                                               name=Name,
+                                               time=Date,
                                                size=Size}) ->
-                                          {ok, #db_contact{name=User}} = db:get_contact(UID),
+                                          Users = element_file_row:get_file_senders(Id),
                                           #panel{body=[
                                                        #link{text=wf:f("~s (~s) - ~s - ~s", [
                                                                                    Name,
                                                                                    sugar:format_file_size(Size),
-                                                                                   User,
+                                                                                   Users,
                                                                                    sugar:date_format(Date)
                                                                                   ]),
                                                              url="/files"}
@@ -157,46 +157,79 @@ files(Files) ->  % {{{1
     end.
 
 messages(Messages) ->  % {{{1
-    case Messages of
+    M = lists:foldl(fun(#message{hash=Id, subject=Subject, from=FID, text=Data}, A) ->
+                          {ok,
+                           #db_contact{name=From}} = db:get_contact_by_address(FID),
+                          try binary_to_term(Data) of
+                              #message_packet{text=Text} ->
+                                  A ++ [#panel{body=[
+                                                     #link{text=wf:f("~s (~s) ~100s",
+                                                                     [
+                                                                      Subject,
+                                                                      From,
+                                                                      Text
+                                                                     ]),
+                                                           postback={to_message,
+                                                                     Id},
+                                                           delegate=common}
+                                                    ]}];
+                              _ ->
+                                  A
+                          catch
+                              error:_ ->
+                                  A
+                          end
+                    end,
+                    [],
+                    Messages),
+    case M of
         [] ->
             [];
-        Messages ->
+        M ->
             ["<dl class='dl-horizontal'>",
                         "<dt>Messages:</dt><dd>",
-                        lists:map(fun(#message{hash=Id, subject=Subject, from=FID, text=Data}) ->
-                                    {ok, #db_contact{name=From}} = db:get_contact_by_address(FID),
-                                    #message_packet{text=Text} = binary_to_term(Data),
-                                    #panel{body=[
-                                            #link{text=wf:f("~s (~s) ~100s", [
-                                                                        Subject,
-                                                                        From,
-                                                                        Text
-                                                                       ]),
-                                                  postback={to_message, Id},
-                                                  delegate=common}
-                                            ]}
-                            end, Messages),
+                        M,
                          "</dd>"]
     end.
 
-tasks(Tasks) ->  % {{{1
+tasks(Messages) ->  % {{{1
+    error_logger:info_msg("Messages for tasks: ~p~n", [Messages]),
+    Tasks = lists:foldl(fun(#message{hash=Id,
+                                     subject=Subject,
+                                     from=FID,
+                                     text=Data}, A) ->
+                                {ok,
+                                 #db_contact{name=From}} = db:get_contact_by_address(FID),
+                                try binary_to_term(Data) of
+                                    #task_packet{id=ID, name=Subject, text=Text} ->
+                                        A ++ [#panel{
+                                                 body=[
+                                                       #link{text=wf:f("~s - ~100s",
+                                                                       [
+                                                                        Subject,
+                                                                        Text
+                                                                       ]),
+                                                             postback={to_task,
+                                                                       ID},
+                                                             delegate=common}
+                                                      ]}];
+                                    _ ->
+                                        []
+                                catch
+                                    error:_ -> []
+                                end
+                        end,
+                        [],
+                        Messages),
+    error_logger:info_msg("Tasks: ~p~n", [Tasks]),
     case Tasks of
         [] ->
             [];
         Tasks ->
             ["<dl class='dl-horizontal'>",
-                        "<dt>Tasks:</dt><dd>",
-                        lists:map(fun(#db_task{id=Id, name=Subject, text=Text}) ->
-                                    #panel{body=[
-                                            #link{text=wf:f("~s - ~100s", [
-                                                                        Subject,
-                                                                        Text
-                                                                       ]),
-                                                  postback={to_task, Id},
-                                                  delegate=common}
-                                            ]}
-                            end, Tasks),
-                         "</dd>"]
+             "<dt>Tasks:</dt><dd>",
+             Tasks,
+             "</dd>"]
     end.
 
 format_dates([]) ->  % {{{1
@@ -206,8 +239,8 @@ format_dates(Dates) ->  % {{{1
                         "<dt>Dates:</dt><dd>",
                         lists:foldl(fun(Date, A) ->
                                     A ++ [#panel{body=[
-                                            #link{text=sugar:date_format(Date),
-                                                 postback={search, sugar:date_format(Date)},
+                                            #link{text=sugar:date_string(Date),
+                                                 postback={search, sugar:date_string(Date)},
                                                  delegate=common}
                                             ]}]
                             end, [], Dates),
@@ -221,16 +254,16 @@ terms(Terms) ->  % {{{1
     {DTerms, D} = search:dates_if(CTerms),
 
     {ok, M} = db:search_messages(DTerms),
-    %{ok, T} = db:search_tasks(DTerms),
-    %{ok, F} = db:search_files(DTerms),
+    {ok, F} = db:search_files(DTerms),
 
+    error_logger:info_msg("Messages: ~p~n", [M]),
     {DTerms,
      [
       format_dates(lists:usort(D)),
-      G, C
-      %messages(lists:usort(M)),
-      %tasks(lists:usort(T)),
-      %files(lists:usort(F))
+      G, C,
+      messages(lists:usort(M)),
+      tasks(lists:usort(M)),
+      files(lists:usort(F))
      ]}.
 
 get_term(Terms) ->  % {{{1

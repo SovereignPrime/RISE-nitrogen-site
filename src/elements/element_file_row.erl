@@ -9,7 +9,8 @@
 -export([
     reflect/0,
     render_element/1,
-    event/1
+    event/1,
+    get_file_senders/1
 ]).
 
 %% Move the following record definition to records.hrl:
@@ -37,19 +38,11 @@ render_element(Record = #file_row{
                    string:to_upper(tl(T))
            end,
     {ok, Messages} = db:get_linked_messages(FID),
-    Linked = once_join(lists:map(fun(#message{subject=S}) ->
+    Linked = sugar:once_join(lists:map(fun(#message{subject=S}) ->
                                          wf:to_list(S)
                        end,
                        Messages)),
-    #db_contact{address=My} = wf:user(),
-    For = once_join(lists:map(fun(#message{from=M, to=A}) when M == My ->
-                            {ok, #db_contact{name=C}} = db:get_contact_by_address(A),
-                            C;
-                       (#message{from=A, to=M}) when M == My ->
-                            {ok, #db_contact{name=C}} = db:get_contact_by_address(A),
-                                                                                  C
-                       end,
-                       Messages)),
+    For = get_file_senders(Messages),
     Percent = wf:to_integer(bitmessage:progress(FID) * 100),
 
     Check =  sets:is_element(FID, wf:session_default(attached_files, sets:new())),
@@ -109,5 +102,16 @@ event({download, #file_row{id=I, file=#bm_file{hash=Id}} = Attachment}) -> % {{{
 event(E) ->  % {{{1
     error_logger:warning_msg("Wrong event ~p in ~p", [E, ?MODULE]).
 
-once_join(L) ->  % {{{1
-    string:join(sets:to_list(sets:from_list(L)), "; ").
+get_file_senders(FID) when is_binary(FID) ->
+    {ok, Messages} = db:get_linked_messages(FID),
+    get_file_senders(Messages);
+get_file_senders(Messages) ->
+    #db_contact{address=My} = wf:user(),
+    sugar:once_join(lists:map(fun(#message{from=M, to=A}) when M == My ->
+                                      {ok, #db_contact{name=C}} = db:get_contact_by_address(A),
+                                      C;
+                                 (#message{from=A, to=M}) when M == My ->
+                                      {ok, #db_contact{name=C}} = db:get_contact_by_address(A),
+                                      C
+                              end,
+                              Messages)).

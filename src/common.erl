@@ -171,13 +171,16 @@ sigma_search_event(search, Terms) -> % {{{1
                                                text=Text,
                                                dropdown=[R || {R, _} <- ?ROLES]
                                               }
-                   end, dict:to_list(NTerms)),
+                   end,
+                   dict:to_list(NTerms)),
 
     {Bs,
      #panel{class="",
             body=[
                   Results,
-                  #panel{body=#link{body="<i class='icon icon-filter'></i> Create filter with search", postback={save_filter_name, dict:to_list(NTerms)}, delegate=?MODULE}}
+                  #panel{body=#link{body="<i class='icon icon-filter'></i> Create filter with search",
+                                    postback={save_filter_name, dict:to_list(NTerms)},
+                                    delegate=?MODULE}}
                 ]}}.  
 sigma_search_filter_event(search, Terms) ->  % {{{1
     wf:session(filter, dict:from_list(Terms)),

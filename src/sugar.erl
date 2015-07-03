@@ -60,6 +60,8 @@ timestamp_to_datetime(TS) when is_integer(TS) -> % {{{1
     calendar:gregorian_seconds_to_datetime(TS +
     calendar:datetime_to_gregorian_seconds({{1970, 1, 1}, {0, 0, 0}})).
 
+timestamp_from_string(Str) ->  % {{{1
+    datetime_to_timestamp(date_from_string(Str)).
 format_file_size(S) when S > 1000 * 1000 * 1000 ->  %{{{1
     wf:f("~.2fG", [ S  / bm_types:pow(1024, 3)]);
 format_file_size(S) when S >  1000 * 1000 ->  %{{{1
@@ -105,3 +107,6 @@ maybe_wrap_list(AddressList) when is_list(AddressList) ->  % {{{1
     AddressList;
 maybe_wrap_list(Address) when is_binary(Address) ->  % {{{1
     [Address].
+
+once_join(L) ->  % {{{1
+    string:join(sets:to_list(sets:from_list(L)), "; ").
