@@ -169,13 +169,8 @@ sigma_search_event(search, Terms) -> % {{{1
                       ({Type, Text}) ->
                            #sigma_search_badge{type=Type,
                                                text=Text,
-                                               dropdown=[
-                                                         "Contact",
-                                                         "Responsible",
-                                                         "Accountable",
-                                                         "Consulted",
-                                                         "Informed"
-                                                        ]}
+                                               dropdown=[R || {R, _} <- ?ROLES]
+                                              }
                    end, dict:to_list(NTerms)),
 
     {Bs,

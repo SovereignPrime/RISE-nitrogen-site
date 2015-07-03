@@ -221,16 +221,16 @@ terms(Terms) ->  % {{{1
     {DTerms, D} = search:dates_if(CTerms),
 
     {ok, M} = db:search_messages(DTerms),
-    {ok, T} = db:search_tasks(DTerms),
-    {ok, F} = db:search_files(DTerms),
+    %{ok, T} = db:search_tasks(DTerms),
+    %{ok, F} = db:search_files(DTerms),
 
     {DTerms,
      [
       format_dates(lists:usort(D)),
-      G, C,
-      messages(lists:usort(M)),
-      tasks(lists:usort(T)),
-      files(lists:usort(F))
+      G, C
+      %messages(lists:usort(M)),
+      %tasks(lists:usort(T)),
+      %files(lists:usort(F))
      ]}.
 
 get_term(Terms) ->  % {{{1
@@ -242,12 +242,7 @@ get_term(Terms) ->  % {{{1
     end.
 
 check_roles(Terms, True, False) ->  % {{{1
-    Roles = [
-             "Responsible",
-             "Accountable",
-             "Consulted",
-             "Informed"
-            ],
+    Roles = [R || {R, _} <- ?ROLES],
     case lists:any(fun(R) -> dict:is_key(R, Terms) end, Roles) of
         true ->
             True();

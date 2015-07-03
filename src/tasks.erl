@@ -389,9 +389,12 @@ render_roles(Id) -> % {{{1
         #panel{id=role_wrapper, class="row-fluid", body=[
             [render_role_row(Inv) || Inv <- Involved]
         ]},
-        #panel{class="row-fluid", body=[
-            #button{class="btn btn-link", body="<i class='icon-plus'></i> Add Role", postback=add_role}
-        ]}
+        #panel{class="row-fluid",
+               body=[
+                     #button{class="btn btn-link",
+                             body="<i class='icon-plus'></i> Add Role",
+                             postback=add_role}
+                    ]}
     ].
 
 render_role_row({ContactRole, Name}) -> % {{{1

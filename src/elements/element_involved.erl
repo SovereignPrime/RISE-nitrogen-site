@@ -51,13 +51,7 @@ role_dropdown(Id, Value, Users) -> % {{{1
                 {provide, "typeahead"}, 
                 {source, Users}
             ],
-            options=[
-                #option{text="Responsible", value="responsible"},
-                #option{text="Accountable", value="accountable"},
-                #option{text="Consulted", value="consulted"},
-                #option{text="Informed", value="informed"},
-                #option{text="Concerning", value="concerning"}
-
+            options=[#option{text=T, value=V} || {T, V} <- ?ROLES]
             ]
         },
         #span{ class="add-on",
