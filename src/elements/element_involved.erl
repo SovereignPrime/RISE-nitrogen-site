@@ -3,6 +3,7 @@
 -module (element_involved).
 -include_lib("nitrogen_core/include/wf.hrl").
 -include("records.hrl").
+-include("db.hrl").
 -export([
     reflect/0,
     render_element/1,
@@ -52,7 +53,6 @@ role_dropdown(Id, Value, Users) -> % {{{1
                 {source, Users}
             ],
             options=[#option{text=T, value=V} || {T, V} <- ?ROLES]
-            ]
         },
         #span{ class="add-on",
                style="background-color: #fff; border: #fff 0px solid;",
