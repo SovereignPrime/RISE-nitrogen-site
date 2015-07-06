@@ -6,6 +6,7 @@
 -include_lib("bitmessage/include/bm.hrl").
 -include("records.hrl").
 -include("db.hrl").
+-include("protokol.hrl").
 
 -define(UPDATE_CURRENT(Field, Val),
             update_current_task(fun(T) ->
@@ -296,6 +297,7 @@ render_task(#db_task{id=Id,  % {{{1
                      changes=Changes}=Task) ->
     TextF = re:replace(Text, "\r*\n", "<br>", [{return, list}, noteol, global]), 
     {ok, Updates} = db:get_task_history(Id),
+    {ok, Comments} = db:get_task_comments(Id),
     AllComplete = db:are_all_child_tasks_complete(Id),
     IncompleteWarning = ?WF_IF(Status==complete andalso not(AllComplete), "<i class='icon-exclamation-sign' title=\"Task marked complete but has incomplete subtasks\"></i>"),
     StatusDropdown = #dropdown{options=db:task_status_list(), value=Status},
@@ -364,6 +366,7 @@ render_task(#db_task{id=Id,  % {{{1
             ]}
         ]},
         render_attachments(Task),
+        render_comments(Comments),
         render_updates(Updates),
         render_task_changes(Changes)
     ]. 
@@ -540,6 +543,7 @@ render_updates(Updates) -> % {{{1
            message=M} || M <- sugar:sort_by_timestamp(Updates)]
     ].
 
+
 render_task_changes([]) -> [];
 render_task_changes(Changes) ->
     [
@@ -560,6 +564,35 @@ render_task_change(C) ->
         #panel{class="span3", text=sugar:date_format(Datetime)},
         #panel{class="span3", text=Contact},
         #panel{class="span6", text=["changed ",C#db_task_change.field," to ",C#db_task_change.new_value]}
+    ]}.
+
+render_comments(Comments) -> % {{{1
+    [
+        #br{},
+        #panel{class="row-fluid", body=[
+            #panel{class="span6", body="<i class='icon-envelope'></i> Comments"}
+        ]},
+        [render_comment(M) || M <- sugar:sort_by_timestamp(Comments)]
+    ].
+
+render_comment(#message{from=From, text=Data, time=Datetime}) ->
+    Contact = case db:get_contact_by_address(From) of
+                  none -> "User " ++ sugar:date_format(calendar:local_time());
+                  {ok, Co} -> Co#db_contact.name
+              end,
+    Text = try binary_to_term(Data) of
+               #task_coment{text=T} ->
+                   T;
+               _ ->
+                   "Wrong comment"
+           catch
+               error:_ ->
+                   "Wrong comment"
+           end,
+    #panel{class="row-fluid", body=[
+        #panel{class="span3", text=sugar:date_format(sugar:timestamp_to_datetime(Datetime))},
+        #panel{class="span3", text=Contact},
+        #panel{class="span6", text=Text}
     ]}.
 
 highlight_selected() ->  % {{{1

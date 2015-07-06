@@ -397,6 +397,22 @@ get_task_history(Hash) ->  % {{{1
                                      end, [], message)
                 end).
 
+get_task_coments(Hash) ->  % {{{1
+    transaction(fun() ->
+                        mnesia:foldr(fun(#message{hash=Id, text=D, status=S}=Msg, A) when S /= archive ->
+                                             try binary_to_term(D) of
+                                                 #task_coment{task=Hash}=Task ->
+                                                     A ++ [Msg];
+                                                 _ ->
+                                                     A
+                                             catch
+                                                 error:_ ->
+                                                     A
+                                             end;
+                                        (_, A) ->
+                                             A
+                                     end, [], message)
+                end).
 
 get_tasks_by_user(UID) ->  % {{{1
     get_tasks_by_user(UID, '_').
