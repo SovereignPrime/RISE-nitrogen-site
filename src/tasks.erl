@@ -567,11 +567,28 @@ render_task_change(C) ->
     ]}.
 
 render_comments(Comments) -> % {{{1
+    #db_contact{name=Me} = wf:user(),
     [
         #br{},
         #panel{class="row-fluid", body=[
             #panel{class="span6", body="<i class='icon-envelope'></i> Comments"}
         ]},
+        #panel{class="row-fluid",
+               body=[
+                     #panel{class="span3",
+                            text=sugar:date_format(calendar:local_time())},
+                     #panel{class="span2", text=Me},
+                     #panel{class="span6", body=#textbox{id=comment, placeholder="Add comment here"}},
+                     #panel{class=span1,
+                            style="min-height:20px; height:20px; text-align:right",
+                            body=[
+                                  #link{id=ok, 
+                                        body=["<i class='icon-ok'></i>"],
+                                        html_encode=false,
+                                        postback=add_comment,
+                                        delegate=?MODULE}
+                                 ]}
+                    ]},
         [render_comment(M) || M <- sugar:sort_by_timestamp(Comments)]
     ].
 
