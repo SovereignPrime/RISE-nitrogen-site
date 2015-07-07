@@ -167,11 +167,17 @@ render_subtask(Task = #db_task{name=Name, status=Status, due=Due, id=Id}, Archiv
             
             #listitem{body=[
                 #droppable{tag={subtask, Id}, accept_groups=[task_groups], body=[
-                    #draggable{tag={task, Id}, group=task_groups, clone=false, distance=20, options=[{delay, 300}], body=[
-                        #panel{style="display:block", body=[
-                            Expander,
-                            render_task_link(Task)
-                       ]}
+                    #draggable{tag={task, Id},
+                               group=task_groups,
+                               clone=false,
+                               distance=20,
+                               options=[{delay, 300}],
+                               body=[
+                                     #panel{style="display:block",
+                                            body=[
+                                                  Expander,
+                                                  render_task_link(Task)
+                                                 ]}
                     ]}
                 ]},
                 Subtree
@@ -194,7 +200,7 @@ render_task_link(Id, Name, HasAttachments, Due) ->
         ]},
         #span{style="font-size:0.8em; white-space:nowrap",body=[
             " (",
-            ?WF_IF(Due,["Due: ",Due],"No due date"),
+            ?WF_IF(Due,["Due: ",sugar:date_format(Due)],"No due date"),
             ")",
             "&nbsp;",
             #link{body="<i class='icon-plus' style='font-size:10px'></i>",
@@ -295,6 +301,7 @@ render_task(#db_task{id=Id,  % {{{1
                      parent=Parent,
                      status=Status,
                      changes=Changes}=Task) ->
+    error_logger:info_msg("Due: ~p~n", [Due]),
     TextF = re:replace(Text, "\r*\n", "<br>", [{return, list}, noteol, global]), 
     {ok, Updates} = db:get_task_history(Id),
     {ok, Comments} = db:get_task_comments(Id),
@@ -336,7 +343,7 @@ render_task(#db_task{id=Id,  % {{{1
                                       text=sugar:date_string(Due),
                                       view=#span{},
                                       start_mode=view,
-                                      edit=#datepicker_textbox{text=sugar:date_format(Due)}
+                                      edit=#datepicker_textbox{text=sugar:date_string(Due)}
                                      },
                              #inplace{id=due_time,
                                       style="min-height:15px;",
@@ -805,7 +812,7 @@ inplace_event(due_date, Val) -> % {{{1
     {DueDate, _DueTime} = sugar:date_from_string(Val),
     #db_task{due=Due} = wf:state(current_task),
     {_DueDateO, DueTimeO} = sugar:date_from_string(Due),
-    NewVal = sugar:date_format({DueDate, DueTimeO}),
+    NewVal = {DueDate, DueTimeO},
     ?UPDATE_CURRENT(due, NewVal),
     Val;
 
@@ -814,7 +821,7 @@ inplace_event(due_time, Val) -> % {{{1
     {_DueDate, DueTime} = sugar:date_from_string("2015-01-01 " ++ Val),
     #db_task{due=Due} = wf:state(current_task),
     {DueDateO, _DueTimeO} = sugar:date_from_string(Due),
-    NewVal = sugar:date_format({DueDateO, DueTime}),
+    NewVal = {DueDateO, DueTime},
     ?UPDATE_CURRENT(due, NewVal),
     Val;
 inplace_event(_, V) ->  % {{{1
@@ -862,8 +869,17 @@ calculate_changes(Task) -> % {{{1
         case element(Fieldnum+1, Task) =:= element(Fieldnum+1, TaskFromDB) of
             true -> Acc;
             false ->
-                FieldValue = element(Fieldnum+1, Task),
-                NewValue = string:strip(lists:flatten(io_lib:format("~100s",[FieldValue]))),
+                FieldValue = sugar:date_format(element(Fieldnum+1, Task)),
+                IsDate = is_tuple(FieldValue),
+                NewValue = if is_list(FieldValue) ->
+                                  string:strip(lists:flatten(io_lib:format("~100s",[FieldValue])));
+                              IsDate ->
+                                  string:strip(lists:flatten(io_lib:format("~100s",[sugar:date_format(FieldValue)])));
+                              true ->
+                                  string:strip(lists:flatten(io_lib:format("~100p",[FieldValue])))
+                           end,
+                                  
+
                 IsShortened = wf:to_list(NewValue) =/= wf:to_list(FieldValue),
                 NewValue2 = ?WF_IF(IsShortened, NewValue ++ "...", NewValue),
                 Change = #db_task_change{
