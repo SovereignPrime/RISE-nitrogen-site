@@ -1189,7 +1189,7 @@ filter_messages_by_date(Date,  % {{{1
 filter_messages_by_date(_,_, A) ->  % {{{1
     A.
 
-get_by_date(FilePred, TaskRe, Date) ->  % {{{1
+get_by_date(FilePred, TaskPred, Date) ->  % {{{1
     transaction(fun() ->
                         %FilesH = mnesia:table(bm_file,
                         %                      [{traverse,
@@ -1210,20 +1210,24 @@ get_by_date(FilePred, TaskRe, Date) ->  % {{{1
                         TasksH1 = mnesia:table(db_task,
                                                [{traverse,
                                                  {select,
-                                                  [{#db_task{status='$1', _='_'},
-                                                    [{'/=', '$1', archive}],
+                                                  [{#db_task{status='$1',
+                                                             due='$2',
+                                                             _='_'},
+                                                    [{'/=', '$1', archive},
+                                                    FilePred],
                                                     ['$_']}]}}]),
 
-                        TasksH2 = qlc:q([T || #db_task{due=DT}=T <- TasksH1,
-                                              re:run(DT, TaskRe) /= nomatch]),
+                        %TasksH2 = qlc:q([T || #db_task{due=DT}=T <- TasksH1,
+                        %                      sugar:date_string(DT) == 
+                        %                      re:run(DT, TaskRe) /= nomatch]),
                         %FromFilesH = qlc:q([DT || #db_file{date=DT} <- FilesH],
                         %                  [unique]),
-                        FromTasksH = qlc:q([sugar:date_from_string(DT) || #db_task{due=DT} <- TasksH2],
+                        FromTasksH = qlc:q([sugar:date_from_string(DT) || #db_task{due=DT} <- TasksH1],
                                            [unique]),
 
 
                         Rest = qlc:e(qlc:append([FromTasksH])),
-                        lists:usort(Msg) %++ Rest)
+                        lists:usort(Msg ++ Rest)
 
                 end).
 
