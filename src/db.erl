@@ -1152,8 +1152,7 @@ filter_messages_by_date({0, M, D},  % {{{1
                            status=S
                           },
                         A) when S /= archive->
-    TS = TTL - application:get_env(bitmessage, message_ttl, 2419200),
-    case sugar:timestamp_to_datetime(TS) of
+    case sugar:ttl_to_datetime(TTL) of
         {{_, M1, D1}= DT, _} when M1 == M; D1 == D ->
             error_logger:info_msg("Dates: ~p~n", [DT]),
             A ++ [DT];
@@ -1167,8 +1166,7 @@ filter_messages_by_date({Y, 0, 0},  % {{{1
                            status=S
                           },
                         A) when S /= archive->
-    TS = TTL - application:get_env(bitmessage, message_ttl, 2419200),
-    case sugar:timestamp_to_datetime(TS) of
+    case sugar:ttl_to_datetime(TTL) of
         {{Y1, _, _}= DT, _} when Y1 == Y ->
             error_logger:info_msg("Subject: ~p Date: ~p~n", [Subject, DT]),
             A ++ [DT];
@@ -1181,8 +1179,7 @@ filter_messages_by_date(Date,
                            status=S
                           },
                         A) when S /= archive ->  % {{{1
-    TS = TTL - application:get_env(bitmessage, message_ttl, 2419200),
-    case sugar:timestamp_to_datetime(TS) of
+    case sugar:ttl_to_datetime(TTL) of
         {Date, _} ->
             error_logger:info_msg("Dates: ~p~n", [Date]),
             A ++ [Date];

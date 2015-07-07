@@ -6,8 +6,13 @@
 ttl_to_readable(TTL) ->  % {{{1
     date_format(calendar:universal_time_to_local_time(ttl_to_datetime(TTL))).
 
+ttl_to_timestamp(undefined) ->  % {{{1
+    bm_types:timestamp();
+ttl_to_timestamp(TTL) ->  % {{{1
+     TTL - application:get_env(bitmessage, message_ttl, 2419200).
+
 ttl_to_datetime(TTL) ->  % {{{1
-    TS = TTL - application:get_env(bitmessage, message_ttl, 2419200),
+    TS = ttl_to_timestamp(TTL),
     timestamp_to_datetime(TS).
 
 time_string(DT) ->  % {{{1
