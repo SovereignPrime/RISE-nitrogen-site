@@ -904,17 +904,6 @@ save_file(Path, #db_contact{id=UID}) ->  % {{{1
     Size = filelib:file_size(Path),
     Type = filename:extension(Path),
     <<FID:64/bytes, _/bytes>> = bm_message_encryptor:process_attachment(Path),
-    File = #db_file{id=FID,
-                    path=Path, 
-                    size=Size,
-                    date=date(),
-                    status=uploaded,
-                    user=UID,
-                    type=Type
-                   },
-    transaction(fun() ->
-                        mnesia:write(File)
-                end),
     FID.
 
 %%%
@@ -956,13 +945,6 @@ get_files(false)  ->  % {{{1
                         mnesia:select(bm_file, [{#bm_file{status='$1', _='_'}, [{'/=', '$1', archive}], ['$_']}])
                 end).
 
-get_owner(FID) ->  % {{{1
-    transaction(fun() ->
-                        [ #db_file{user=UID} ] = mnesia:read(db_file, FID),
-                        [ #db_contact{bitmessage=Address} ] = mnesia:read(db_contact, UID),
-                        Address
-                end).
-
 get_addresat(FID) ->  % {{{1
     transaction(fun() ->
                         Attachments = mnesia:read(db_attachment, FID),
@@ -972,11 +954,6 @@ get_addresat(FID) ->  % {{{1
                                                          end)
                 end).
 
-mark_downloaded(Id) ->  % {{{1
-    transaction(fun() ->
-                        [F] = mnesia:wread({ db_file, Id }),
-                        mnesia:write(F#db_file{status=downloaded})
-                end).
 
 get_linked_messages(FID) when is_list(FID) ->  % {{{1
     get_linked_messages(wf:to_binary(FID));
@@ -1102,8 +1079,6 @@ transaction(Fun) ->  % {{{1
 
 save_attachment(_Type, _Id, [], _N) ->  % {{{1
     ok;
-save_attachment(Type, Id, [#db_file{id=File}|Rest], N) ->  % {{{1
-    save_attachment(Type, Id, [File|Rest], N);
 save_attachment(Type, Id, [File|Rest], N) ->  % {{{1
     case mnesia:match_object(#db_attachment{file=File, type=Type, tid=Id, _='_'}) of
         [] ->
@@ -1220,7 +1195,7 @@ get_by_date(FilePred, TaskPred, Date) ->  % {{{1
                         %TasksH2 = qlc:q([T || #db_task{due=DT}=T <- TasksH1,
                         %                      sugar:date_string(DT) == 
                         %                      re:run(DT, TaskRe) /= nomatch]),
-                        %FromFilesH = qlc:q([DT || #db_file{date=DT} <- FilesH],
+                        %FromFilesH = qlc:q([DT || #bm_file{time=DT} <- FilesH],
                         %                  [unique]),
                         FromTasksH = qlc:q([sugar:date_from_string(DT) || #db_task{due=DT} <- TasksH1],
                                            [unique]),

@@ -47,6 +47,7 @@
          time,
          visible=false}).
 
+%% DEPRECATED: Will be removed in next release
 -record(db_file,
         {id,
          path,
@@ -75,6 +76,7 @@
         {expense,
          task}).
 
+%% DEPRECATED: Will be removed in next release
 -record(db_update,
         {id,
          subject,

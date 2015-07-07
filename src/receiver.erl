@@ -133,9 +133,7 @@ handle_cast({register, Pid}, State) ->  % {{{1
 handle_cast({connection, N}, State) ->  % {{{1
     State#state.pid ! {status, N},
     {noreply, State};
-handle_cast({downloaded, Hash}, State) ->  % {{{1
-    [#bm_file{name=Name}] = bm_db:lookup(bm_file, Hash),
-    db:mark_downloaded(Name),
+handle_cast({downloaded, _Hash}, State) ->  % {{{1
     {noreply, State};
 handle_cast({sent, Hash}, State) ->  % {{{1
     {ok, #message{enc=Enc}}= bitmessage:get_message(Hash),
@@ -417,20 +415,8 @@ extract_task(Task) ->  % {{{1
 -spec save_attachments(non_neg_integer(), record(), [#bm_file{}]) -> {ok, ok}.  % {{{1
 save_attachments(UID, Message, Attachments) ->
     Files = lists:map(fun(#bm_file{
-                             hash=I,
-                             name=Name,
-                             time={Date, _},
-                             size=Size
+                             hash=I
                             }) ->
-                                    db:save(#db_file{
-                                              id=I,
-                                              type=filename:extension(Name),
-                                              path=Name,
-                                              size=Size,
-                                              date=Date,
-                                              user=UID,
-                                              status=received
-                                             }),
                                     I
                       end,
                       Attachments),

@@ -3,6 +3,7 @@
 -module (files).
 -compile(export_all).
 -include_lib("nitrogen_core/include/wf.hrl").
+-include_lib("bitmessage/include/bm.hrl").
 -include("records.hrl").
 -include("db.hrl").
 
@@ -70,7 +71,7 @@ body() ->  % {{{1
     body(false).
 body(Archive) ->   % {{{1
     {ok, Files0} = db:get_files(Archive),
-    Sortby = wf:state_default(sortby, #db_file.path),
+    Sortby = wf:state_default(sortby, #bm_file.name),
     Files = lists:sort(fun(A,B) -> element(Sortby, A) =< element(Sortby, B) end, Files0),
     #panel{id=body,
            class="scrollable",
@@ -84,13 +85,13 @@ body(Archive) ->   % {{{1
                                                                 %checked=false,
                                                                 %delegate=common}
                                                                ]},
-                                               sortheader("File name", #db_file.path),
-                                               sortheader("Type", #db_file.type),
-                                               sortheader("Size", #db_file.size),
-                                               sortheader("From/To", #db_file.user),
+                                               sortheader("File name", #bm_file.name),
+                                               sortheader("Type", 2),
+                                               sortheader("Size", #bm_file.size),
+                                               sortheader("From/To", 4),
                                                #tableheader{text="Linked Message"},
-                                               sortheader("Date", #db_file.date),
-                                               sortheader("Status", #db_file.status)
+                                               sortheader("Date", #bm_file.time),
+                                               sortheader("Status", #bm_file.status)
                                                 ]},
                 lists:map(fun(F) ->
                             #file_row{file=F}
@@ -101,7 +102,7 @@ body(Archive) ->   % {{{1
             ]}.    
 
 sortheader(Label, Sortby) -> % {{{1
-    Sort = wf:state_default(sortby, #db_file.path),
+    Sort = wf:state_default(sortby, #bm_file.path),
     #tableheader{body=[
         #link{text=Label, postback={sort, Sortby}},
         if Sortby == Sort ->
