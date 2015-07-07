@@ -1262,20 +1262,19 @@ create_contacts_request(Terms) ->  % {{{1
     end.
 
 create_dates_request(Terms) -> % {{{1
-    DT = application:get_env(bitmessage, message_ttl, 2419200),
     case {dict:find("Daterange", Terms),
           dict:find("Date", Terms)} of
         {error, error} ->
             [];
         {{ok, {SD1, ED1}}, _} ->
             [{'andalso', 
-              {'>=', '$3', sugar:timestamp_from_string(SD1)},
-              {'<', '$3', sugar:timestamp_from_string(ED1)}}];
+              {'>=', '$3', sugar:ttl_from_string(SD1)},
+              {'<', '$3', sugar:ttl_from_string(ED1) + 24 * 3600}}];
         {{ok, D}, _} when is_list(D) ->
             [SD1, ED1] = string:tokens(D, " "),
             [{'andalso', 
-              {'>=', '$3', sugar:timestamp_from_string(SD1)},
-              {'<', '$3', sugar:timestamp_from_string(ED1)}}];
+              {'>=', '$3', sugar:ttl_from_string(SD1)},
+              {'<', '$3', sugar:ttl_from_string(ED1) + 24 * 3600}}];
         {error, {ok, D1}} ->
             [{'andalso', 
               {'>=', '$3', sugar:ttl_from_string(D1)},
