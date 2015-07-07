@@ -1173,12 +1173,12 @@ filter_messages_by_date({Y, 0, 0},  % {{{1
         _ ->
             A
     end;
-filter_messages_by_date(Date,
+filter_messages_by_date(Date,  % {{{1
                         #message{
                            time=TTL,
                            status=S
                           },
-                        A) when S /= archive ->  % {{{1
+                        A) when S /= archive ->  
     case sugar:ttl_to_datetime(TTL) of
         {Date, _} ->
             error_logger:info_msg("Dates: ~p~n", [Date]),
@@ -1277,7 +1277,9 @@ create_dates_request(Terms) -> % {{{1
               {'>=', '$3', sugar:timestamp_from_string(SD1)},
               {'<', '$3', sugar:timestamp_from_string(ED1)}}];
         {error, {ok, D1}} ->
-              [{'=:=', '$3', sugar:timestamp_from_string(D1)}]
+            [{'andalso', 
+              {'>=', '$3', sugar:ttl_from_string(D1)},
+              {'<', '$3', sugar:ttl_from_string(D1) + 24 * 3600 }}]
     end.
 
 check_due(D, Terms) ->  % {{{1
