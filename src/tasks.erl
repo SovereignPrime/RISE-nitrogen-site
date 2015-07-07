@@ -592,13 +592,13 @@ render_comments(Comments) -> % {{{1
         [render_comment(M) || M <- sugar:sort_by_timestamp(Comments)]
     ].
 
-render_comment(#message{from=From, text=Data, time=Datetime}) ->
+render_comment(#message{from=From, text=Data, time=Datetime}) ->  % {{{1
     Contact = case db:get_contact_by_address(From) of
                   none -> "User " ++ sugar:date_format(calendar:local_time());
                   {ok, Co} -> Co#db_contact.name
               end,
     Text = try binary_to_term(Data) of
-               #task_coment{text=T} ->
+               #task_comment{text=T} ->
                    T;
                _ ->
                    "Wrong comment"
@@ -715,6 +715,17 @@ event(show) ->  % {{{1
                                         #event{postback=hide}
                                         ]}});
 
+event(add_comment) -> % {{{1
+    Text = wf:q(comment), 
+    if Text == "" ->
+           ok;
+       true ->
+           #db_task{id=TID} = T = wf:session(current_task),
+           common:send_messages(#task_comment{task=TID, 
+                                              text=text,
+                                              time=calendar:universal_time()}),
+           wf:update(body, render_task(T))
+    end;
 event(add_role) -> % {{{1
     wf:insert_bottom(role_wrapper, render_role_edit_row({#db_contact_roles{id=new}, ""}));
 

@@ -614,6 +614,21 @@ save_involved(Type, TId) -> %{{{1
                 db:save(P#db_contact_roles{id=NPId, contact=CID})
         end, List).
 
+send_messages(#task_comment{task=TID}=TP) -> % {{{1
+    #db_task{id=TID, name=Subject} = wf:session(current_task),
+    #db_contact{address=From} = wf:user(),
+    {ok, Involved} = db:get_involved(TID),
+    Contacts = [#role_packet{address=C, role=R} || {_, R, #db_contact{bitmessage=C}}  <- Involved],
+    #db_contact{address=From} = wf:user(),
+    lists:foreach(fun(#role_packet{address=To}) when To /= From ->
+                          bitmessage:send_message(From,
+                                                  wf:to_binary(To), 
+                                                  wf:to_binary(Subject), 
+                                                  term_to_binary(TP));
+                     (_) ->
+                          ok
+                  end,
+                  Contacts);
 send_messages(#db_update{subject=Subject, % {{{1
                          text=Text,
                          from=FID,

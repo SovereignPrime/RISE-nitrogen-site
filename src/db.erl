@@ -397,11 +397,11 @@ get_task_history(Hash) ->  % {{{1
                                      end, [], message)
                 end).
 
-get_task_coments(Hash) ->  % {{{1
+get_task_comments(Hash) ->  % {{{1
     transaction(fun() ->
                         mnesia:foldr(fun(#message{hash=Id, text=D, status=S}=Msg, A) when S /= archive ->
                                              try binary_to_term(D) of
-                                                 #task_coment{task=Hash}=Task ->
+                                                 #task_comment{task=Hash}=Task ->
                                                      A ++ [Msg];
                                                  _ ->
                                                      A
