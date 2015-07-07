@@ -275,6 +275,10 @@ decode_enc(Enc, Data, Collapsed) when Enc == 2; Enc == 3 ->  % {{{1
                                         ]}],
             Text = ?WF_IF(Collapsed, wf:html_encode(T), wf:html_encode(T, whites)),
             {Text, TS, empty};
+        #task_comment{task=TID,
+                      time=TS,
+                      text=Txt} ->
+            {Txt, sugar:datetime_to_timestamp(TS), 4};
         Task ->
             #task_packet{id=Id,
                          text=T,

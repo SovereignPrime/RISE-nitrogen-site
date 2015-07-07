@@ -578,7 +578,11 @@ render_comments(Comments) -> % {{{1
                      #panel{class="span3",
                             text=sugar:date_format(calendar:local_time())},
                      #panel{class="span2", text=Me},
-                     #panel{class="span6", body=#textbox{id=comment, placeholder="Add comment here"}},
+                     #panel{class="span6",
+                            body=#textbox{id=comment,
+                                          style="min-height:15px;border:0px;box-shadow:none;padding-left:0",
+                                          placeholder="Add comment here"}},
+
                      #panel{class=span1,
                             style="min-height:20px; height:20px; text-align:right",
                             body=[
@@ -607,7 +611,13 @@ render_comment(#message{from=From, text=Data, time=Datetime}) ->  % {{{1
                    "Wrong comment"
            end,
     #panel{class="row-fluid", body=[
-        #panel{class="span3", text=sugar:date_format(sugar:timestamp_to_datetime(Datetime))},
+        #panel{class="span3",
+               text=case Datetime of
+                        undefined -> 
+                            sugar:date_format(calendar:local_time());
+                        _ ->
+                            sugar:ttl_to_readable(Datetime)
+                    end},
         #panel{class="span3", text=Contact},
         #panel{class="span6", text=Text}
     ]}.
@@ -722,7 +732,7 @@ event(add_comment) -> % {{{1
        true ->
            #db_task{id=TID} = T = wf:session(current_task),
            common:send_messages(#task_comment{task=TID, 
-                                              text=text,
+                                              text=Text,
                                               time=calendar:universal_time()}),
            wf:update(body, render_task(T))
     end;

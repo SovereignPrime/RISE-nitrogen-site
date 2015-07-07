@@ -139,6 +139,10 @@ decode_type(Data) ->  % {{{1
             {Txt, TS, 3};
         #update_packet{text=Txt, time=TS} -> 
             {Txt, TS, 5};
+        #task_comment{task=TID,
+                      time=TS,
+                      text=Txt} ->
+            {Txt, sugar:datetime_to_timestamp(TS), 4};
         Task ->
             #task_packet{text=Txt,
                          time=TS} = receiver:extract_task(Task),
