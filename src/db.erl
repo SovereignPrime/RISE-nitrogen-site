@@ -1127,43 +1127,47 @@ search_parent_rec(Id, PId) ->  % {{{1
 verify_create_table({atomic, ok}) -> ok;  % {{{1
 verify_create_table({aborted, {already_exists, _Table}}) -> ok. % {{{1
 
-filter_messages_by_date({0, M, D}, #message{text=Data, enc=3, status=S}, A) when S /= archive->  % {{{1
-    try
-        #message_packet{time=TS} = binary_to_term(Data),
-        case sugar:timestamp_to_datetime(TS) of
-            {{_, MU, DU} = Date, _} when MU == M; DU == D ->
-                A ++ [Date];
-            _ ->
-                A
-        end
-    catch
-        error:_ ->
+filter_messages_by_date({0, M, D},  % {{{1
+                        #message{
+                           time=TTL,
+                           status=S
+                          },
+                        A) when S /= archive->
+    TS = TTL - application:get_env(bitmessage, message_ttl, 2419200),
+    case sugar:timestamp_to_datetime(TS) of
+        {{_, M1, D1}= DT, _} when M1 == M; D1 == D ->
+            error_logger:info_msg("Dates: ~p~n", [DT]),
+            A ++ [DT];
+        _ ->
             A
     end;
-filter_messages_by_date({Y, 0, 0}, #message{text=Data, enc=3, status=S}, A) when S /= archive->  % {{{1
-    try
-        #message_packet{time=TS} = binary_to_term(Data),
-        case sugar:timestamp_to_datetime(TS) of
-            {{Y, _, _} = Date, _} ->
-                A ++ [Date];
-            _ ->
-                A
-        end
-    catch
-        error:_ ->
+filter_messages_by_date({Y, 0, 0},  % {{{1
+                        #message{
+                           subject=Subject,
+                           time=TTL,
+                           status=S
+                          },
+                        A) when S /= archive->
+    TS = TTL - application:get_env(bitmessage, message_ttl, 2419200),
+    case sugar:timestamp_to_datetime(TS) of
+        {{Y1, _, _}= DT, _} when Y1 == Y ->
+            error_logger:info_msg("Subject: ~p Date: ~p~n", [Subject, DT]),
+            A ++ [DT];
+        _ ->
             A
     end;
-filter_messages_by_date(Date, #message{text=Data, enc=3, status=S}, A) when S /= archive->  % {{{1
-    try
-        #message_packet{time=TS} = binary_to_term(Data),
-        case sugar:timestamp_to_datetime(TS) of
-            {Date, _} ->
-                A ++ [Date];
-            _ ->
-                A
-        end
-    catch
-        error:_ ->
+filter_messages_by_date(Date,
+                        #message{
+                           time=TTL,
+                           status=S
+                          },
+                        A) when S /= archive ->  % {{{1
+    TS = TTL - application:get_env(bitmessage, message_ttl, 2419200),
+    case sugar:timestamp_to_datetime(TS) of
+        {Date, _} ->
+            error_logger:info_msg("Dates: ~p~n", [Date]),
+            A ++ [Date];
+        _ ->
             A
     end;
 filter_messages_by_date(_,_, A) ->  % {{{1
@@ -1171,17 +1175,39 @@ filter_messages_by_date(_,_, A) ->  % {{{1
 
 get_by_date(FilePred, TaskRe, Date) ->  % {{{1
     transaction(fun() ->
-                        FilesH = mnesia:table(db_file, [{traverse, {select, [{#db_file{date={'$1', '$2', '$3'}, status='$4', _='_'}, [FilePred, {'/=', '$4', archive}],['$_']}]}}]),
-                        Msg = mnesia:foldl(fun(Upd, A) -> filter_messages_by_date(Date, Upd, A) end, [], message),
-                        TasksH1 = mnesia:table(db_task, [{traverse, {select, [{#db_task{status='$1', _='_'}, [ {'/=', '$1', archive}],['$_']}]}}]),
+                        %FilesH = mnesia:table(bm_file,
+                        %                      [{traverse,
+                        %                        {select,
+                        %                         [{#bm_file{time={'$1', '$2', '$3'},
+                        %                                    status='$5',
+                        %                                    _='_'},
+                        %                           [FilePred,
+                        %                            {'/=', '$4', archive}],
+                        %                           ['$_']}]}}]),
+                        Msg = mnesia:foldl(fun(Upd, A) -> 
+                                                   filter_messages_by_date(Date,
+                                                                           Upd,
+                                                                           A)
+                                           end,
+                                           [],
+                                           message),
+                        TasksH1 = mnesia:table(db_task,
+                                               [{traverse,
+                                                 {select,
+                                                  [{#db_task{status='$1', _='_'},
+                                                    [{'/=', '$1', archive}],
+                                                    ['$_']}]}}]),
+
                         TasksH2 = qlc:q([T || #db_task{due=DT}=T <- TasksH1,
                                               re:run(DT, TaskRe) /= nomatch]),
-                        FromFilesH = qlc:q([DT || #db_file{date=DT} <- FilesH], [unique]),
-                        FromTasksH = qlc:q([sugar:date_from_string(DT) || #db_task{due=DT} <- TasksH2], [unique]),
+                        %FromFilesH = qlc:q([DT || #db_file{date=DT} <- FilesH],
+                        %                  [unique]),
+                        FromTasksH = qlc:q([sugar:date_from_string(DT) || #db_task{due=DT} <- TasksH2],
+                                           [unique]),
 
 
-                        Rest = qlc:e(qlc:append([FromFilesH, FromTasksH])),
-                        lists:usort(Msg ++ Rest)
+                        Rest = qlc:e(qlc:append([FromTasksH])),
+                        lists:usort(Msg) %++ Rest)
 
                 end).
 
@@ -1220,6 +1246,7 @@ create_contacts_request(Terms) ->  % {{{1
     end.
 
 create_dates_request(Terms) -> % {{{1
+    DT = application:get_env(bitmessage, message_ttl, 2419200),
     case {dict:find("Daterange", Terms),
           dict:find("Date", Terms)} of
         {error, error} ->

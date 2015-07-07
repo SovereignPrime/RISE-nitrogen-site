@@ -43,7 +43,6 @@ render_element(Record = #file_row{
                        end,
                        Messages)),
     For = get_file_senders(Messages),
-    Percent = wf:to_integer(bitmessage:progress(FID) * 100),
 
     Check =  sets:is_element(FID, wf:session_default(attached_files, sets:new())),
 
@@ -62,6 +61,7 @@ render_element(Record = #file_row{
             #tablecell{text=sugar:date_format(Date), class=""},
             case Status of
                 downloading ->
+                    Percent = wf:to_integer(bitmessage:progress(FID) * 100),
                     #tablecell{body=#progressbar{progress=wf:to_list(Percent),
                                                  width=80},
                                class=""};

@@ -47,7 +47,7 @@ dates(Term) when length(Term) == 2 ->  % {{{1
     try
         T = wf:to_integer(Term),
         {ok, Dates} = db:search_dates({0, T, T}),
-        {[], Dates }
+        {[], Dates}
     catch 
         error:badarg ->
             {[], []}
