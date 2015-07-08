@@ -236,25 +236,6 @@ get_archive(Type) when Type == db_expense ->  % {{{1
                 mnesia:index_read(Type, archive, #db_expense.status)
         end).
 
-search_dates({D, _T}) ->  % {{{1
-    search_dates(D);
-search_dates({0, M, D}=Date) ->  % {{{1
-    MS = wf:to_list(M),
-    DS = wf:to_list(D),
-    get_by_date({'or', {'==', '$2', M}, {'==', '$3', D}},
-                "\\d{4}-" ++ MS ++ "-\\d{2}|\\d{4}-\\d{2}-" ++ DS,
-                Date);
-search_dates({Y, 0, 0}=Date) ->  % {{{1
-    YS = wf:to_list(Y),
-    get_by_date({'==', '$1', Y}, 
-                {'==', '$1', Y},
-                Date);
-search_dates({Y, M, D}=Date) when M > 12; D > 31 ->  % {{{1
-    [];
-search_dates({Y, M, D}=Date) ->  % {{{1
-    get_by_date([{'==', '$1', Y}, {'==', '$2', M}, {'==', '$3', D}], 
-                sugar:date_format(Date),
-                Date).
 
 search_groups(Term) ->  % {{{1
     transaction(fun() ->
@@ -1130,83 +1111,67 @@ search_parent_rec(Id, PId) ->  % {{{1
 verify_create_table({atomic, ok}) -> ok;  % {{{1
 verify_create_table({aborted, {already_exists, _Table}}) -> ok. % {{{1
 
-filter_messages_by_date({0, M, D},  % {{{1
-                        #message{
-                           time=TTL,
-                           status=S
-                          },
-                        A) when S /= archive->
-    case sugar:ttl_to_datetime(TTL) of
+filter_by_date({0, M, D}, TTL, A) -> % {{{1
+    case sugar:timestamp_to_datetime(TTL) of
         {{_, M1, D1}= DT, _} when M1 == M; D1 == D ->
-            error_logger:info_msg("Dates: ~p~n", [DT]),
             A ++ [DT];
         _ ->
             A
     end;
-filter_messages_by_date({Y, 0, 0},  % {{{1
-                        #message{
-                           subject=Subject,
-                           time=TTL,
-                           status=S
-                          },
-                        A) when S /= archive->
-    case sugar:ttl_to_datetime(TTL) of
+filter_by_date({Y, 0, 0}, TTL, A) -> % {{{1
+    case sugar:timestamp_to_datetime(TTL) of
         {{Y1, _, _}= DT, _} when Y1 == Y ->
-            error_logger:info_msg("Subject: ~p Date: ~p~n", [Subject, DT]),
             A ++ [DT];
         _ ->
             A
     end;
-filter_messages_by_date(Date,  % {{{1
-                        #message{
-                           time=TTL,
-                           status=S
-                          },
-                        A) when S /= archive ->  
-    case sugar:ttl_to_datetime(TTL) of
+filter_by_date(Date, TTL, A) ->  % {{{1
+    case sugar:timestamp_to_datetime(TTL) of
         {Date, _} ->
             error_logger:info_msg("Dates: ~p~n", [Date]),
             A ++ [Date];
         _ ->
             A
     end;
-filter_messages_by_date(_,_, A) ->  % {{{1
+filter_by_date(_,_, A) ->  % {{{1
     A.
 
-get_by_date(FilePred, TaskPred, Date) ->  % {{{1
+search_dates(Date) ->  % {{{1
     transaction(fun() ->
-                        %FilesH = mnesia:table(bm_file,
-                        %                      [{traverse,
-                        %                        {select,
-                        %                         [{#bm_file{time={'$1', '$2', '$3'},
-                        %                                    status='$5',
-                        %                                    _='_'},
-                        %                           [FilePred,
-                        %                            {'/=', '$4', archive}],
-                        %                           ['$_']}]}}]),
-                        Msg = mnesia:foldl(fun(Upd, A) -> 
-                                                   filter_messages_by_date(Date,
-                                                                           Upd,
-                                                                           A)
+                        Msg = mnesia:foldl(fun(#message{time=TTL, 
+                                                       status=Status},
+                                               A) when Status /= archive -> 
+                                                   TS = sugar:ttl_to_timestamp(TTL),
+                                                   filter_by_date(Date,
+                                                                  TS,
+                                                                  A);
+                                              (_, A) -> A
                                            end,
                                            [],
                                            message),
-                        TasksH1 = mnesia:table(db_task,
-                                               [{traverse,
-                                                 {select,
-                                                  [{#db_task{status='$4',
-                                                             due={{'$1', '$2', '$3'}, '_'},
-                                                             _='_'},
-                                                    [{'/=', '$4', archive},
-                                                    TaskPred],
-                                                    ['$_']}]}}]),
-
-                        FromTasksH = qlc:q([sugar:date_from_string(DT) || #db_task{due=DT} <- TasksH1],
-                                           [unique]),
-
-
-                        Rest = qlc:e(qlc:append([FromTasksH])),
-                        lists:usort(Msg ++ Rest)
+                        TasksH =mnesia:foldl(fun(#db_task{due=Due, 
+                                                          status=Status},
+                                                 A) when Status /= archive, 
+                                                         Due /= "" -> 
+                                                     TS = sugar:datetime_to_timestamp(Due),
+                                                     filter_by_date(Date,
+                                                                    TS,
+                                                                    A);
+                                              (_, A) -> A
+                                             end,
+                                             [],
+                                             db_task),
+                        FilesH = mnesia:foldl(fun(#bm_file{time=TS, 
+                                                          status=Status},
+                                                 A) when Status /= archive -> 
+                                                     filter_by_date(Date,
+                                                                    TS,
+                                                                    A);
+                                              (_, A) -> A
+                                             end,
+                                             [],
+                                             bm_file),
+                        lists:usort(Msg ++ TasksH ++ FilesH)
 
                 end).
 
