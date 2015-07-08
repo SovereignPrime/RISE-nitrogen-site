@@ -89,7 +89,7 @@ update(4) ->  % {{{1
                            NFields);
 update(5) ->  % {{{1
     mnesia:transaction(fun() ->
-                        Files = mnesia:select(db_file, [{#db_file{status='$1', _='_'}, [{'/=', '$1', archive}], ['$_']}]),
+                       Files = mnesia:select(db_file, [{#db_file{status='$1', _='_'}, [{'/=', '$1', archive}], ['$_']}]),
                         lists:foreach(fun(#db_file{id=Id,
                                                    path=Path,
                                                    status=Status,
@@ -100,9 +100,18 @@ update(5) ->  % {{{1
                                                               name=Path,
                                                               size=Size,
                                                               time={Date, {0,0,0}},
-                                                              status=Status})
+                                                              status=imported})
                                       end,
                                       Files)
+                       end),
+    mnesia:transaction(fun() ->
+                               mnesia:foldl(fun(#db_task{due=undefined}=T, _) ->
+                                                    ok;
+                                               (#db_task{due=D}=T, _) ->
+                                                    mnesia:write(T#db_task{due=sugar:date_from_string(D)})
+                                            end,
+                                            [],
+                                            db_task)
                        end);
 update(6) ->  % {{{1
     mnesia:delete_table(db_update),
@@ -237,8 +246,8 @@ search_dates({0, M, D}=Date) ->  % {{{1
                 Date);
 search_dates({Y, 0, 0}=Date) ->  % {{{1
     YS = wf:to_list(Y),
-    get_by_date({'==', '$3', Y}, 
-                YS ++ "-\\d{2}-\\d{2}",
+    get_by_date({'==', '$1', Y}, 
+                {'==', '$1', Y},
                 Date);
 search_dates({Y, M, D}=Date) when M > 12; D > 31 ->  % {{{1
     [];
@@ -1185,18 +1194,13 @@ get_by_date(FilePred, TaskPred, Date) ->  % {{{1
                         TasksH1 = mnesia:table(db_task,
                                                [{traverse,
                                                  {select,
-                                                  [{#db_task{status='$1',
-                                                             due='$2',
+                                                  [{#db_task{status='$4',
+                                                             due={{'$1', '$2', '$3'}, '_'},
                                                              _='_'},
-                                                    [{'/=', '$1', archive},
-                                                    FilePred],
+                                                    [{'/=', '$4', archive},
+                                                    TaskPred],
                                                     ['$_']}]}}]),
 
-                        %TasksH2 = qlc:q([T || #db_task{due=DT}=T <- TasksH1,
-                        %                      sugar:date_string(DT) == 
-                        %                      re:run(DT, TaskRe) /= nomatch]),
-                        %FromFilesH = qlc:q([DT || #bm_file{time=DT} <- FilesH],
-                        %                  [unique]),
                         FromTasksH = qlc:q([sugar:date_from_string(DT) || #db_task{due=DT} <- TasksH1],
                                            [unique]),
 
