@@ -338,6 +338,46 @@ search_messages(Terms) ->  % {{{1
             end).
 
 
+search_tasks(Terms) ->  % {{{1
+    Term = search:get_term(Terms),
+    transaction(fun() ->
+                        Tasks = lists:foldl(fun({T, _}, A) when T=="Term";T == "Date"; T == "Daterange" ->
+                                                    A;
+                                               ({T, U}, A) when T == "Responsible"; T == "Accountable"; T == "Informed"; T =="Consulted" ->
+                                                    {ok, #db_contact{id=UID}} = get_contacts_by_name(U),
+                                                    {ok, Ts} = get_tasks_by_user(UID, string:to_lower(T)) ,
+                                                    lists:usort(A ++ Ts);
+                                               ({"Group", G}, A) ->
+                                                    [#db_group{id=GID}] = mnesia:index_read(db_group, G, #db_group.name),
+                                                    lists:usort(lists:map(fun(#db_group_members{contact=UID}) ->
+                                                                                  {ok, Ts} = get_tasks_by_user(UID) 
+                                                                          end,
+                                                                          mnesia:read(db_group_members, GID)));
+                                               ({"Contact", U}, A) ->
+                                                    {ok, #db_contact{id=UID}} = get_contacts_by_name(U),
+                                                    {ok, Ts} = get_tasks_by_user(UID) ,
+                                                    Ts
+                                            end, [], dict:to_list(Terms)),
+
+                        QH = qlc:q([G || G <- Tasks, 
+                                         G#db_task.status /= archive,
+                                         case {dict:find("Daterange", Terms), dict:find("Date", Terms)} of
+                                             {error, error} ->
+                                                 true;
+                                             {{ok, D}, _} when is_list(D) ->
+                                                 [SD1, ED1] = string:tokens(D, " "),
+                                                 DI = sugar:date_from_string(G#db_task.due),
+                                                 DI /= "" andalso DI >= sugar:date_from_string(SD1) andalso DI < sugar:date_from_string(ED1);
+                                             {{ok, {SD1, ED1}}, _} ->
+                                                 DI = sugar:date_from_string(G#db_task.due),
+                                                 DI /= "" andalso DI >= sugar:date_from_string(SD1) andalso DI < sugar:date_from_string(ED1);
+                                             {error, {ok, D1}} ->
+                                                 DI = sugar:date_from_string(G#db_task.due),
+                                                 DI /= "" andalso DI == sugar:date_from_string(D1)
+                                         end,
+                                         re:run(wf:to_list(G#db_task.name) ++ wf:to_list(G#db_task.text), Term, [caseless]) /= nomatch]),
+                        qlc:e(QH)
+                end).
 get_filters() ->  % {{{1
     transaction(fun() ->
                         mnesia:select(db_search, [{#db_search{_='_'}, [], ['$_']}])
@@ -1211,22 +1251,23 @@ create_contacts_request(Terms) ->  % {{{1
 
 create_dates_request(Terms) -> % {{{1
     case {dict:find("Daterange", Terms),
-          dict:find("Date", Terms)} of
-        {error, error} ->
-            [];
-        {{ok, {SD1, ED1}}, _} ->
+          dict:find("Date", Terms),
+          dict:find("Due", Terms),
+          dict:find("Duerange", Terms)} of
+        {{ok, {SD1, ED1}}, _, error, error} ->
             [{'andalso', 
               {'>=', '$3', sugar:ttl_from_string(SD1)},
               {'<', '$3', sugar:ttl_from_string(ED1) + 24 * 3600}}];
-        {{ok, D}, _} when is_list(D) ->
+        {{ok, D}, _, error, error} when is_list(D) ->
             [SD1, ED1] = string:tokens(D, " "),
             [{'andalso', 
               {'>=', '$3', sugar:ttl_from_string(SD1)},
               {'<', '$3', sugar:ttl_from_string(ED1) + 24 * 3600}}];
-        {error, {ok, D1}} ->
+        {error, {ok, D1}, error, error} ->
             [{'andalso', 
               {'>=', '$3', sugar:ttl_from_string(D1)},
-              {'<', '$3', sugar:ttl_from_string(D1) + 24 * 3600 }}]
+              {'<', '$3', sugar:ttl_from_string(D1) + 24 * 3600 }}];
+        _ -> []
     end.
 
 check_due(D, Terms) ->  % {{{1

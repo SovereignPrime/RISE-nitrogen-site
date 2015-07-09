@@ -14,7 +14,6 @@ dates_if(Terms) ->  % {{{1
             {Terms, []};
         false ->
             Term = get_term(Terms),
-            
             case dict:find("Date", Terms) of
                 error ->
                     case  dates(Term) of
@@ -86,7 +85,9 @@ contacts(Terms) ->  % {{{1
                         false ->
                             {Terms, #panel{body=["<dl class='dl-horizontal'>",
                                                  "<dt>Contacts:</dt><dd>",
-                                                 lists:map(fun(#db_contact{id=Id, name=Name, email=Email}) ->
+                                                 lists:map(fun(#db_contact{id=Id,
+                                                                           name=Name,
+                                                                           email=Email}) ->
                                                                    #panel{body=[
                                                                                 #link{text=wf:f("~s (~s)", [Name, Email]),
                                                                                       postback={search, Name},

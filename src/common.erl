@@ -156,13 +156,15 @@ sigma_search_event(search, Terms) -> % {{{1
     TermsD = dict:from_list(Terms),
     {NTerms, Results} = search:terms(TermsD),
     Bs = lists:map(fun({"Date", Date}) ->
-                           #sigma_search_badge{type="Date", text=sugar:date_format(Date)};
+                           #sigma_search_badge{type="Date",
+                                               text=sugar:date_format(Date),
+                                               dropdown=["Due"]};
                       ({"Daterange", {SDate, EDate}}) ->
                            #sigma_search_badge{type="Daterange",
                                                text=sugar:date_string(SDate) 
                                                ++ " " ++
-                                               sugar:date_string(EDate)
-                                              };
+                                               sugar:date_string(EDate),
+                                               dropdown=["Duerange"]};
                       ({"Group", Group}) ->
                            #sigma_search_badge{type="Group", text=Group};
                       ({"Term", _}) ->
