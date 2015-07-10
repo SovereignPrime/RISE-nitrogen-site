@@ -306,8 +306,9 @@ render_task(#db_task{id=Id,  % {{{1
     {ok, Updates} = db:get_task_history(Id),
     {ok, Comments} = db:get_task_comments(Id),
     AllComplete = db:are_all_child_tasks_complete(Id),
+    Paied = false,
     IncompleteWarning = ?WF_IF(Status==complete andalso not(AllComplete), "<i class='icon-exclamation-sign' title=\"Task marked complete but has incomplete subtasks\"></i>"),
-    StatusDropdown = #dropdown{options=db:task_status_list(), value=Status},
+    StatusDropdown = #dropdown{options=db:task_status_list(Paied), value=Status},
     [
         render_top_buttons(),
         #panel{class="row-fluid",

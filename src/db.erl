@@ -570,11 +570,21 @@ get_children(UID, Time) ->  % {{{1
                 end). 
 
 task_status_list() ->  % {{{1
+    task_status_list(false).
+
+task_status_list(WhthValue) ->  % {{{1
     [{new, "New"},
      {accepted, "Accepted"},
      {in_progress, "In Progress"},
-     {complete, "Complete"},
-     {archive, "Archived"}].
+     {complete, "Complete"}] ++
+     if WhthValue ->
+            [
+             {paied, "Paied"}
+            ];
+        true ->
+            []
+     end ++
+     [{archive, "Archived"}].
 
 nice_task_status_name(changed) ->  % {{{1
     "Changed";
