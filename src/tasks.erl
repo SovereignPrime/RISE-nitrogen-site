@@ -59,22 +59,23 @@ buttons(main) ->  % {{{1
 
 left() ->  % {{{1
     CId = wf:session(current_task_id),
-    case wf:session(filter) of
-        undefined ->
-            wf:session(task_tree_mode, task_tree),
-            #panel{id=tasks,
-                   class="span4 scrollable",
-                   body=[
-                         render_task_tree()
-                        ]};
-        D ->
-            wf:session(task_tree_mode, filter),
-            #panel{id=tasks,
-                   class="span4 scrollable",
-                   body=[
-                         render_task_tree()
-                        ]}
-    end.
+    #panel{id=left,
+           body=case wf:session(filter) of
+                    undefined ->
+                        wf:session(task_tree_mode, task_tree),
+                        #panel{id=tasks,
+                               class="span4 scrollable",
+                               body=[
+                                     render_task_tree()
+                                    ]};
+                    D ->
+                        wf:session(task_tree_mode, filter),
+                        #panel{id=tasks,
+                               class="span4 scrollable",
+                               body=[
+                                     render_task_tree()
+                                    ]}
+                end}.
 
 
 render_task_tree_buttons(Selected) ->  % {{{1
@@ -184,11 +185,11 @@ render_subtask(Task = #db_task{name=Name, status=Status, due=Due, id=Id}, Archiv
             ]}
     end.
 
-render_task_link(Task = #db_task{name=Name, due=Due, id=Id}) ->
+render_task_link(Task = #db_task{name=Name, due=Due, id=Id}) -> % {{{1
     HasAttachments = does_task_have_attachments(Task),
     render_task_link(Id, Name, HasAttachments, Due).
 
-render_task_link(Id, Name, HasAttachments, Due) ->
+render_task_link(Id, Name, HasAttachments, Due) -> % {{{1
     ThisTaskIdMd5 = md5(Id),
     [
         #link{postback={task_chosen, Id}, data_fields=[{link, ThisTaskIdMd5}], body=[
@@ -210,7 +211,7 @@ render_task_link(Id, Name, HasAttachments, Due) ->
         ]}
     ].
 
-does_task_have_attachments(Task) ->
+does_task_have_attachments(Task) -> % {{{1
     {ok, Attachments} = db:get_attachments(Task),
     _HasAttachments = length(Attachments) >= 1.
 

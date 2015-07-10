@@ -317,11 +317,11 @@ search_messages(Terms) ->  % {{{1
                                        search:check_roles(Terms,
                                                           fun() ->
                                                                   check_due(D, Terms) 
-                                                                  andalso
+                                                                  and
                                                                   check_status(S, Terms)
-                                                                  andalso
+                                                                  and
                                                                   search_roles(I, Terms) 
-                                                                  andalso
+                                                                  and
                                                                   SearchText(G, T)
                                                                   
                                                           end,
@@ -339,45 +339,21 @@ search_messages(Terms) ->  % {{{1
 
 
 search_tasks(Terms) ->  % {{{1
-    Term = search:get_term(Terms),
-    transaction(fun() ->
-                        Tasks = lists:foldl(fun({T, _}, A) when T=="Term";T == "Date"; T == "Daterange" ->
-                                                    A;
-                                               ({T, U}, A) when T == "Responsible"; T == "Accountable"; T == "Informed"; T =="Consulted" ->
-                                                    {ok, #db_contact{id=UID}} = get_contacts_by_name(U),
-                                                    {ok, Ts} = get_tasks_by_user(UID, string:to_lower(T)) ,
-                                                    lists:usort(A ++ Ts);
-                                               ({"Group", G}, A) ->
-                                                    [#db_group{id=GID}] = mnesia:index_read(db_group, G, #db_group.name),
-                                                    lists:usort(lists:map(fun(#db_group_members{contact=UID}) ->
-                                                                                  {ok, Ts} = get_tasks_by_user(UID) 
-                                                                          end,
-                                                                          mnesia:read(db_group_members, GID)));
-                                               ({"Contact", U}, A) ->
-                                                    {ok, #db_contact{id=UID}} = get_contacts_by_name(U),
-                                                    {ok, Ts} = get_tasks_by_user(UID) ,
-                                                    Ts
-                                            end, [], dict:to_list(Terms)),
-
-                        QH = qlc:q([G || G <- Tasks, 
-                                         G#db_task.status /= archive,
-                                         case {dict:find("Daterange", Terms), dict:find("Date", Terms)} of
-                                             {error, error} ->
-                                                 true;
-                                             {{ok, D}, _} when is_list(D) ->
-                                                 [SD1, ED1] = string:tokens(D, " "),
-                                                 DI = sugar:date_from_string(G#db_task.due),
-                                                 DI /= "" andalso DI >= sugar:date_from_string(SD1) andalso DI < sugar:date_from_string(ED1);
-                                             {{ok, {SD1, ED1}}, _} ->
-                                                 DI = sugar:date_from_string(G#db_task.due),
-                                                 DI /= "" andalso DI >= sugar:date_from_string(SD1) andalso DI < sugar:date_from_string(ED1);
-                                             {error, {ok, D1}} ->
-                                                 DI = sugar:date_from_string(G#db_task.due),
-                                                 DI /= "" andalso DI == sugar:date_from_string(D1)
-                                         end,
-                                         re:run(wf:to_list(G#db_task.name) ++ wf:to_list(G#db_task.text), Term, [caseless]) /= nomatch]),
-                        qlc:e(QH)
-                end).
+    {ok, Messages} = search_messages(Terms),
+    {ok, lists:foldl(fun(#message{text=Data}, A) ->
+                        try binary_to_term(Data) of
+                            #task_packet{id=Id} ->
+                                {ok, T} = db:get_task(Id),
+                                A ++ T;
+                            _ ->
+                                A
+                        catch 
+                            error:badarg ->
+                                A
+                        end
+                end, 
+                [],
+               Messages)}.
 get_filters() ->  % {{{1
     transaction(fun() ->
                         mnesia:select(db_search, [{#db_search{_='_'}, [], ['$_']}])
@@ -1281,11 +1257,19 @@ create_dates_request(Terms) -> % {{{1
     end.
 
 check_due(D, Terms) ->  % {{{1
-    case dict:find("Due", Terms) of
-        error ->
+    case {dict:find("Due", Terms),
+          dict:find("Duerange", Terms)} of
+        {error, error} ->
             true;
-        {ok, Due} ->
-            Due == D
+        {error, {ok, {SDate, EDate} }} ->
+            Date = sugar:timestamp_from_string(D),
+            Date >= sugar:timestamp_from_string(SDate) andalso Date =< sugar:timestamp_from_string(EDate);
+        {error, {ok, Duerange}} ->
+            [SDate, EDate] = string:tokens(Duerange, " "),
+            Date = sugar:timestamp_from_string(D),
+            Date >= sugar:timestamp_from_string(SDate) andalso Date =< sugar:timestamp_from_string(EDate);
+        {{ok, Due}, _} ->
+            Due == sugar:date_string(D)
     end.
             
 check_status(S, Terms) ->  % {{{1
@@ -1293,14 +1277,20 @@ check_status(S, Terms) ->  % {{{1
         error ->
             true;
         {ok, Status} ->
-            Status == S
+            case lists:keyfind(Status, 2, task_status_list(true)) of
+             {StatusA, Status} ->
+                    StatusA == S;
+                _ ->
+                    false
+            end
     end.
 
 search_roles(Involved, Terms) ->  % {{{1
-    lists:filter(fun(#role_packet{role=R, address=A}) ->
+    error_logger:info_msg("Involved: ~p~n", [Involved]),
+    lists:any(fun(#role_packet{role=R, address=A}) ->
                          case dict:find(R, Terms) of
                              error ->
-                                 false;
+                                 true;
                              {ok, N} ->
                                  case get_contact_by_address(A) of
                                     #db_contact{name=N} ->

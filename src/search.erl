@@ -8,21 +8,21 @@
 -include("records.hrl").
 
 dates_if(Terms) ->  % {{{1
-    case dict:is_key("Daterange", Terms) of
+    case dict:is_key("Daterange", Terms) or dict:is_key("Duerange", Terms) of
         true ->
-            wf:info("Test~n"),
             {Terms, []};
         false ->
             Term = get_term(Terms),
-            case dict:find("Date", Terms) of
-                error ->
+            case {dict:find("Date", Terms),
+                  dict:find("Due", Terms)} of
+                {error, error} ->
                     case  dates(Term) of
                         {[], Ts} ->
                             {Terms, Ts};
                         {Date, Ts} ->
                             {dict:erase("Term", dict:append_list("Date", Term, Terms)), Ts}
                     end;
-                {ok, Date} ->
+                {{ok, Date}, error} ->
                     case  dates(Term) of
                         {[], Ts} ->
                             {Terms, Ts};
@@ -34,6 +34,20 @@ dates_if(Terms) ->  % {{{1
                                     {dict:erase("Term", dict:append_list("Date", Date, ADict1)), []};
                                 L ->
                                     {dict:erase("Term", dict:append_list("Daterange", list_to_tuple(L), ADict1)), []}
+                            end
+                    end;
+                {_, {ok, Date}} ->
+                    case  dates(Term) of
+                        {[], Ts} ->
+                            {Terms, Ts};
+                        {DateN, Ts} ->
+                            ADict1 = dict:erase("Due", Terms),
+                            DT = sugar:date_from_string(Date),
+                            case lists:usort([DT, DateN]) of
+                                L when length(L) == 1->
+                                    {dict:erase("Term", dict:append_list("Due", Date, ADict1)), []};
+                                L ->
+                                    {dict:erase("Term", dict:append_list("Duerange", list_to_tuple(L), ADict1)), []}
                             end
                     end
             end
@@ -131,6 +145,33 @@ groups(Terms) ->  % {{{1
         _ ->
             {Terms, []}
     end.
+
+statuses(Terms) ->  % {{{1
+    Term = get_term(Terms),
+    Statuses = db:task_status_list(true),
+    case dict:find("Status", Terms) of
+        error ->
+            case lists:keyfind(Term, 2, Statuses) of
+                false ->
+                    {Terms, format_dropdown_group("Statuses", 
+                                                  Term,
+                                                  lists:foldl(fun({_, Status}, A) ->
+                                                                      case re:run(Status, Term, [global, caseless]) of
+                                                                          nomatch ->
+                                                                              A;
+                                                                          _ ->
+                                                                              [Status | A]
+                                                                      end
+                                                              end, 
+                                                              [],
+                                                              Statuses))};
+                    _ ->
+                            {dict:erase("Term", dict:append_list("Status", Term, Terms)), []}
+            end;
+        _ ->
+            {Terms, []}
+    end.
+
 
 files(Files) ->  % {{{1
     case Files of
@@ -252,7 +293,9 @@ format_dates(Dates) ->  % {{{1
 terms(Terms) ->  % {{{1
     {GTerms, G} = search:groups(Terms),
     {CTerms, C} = search:contacts(GTerms),
-    {DTerms, D} = search:dates_if(CTerms),
+    {STerms, S} = search:statuses(CTerms),
+    {DTerms, D} = search:dates_if(STerms),
+    
 
     {ok, M} = db:search_messages(DTerms),
     {ok, F} = db:search_files(DTerms),
@@ -261,7 +304,7 @@ terms(Terms) ->  % {{{1
     {DTerms,
      [
       format_dates(lists:usort(D)),
-      G, C,
+      G, C, S,
       messages(lists:usort(M)),
       tasks(lists:usort(M)),
       files(lists:usort(F))
@@ -277,9 +320,72 @@ get_term(Terms) ->  % {{{1
 
 check_roles(Terms, True, False) ->  % {{{1
     Roles = [R || {R, _} <- ?ROLES],
-    case lists:any(fun(R) -> dict:is_key(R, Terms) end, Roles) of
+    Additional = ["Due", "Duerange", "Status"],
+    case lists:any(fun(R) -> dict:is_key(R, Terms) end, Roles ++ Additional) of
         true ->
             True();
         false ->
             False()
     end.
+
+bage_types() ->  % {{{1
+    [
+     {["Date", "Due"], fun ?MODULE:date_badge/2},
+     {["Daterange", "Duerange"], fun ?MODULE:daterange_badge/2},
+     {["Contact" | [ R || {R, _} <- ?ROLES]], fun ?MODULE:simple_badge/2},
+     {["Group"], fun ?MODULE:simple_badge/2},
+     {["Status"], fun ?MODULE:simple_badge/2}
+    ].
+
+date_badge({Type, Date}, Variants) ->  % {{{1
+    Text = sugar:date_format(Date),
+    #sigma_search_badge{type=Type,
+                        text=Text,
+                        dropdown=Variants -- [Type]}.
+
+daterange_badge({Type, {SDate, EDate}}, Variants) ->  % {{{1
+    Text=sugar:date_string(SDate) 
+    ++ " " ++
+    sugar:date_string(EDate),
+    #sigma_search_badge{type=Type,
+                        text=Text,
+                        dropdown=Variants -- [Type]};
+daterange_badge({Type, Daterange}, Variants) ->  % {{{1
+    [SDate, EDate] = string:tokens(Daterange, " "),
+    daterange_badge({Type, {SDate, EDate}}, Variants).
+
+simple_badge({Type, Text}, Variants) ->  % {{{1
+    #sigma_search_badge{type=Type,
+                        text=Text,
+                        dropdown = Variants -- [Type]}.
+
+get_badge_for_type({"Term", _Data}) ->  % {{{1
+    [];
+get_badge_for_type({Type, _Data}=In) ->  % {{{1
+    lists:foldl(fun({Variants, Fun}, A) ->
+                        case lists:member(Type, Variants) of
+                            true ->
+                                Fun(In, Variants);
+                            _ ->
+                                A
+                        end
+                end,
+                simple_badge(In, [Type]),
+               bage_types()).
+
+format_dropdown_group(_Name, _Term, []) ->  % {{{1
+    [];
+format_dropdown_group(Name, Term, List) ->  % {{{1
+                    #panel{body=["<dl class='dl-horizontal'>",
+                                 "<dt>", 
+                                 Name, 
+                                 ":</dt><dd>",
+                                 lists:map(fun(Item) ->
+                                                   #panel{body=[
+                                                                #link{text=Item,
+                                                                      postback={search, Item},
+                                                                      delegate=common}
+                                                               ]}
+                                           end,
+                                           List),
+                                 "</dd>"]}.
