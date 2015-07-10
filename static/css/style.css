@@ -413,3 +413,8 @@ span.label {
     background-color: #000;
     background-image: none;
 }
+
+.dropdown-menu {
+    border-radius: 0 !important;
+    box-shadow: none;
+}
