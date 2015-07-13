@@ -165,10 +165,7 @@ sigma_search_event(to, Terms) -> % {{{1
     {lists:flatten(Bs),
      #panel{class="",
             body=[
-                  Results,
-                  #panel{body=#link{body="<i class='icon icon-filter'></i> Create filter with search",
-                                    postback={save_filter_name, NTerms},
-                                    delegate=?MODULE}}
+                  Results
                 ]}};
 sigma_search_event(search, Terms) -> % {{{1
     TermsD = dict:from_list(Terms),
