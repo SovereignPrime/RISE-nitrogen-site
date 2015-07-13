@@ -61,7 +61,7 @@ body() -> % {{{1
                           placeholder="Contacts", 
                           class="input-append input-prepend input-block-level search", 
                           textbox_class="",
-                          search_button_class="hidden btn btn-inverse search-btn", 
+                          search_button_class="hidden btn btn-inverse search-btn wfid_to_field", 
                           search_button_text="<i class='icon icon-search'></i>",
                           x_button_class="search-x",
                           clear_button_class="pull-right btn btn-inverse",
@@ -140,6 +140,7 @@ event(add_file) -> % {{{1
     wf:session(current_update, NUpdate),
     wf:redirect("/files?from=message");
 event(save) -> % {{{1
+    wf:wire(#script{script="$('.wfid_to_field').click();"}),
     Subject = wf:q(name),
     InvolvedS = wf:qs(person),
     Text = wf:q(text),
@@ -178,8 +179,8 @@ event(save) -> % {{{1
                                status=new},
     db:save(NUpdate),
     db:save_attachments(NUpdate, wf:session_default(attached_files, sets:new())),
-    common:send_messages(NUpdate),
-    wf:redirect("/");
+    common:send_messages(NUpdate);
+    %wf:redirect("/");
 event(Ev) -> % {{{1
     io:format("Event ~p in module ~p~n", [Ev, ?MODULE]).
 
