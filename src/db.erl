@@ -1206,11 +1206,11 @@ check_roles(Terms, Fun) ->  % {{{1
 
 
 create_contacts_request(Terms) ->  % {{{1
-    case {dict:find("Group", Terms),
-          dict:find("Contact", Terms)} of
+    case {proplists:get_value("Group", Terms, error),
+          proplists:get_value("Contact", Terms, error)} of
         {error, error} ->
             [];
-        {{ok, G}, _} ->
+        {G, error} ->
             [#db_group{id=GID}] = mnesia:index_read(db_group,
                                                     G,
                                                     #db_group.name),
@@ -1228,28 +1228,31 @@ create_contacts_request(Terms) ->  % {{{1
                 L ->
                     [list_to_tuple(['orelse' | L])]
             end;
-        {error, {ok, U}} ->
+        {error, U} ->
             {ok, #db_contact{address=A}} = get_contacts_by_name(U),
             [{'orelse',
               {'==', '$2', A},
-              {'==', '$1', A}}]
+              {'==', '$1', A}}];
+        _ ->
+            []
     end.
 
 create_dates_request(Terms) -> % {{{1
-    case {dict:find("Daterange", Terms),
-          dict:find("Date", Terms),
-          dict:find("Due", Terms),
-          dict:find("Duerange", Terms)} of
-        {{ok, {SD1, ED1}}, _, error, error} ->
+    case {proplists:get_value("Daterange", Terms, error),
+          proplists:get_value("Date", Terms, error),
+          proplists:get_value("Due", Terms, error),
+          proplists:get_value("Duerange", Terms, error)} of
+        {error, error, error, error} -> [];
+        {{SD1, ED1}, _, error, error} ->
             [{'andalso', 
               {'>=', '$3', sugar:ttl_from_string(SD1)},
               {'<', '$3', sugar:ttl_from_string(ED1) + 24 * 3600}}];
-        {{ok, D}, _, error, error} when is_list(D) ->
+        {D, _, error, error} when is_list(D) ->
             [SD1, ED1] = string:tokens(D, " "),
             [{'andalso', 
               {'>=', '$3', sugar:ttl_from_string(SD1)},
               {'<', '$3', sugar:ttl_from_string(ED1) + 24 * 3600}}];
-        {error, {ok, D1}, error, error} ->
+        {error, D1, error, error} ->
             [{'andalso', 
               {'>=', '$3', sugar:ttl_from_string(D1)},
               {'<', '$3', sugar:ttl_from_string(D1) + 24 * 3600 }}];
@@ -1257,26 +1260,26 @@ create_dates_request(Terms) -> % {{{1
     end.
 
 check_due(D, Terms) ->  % {{{1
-    case {dict:find("Due", Terms),
-          dict:find("Duerange", Terms)} of
+    case {proplists:get_value("Due", Terms, error),
+          proplists:get_value("Duerange", Terms, error)} of
         {error, error} ->
             true;
-        {error, {ok, {SDate, EDate} }} ->
+        {error, {SDate, EDate}} ->
             Date = sugar:timestamp_from_string(D),
             Date >= sugar:timestamp_from_string(SDate) andalso Date =< sugar:timestamp_from_string(EDate);
-        {error, {ok, Duerange}} ->
+        {error, Duerange} ->
             [SDate, EDate] = string:tokens(Duerange, " "),
             Date = sugar:timestamp_from_string(D),
             Date >= sugar:timestamp_from_string(SDate) andalso Date =< sugar:timestamp_from_string(EDate);
-        {{ok, Due}, _} ->
+        {Due, _} ->
             Due == sugar:date_string(D)
     end.
             
 check_status(S, Terms) ->  % {{{1
-    case dict:find("Status", Terms) of
+    case proplists:get_value("Status", Terms, error) of
         error ->
             true;
-        {ok, Status} ->
+        Status ->
             case lists:keyfind(Status, 2, task_status_list(true)) of
              {StatusA, Status} ->
                     StatusA == S;
@@ -1287,17 +1290,27 @@ check_status(S, Terms) ->  % {{{1
 
 search_roles(Involved, Terms) ->  % {{{1
     error_logger:info_msg("Involved: ~p~n", [Involved]),
-    lists:any(fun(#role_packet{role=R, address=A}) ->
-                         case dict:find(R, Terms) of
-                             error ->
-                                 true;
-                             {ok, N} ->
-                                 case get_contact_by_address(A) of
-                                    #db_contact{name=N} ->
-                                         true;
-                                     _ ->
-                                         false
+    IsRoleFiltered = lists:any(fun({Role, _}) ->
+                                       proplists:is_defined(Role, Terms)
+                               end,
+                               ?ROLES),
+    IsInRole = lists:any(fun(#role_packet{role=R, address=A}) ->
+                                 {value, {Role, _R}, _} = lists:keytake(R, 2, ?ROLES),
+                                 case proplists:get_value(Role, Terms, error) of
+                                     error ->
+                                         wf:info("Role: ~p", [Role]),
+                                         false;
+                                     Name ->
+                                         case get_contact_by_address(A) of
+                                             {ok, #db_contact{name=N}} when N == Name ->
+                                                 wf:info("Role1: ~p", [Role]),
+                                                 true;
+                                             T ->
+                                                 wf:info("Role2: ~p", [T]),
+                                                 false
+                                         end
                                  end
-                         end
-                 end,
-                 Involved).
+                         end,
+                         Involved),
+    wf:info("Filtered: ~p In role: ~p", [IsRoleFiltered, IsInRole]),
+    (not IsRoleFiltered) or IsInRole.

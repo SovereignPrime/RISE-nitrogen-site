@@ -57,8 +57,19 @@ body() -> % {{{1
                             #textbox{id=name, placeholder="Re:something", text=Subject, next=due, class="span12"}
                             ]}
                     ]},
-            #addable_row{id=roles, num=0, body= #to{}},
-            add_existing_rows(To),
+            #sigma_search{tag=to, 
+                          placeholder="Contacts", 
+                          class="input-append input-prepend input-block-level search", 
+                          textbox_class="",
+                          search_button_class="hidden btn btn-inverse search-btn", 
+                          search_button_text="<i class='icon icon-search'></i>",
+                          x_button_class="search-x",
+                          clear_button_class="pull-right btn btn-inverse",
+                          clear_button_text="<i class='icon icon-remove'></i>",
+                          results_summary_class="search-results span10",
+                          delegate=common},
+            %#addable_row{id=roles, num=0, body= #to{}},
+            %add_existing_rows(To),
 
             #panel{ class="row-fluid", body=[
                     #panel{class="span12", body=[

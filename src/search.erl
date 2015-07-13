@@ -8,46 +8,46 @@
 -include("records.hrl").
 
 dates_if(Terms) ->  % {{{1
-    case dict:is_key("Daterange", Terms) or dict:is_key("Duerange", Terms) of
+    case proplists:is_defined("Daterange", Terms) or proplists:is_defined("Duerange", Terms) of
         true ->
             {Terms, []};
         false ->
             Term = get_term(Terms),
-            case {dict:find("Date", Terms),
-                  dict:find("Due", Terms)} of
+            case {proplists:get_value("Date", Terms, error),
+                  proplists:get_value("Due", Terms, error)} of
                 {error, error} ->
                     case  dates(Term) of
                         {[], Ts} ->
                             {Terms, Ts};
                         {Date, Ts} ->
-                            {dict:erase("Term", dict:append_list("Date", Term, Terms)), Ts}
+                            {proplists:delete("Term", [{"Date", Term} | Terms]), Ts}
                     end;
-                {{ok, Date}, error} ->
+                {Date, error} ->
                     case  dates(Term) of
                         {[], Ts} ->
                             {Terms, Ts};
                         {DateN, Ts} ->
-                            ADict1 = dict:erase("Date", Terms),
+                            ADict1 = proplists:delete("Date", Terms),
                             DT = sugar:date_from_string(Date),
                             case lists:usort([DT, DateN]) of
                                 L when length(L) == 1->
-                                    {dict:erase("Term", dict:append_list("Date", Date, ADict1)), []};
+                                    {proplists:delete("Term", [{"Date", Date} | ADict1]), []};
                                 L ->
-                                    {dict:erase("Term", dict:append_list("Daterange", list_to_tuple(L), ADict1)), []}
+                                    {proplists:delete("Term", [{"Daterange", list_to_tuple(L)} | ADict1]), []}
                             end
                     end;
-                {_, {ok, Date}} ->
+                {_, Date} ->
                     case  dates(Term) of
                         {[], Ts} ->
                             {Terms, Ts};
                         {DateN, Ts} ->
-                            ADict1 = dict:erase("Due", Terms),
+                            ADict1 = proplists:delete("Due", Terms),
                             DT = sugar:date_from_string(Date),
                             case lists:usort([DT, DateN]) of
                                 L when length(L) == 1->
-                                    {dict:erase("Term", dict:append_list("Due", Date, ADict1)), []};
+                                    {proplists:delete("Term", [{"Due", Date} | ADict1]), []};
                                 L ->
-                                    {dict:erase("Term", dict:append_list("Duerange", list_to_tuple(L), ADict1)), []}
+                                    {proplists:delete("Term", [{"Duerange", list_to_tuple(L)} | ADict1]), []}
                             end
                     end
             end
@@ -88,7 +88,7 @@ dates(Term) ->  % {{{1
 
 contacts(Terms) ->  % {{{1
     Term = get_term(Terms),
-    case dict:is_key("Group", Terms) of
+    case proplists:is_defined("Group", Terms) of
         false ->
             {ok, Contacts} = db:search_contacts(Term),
             case Contacts of
@@ -110,7 +110,7 @@ contacts(Terms) ->  % {{{1
                                                            end, Contacts),
                                                  "</dd>"]}};
                         #db_contact{name=Term} ->
-                            {dict:erase("Term", dict:append_list("Contact", Term, Terms)), []}
+                            {proplists:delete("Term", [{"Contact", Term} | Terms]), []}
                     end
             end;
         _ ->
@@ -119,7 +119,7 @@ contacts(Terms) ->  % {{{1
 
 groups(Terms) ->  % {{{1
     Term = get_term(Terms),
-    case {dict:is_key("Group", Terms), dict:is_key("Contact", Terms)} of
+    case {proplists:is_defined("Group", Terms), proplists:is_defined("Contact", Terms)} of
         {false, false} ->
             {ok, Groups} = db:search_groups(Term),
             case Groups of
@@ -139,7 +139,7 @@ groups(Terms) ->  % {{{1
                                            end, Groups),
                                  "</dd>"]}};
                         #db_group{name=Term} ->
-                            {dict:erase("Term", dict:append_list("Group", Term, Terms)), []}
+                            {proplists:delete("Term", [{"Group", Term} | Terms]), []}
                     end
             end;
         _ ->
@@ -149,7 +149,7 @@ groups(Terms) ->  % {{{1
 statuses(Terms) ->  % {{{1
     Term = get_term(Terms),
     Statuses = db:task_status_list(true),
-    case dict:find("Status", Terms) of
+    case proplists:get_value("Status", Terms, error) of
         error ->
             case lists:keyfind(Term, 2, Statuses) of
                 false ->
@@ -166,7 +166,7 @@ statuses(Terms) ->  % {{{1
                                                               [],
                                                               Statuses))};
                     _ ->
-                            {dict:erase("Term", dict:append_list("Status", Term, Terms)), []}
+                            {proplists:delete("Term", [{"Status", Term} | Terms]), []}
             end;
         _ ->
             {Terms, []}
@@ -311,17 +311,12 @@ terms(Terms) ->  % {{{1
      ]}.
 
 get_term(Terms) ->  % {{{1
-   case dict:find("Term", Terms) of
-        error ->
-            "";
-        {ok, T} ->
-            T
-    end.
+   proplists:get_value("Term", Terms, "").
 
 check_roles(Terms, True, False) ->  % {{{1
     Roles = [R || {R, _} <- ?ROLES],
     Additional = ["Due", "Duerange", "Status"],
-    case lists:any(fun(R) -> dict:is_key(R, Terms) end, Roles ++ Additional) of
+    case lists:any(fun(R) -> proplists:is_defined(R, Terms) end, Roles ++ Additional) of
         true ->
             True();
         false ->
@@ -339,25 +334,25 @@ bage_types() ->  % {{{1
 
 date_badge({Type, Date}, Variants) ->  % {{{1
     Text = sugar:date_format(Date),
-    #sigma_search_badge{type=Type,
-                        text=Text,
-                        dropdown=Variants -- [Type]}.
+    {Type,
+     Text,
+     Variants -- [Type]}.
 
 daterange_badge({Type, {SDate, EDate}}, Variants) ->  % {{{1
     Text=sugar:date_string(SDate) 
     ++ " " ++
     sugar:date_string(EDate),
-    #sigma_search_badge{type=Type,
-                        text=Text,
-                        dropdown=Variants -- [Type]};
+    {Type,
+     Text,
+     Variants -- [Type]};
 daterange_badge({Type, Daterange}, Variants) ->  % {{{1
     [SDate, EDate] = string:tokens(Daterange, " "),
     daterange_badge({Type, {SDate, EDate}}, Variants).
 
 simple_badge({Type, Text}, Variants) ->  % {{{1
-    #sigma_search_badge{type=Type,
-                        text=Text,
-                        dropdown = Variants -- [Type]}.
+    {Type,
+     Text,
+     Variants -- [Type]}.
 
 get_badge_for_type({"Term", _Data}) ->  % {{{1
     [];
@@ -371,7 +366,7 @@ get_badge_for_type({Type, _Data}=In) ->  % {{{1
                         end
                 end,
                 simple_badge(In, [Type]),
-               bage_types()).
+                bage_types()).
 
 format_dropdown_group(_Name, _Term, []) ->  % {{{1
     [];

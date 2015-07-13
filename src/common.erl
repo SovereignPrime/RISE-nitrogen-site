@@ -152,19 +152,37 @@ render_files() -> % {{{1
                            Attachments)
                 ]}.
 
-sigma_search_event(search, Terms) -> % {{{1
+sigma_search_event(to, Terms) -> % {{{1
     TermsD = dict:from_list(Terms),
-    {NTerms, Results} = search:terms(TermsD),
-    Bs = lists:map(fun(In) ->
-                           search:get_badge_for_type(In)
+    {NTerms, Results} = search:contacts(Terms),
+    Bs = lists:map(fun({"Term", _}) ->
+                           [];
+                      (In) ->
+                           wf:info("In: ~p", [In]),
+                           search:simple_badge(In, ["Contact"])
                    end,
-                   dict:to_list(NTerms)),
-    {Bs,
+                   NTerms),
+    {lists:flatten(Bs),
      #panel{class="",
             body=[
                   Results,
                   #panel{body=#link{body="<i class='icon icon-filter'></i> Create filter with search",
-                                    postback={save_filter_name, dict:to_list(NTerms)},
+                                    postback={save_filter_name, NTerms},
+                                    delegate=?MODULE}}
+                ]}};
+sigma_search_event(search, Terms) -> % {{{1
+    TermsD = dict:from_list(Terms),
+    {NTerms, Results} = search:terms(Terms),
+    Bs = lists:map(fun(In) ->
+                           search:get_badge_for_type(In)
+                   end,
+                   NTerms),
+    {lists:flatten(Bs),
+     #panel{class="",
+            body=[
+                  Results,
+                  #panel{body=#link{body="<i class='icon icon-filter'></i> Create filter with search",
+                                    postback={save_filter_name, NTerms},
                                     delegate=?MODULE}}
                 ]}}.  
 sigma_search_filter_event(search, Terms) ->  % {{{1

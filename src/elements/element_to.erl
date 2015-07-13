@@ -13,7 +13,6 @@ reflect() -> record_info(fields, involved).
 
 -spec render_element(#to{}) -> body().
 render_element(_Record = #to{text=Value}) ->
-    %{ok, Users, _} = db:get_users(10), % Move from here
     #panel{class="row-fluid",
            body=[
                  #panel{class="input-prepend span12",
