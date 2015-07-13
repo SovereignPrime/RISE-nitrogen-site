@@ -74,7 +74,9 @@ datetime_to_timestamp(DateTime) ->  %{{{1
 
 timestamp_to_datetime(TS) when is_integer(TS) -> % {{{1
     calendar:gregorian_seconds_to_datetime(TS +
-    calendar:datetime_to_gregorian_seconds({{1970, 1, 1}, {0, 0, 0}})).
+    calendar:datetime_to_gregorian_seconds({{1970, 1, 1}, {0, 0, 0}}));
+timestamp_to_datetime(TS) -> % {{{1
+    TS.
 
 timestamp_from_string(Str) ->  % {{{1
     datetime_to_timestamp(date_from_string(Str)).
