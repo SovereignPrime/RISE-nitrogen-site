@@ -163,10 +163,8 @@ sigma_search_event(to, Terms) -> % {{{1
                    end,
                    NTerms),
     {lists:flatten(Bs),
-     #panel{class="",
-            body=[
                   Results
-                ]}};
+                };
 sigma_search_event(search, Terms) -> % {{{1
     TermsD = dict:from_list(Terms),
     {NTerms, Results} = search:terms(Terms),
@@ -182,9 +180,40 @@ sigma_search_event(search, Terms) -> % {{{1
                                     postback={save_filter_name, NTerms},
                                     delegate=?MODULE}}
                 ]}}.  
+sigma_search_filter_event(to, Terms) ->  % {{{1
+    Subject = wf:q(name),
+    Text = wf:q(text),
+    Update = wf:session(current_update),
+    #db_contact{id=UID} = wf:user(),
+    Involved = lists:foldl(fun({"Term", _}, A) ->
+                                   A;
+                              ({"Contact", Name}, A) ->
+                                   error_logger:info_msg("Adding contact ~p~n", [Name]),
+                                   case db:get_contacts_by_name(Name) of
+                                       {ok, #db_contact{address=Addr}} ->
+                                           [Addr | A];
+                                       _ ->
+                                           A
+                                   end;
+                              (_, A) -> A
+                           end,
+                           [],
+                           Terms),
+
+    io:format("~p~n", [Involved]),
+    NUpdate = Update#db_update{subject=Subject,
+                               text=Text,
+                               from=UID, 
+                               to=Involved,
+                               date=date(),
+                               status=new},
+    db:save(NUpdate),
+    db:save_attachments(NUpdate, wf:session_default(attached_files, sets:new())),
+    common:send_messages(NUpdate),
+    wf:redirect("/");
 sigma_search_filter_event(search, Terms) ->  % {{{1
-    wf:session(filter, dict:from_list(Terms)),
-    search:check_roles(dict:from_list(Terms),
+    wf:session(filter, Terms),
+    search:check_roles(Terms,
                        fun() ->
                                wf:redirect("/tasks")
                        end,

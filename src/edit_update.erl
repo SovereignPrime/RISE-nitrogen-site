@@ -140,47 +140,7 @@ event(add_file) -> % {{{1
     wf:session(current_update, NUpdate),
     wf:redirect("/files?from=message");
 event(save) -> % {{{1
-    wf:wire(#script{script="$('.wfid_to_field').click();"}),
-    Subject = wf:q(name),
-    InvolvedS = wf:qs(person),
-    Text = wf:q(text),
-    Update = wf:session(current_update),
-    #db_contact{id=UID} = wf:user(),
-    Involved = lists:map(fun([]) ->
-                    <<"">>;
-                ([$B, $M, $- |_] = N) ->
-                                 error_logger:info_msg("Adding BM address ~p~n", [N]),
-                                 Addr = wf:to_binary(N),
-                                 case db:get_contact_by_address(Addr) of
-                                     {ok, #db_contact{address=Addr}} ->
-                                         N;
-                                     _ ->
-                                         {ok, Id} = db:next_id(db_contact),
-                                         db:save(#db_contact{
-                                                    name="User " ++ sugar:date_format(calendar:local_time()),
-                                                    address=Addr,
-                                                    bitmessage=Addr,
-                                                    id=Id
-                                                   }),
-
-                                         Addr
-                                 end;
-                (N) ->
-                    I = wf:session(wf:to_binary(N)),
-                    {ok,  #db_contact{bitmessage=BM}} = db:get_contact(I),
-                    BM
-            end, InvolvedS) -- [<<"">>],
-    io:format("~p~n", [Involved]),
-    NUpdate = Update#db_update{subject=Subject,
-                               text=Text,
-                               from=UID, 
-                               to=Involved,
-                               date=date(),
-                               status=new},
-    db:save(NUpdate),
-    db:save_attachments(NUpdate, wf:session_default(attached_files, sets:new())),
-    common:send_messages(NUpdate);
-    %wf:redirect("/");
+    wf:wire(#script{script="$('.wfid_to_field').click();"});
 event(Ev) -> % {{{1
     io:format("Event ~p in module ~p~n", [Ev, ?MODULE]).
 
