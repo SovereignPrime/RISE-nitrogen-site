@@ -334,25 +334,21 @@ bage_types() ->  % {{{1
 
 date_badge({Type, Date}, Variants) ->  % {{{1
     Text = sugar:date_format(Date),
-    {Type,
-     Text,
-     Variants -- [Type]}.
+    simple_badge({Type, Text}, Variants).
 
 daterange_badge({Type, {SDate, EDate}}, Variants) ->  % {{{1
     Text=sugar:date_string(SDate) 
     ++ " " ++
     sugar:date_string(EDate),
-    {Type,
-     Text,
-     Variants -- [Type]};
+    simple_badge({Type, Text}, Variants);
 daterange_badge({Type, Daterange}, Variants) ->  % {{{1
     [SDate, EDate] = string:tokens(Daterange, " "),
     daterange_badge({Type, {SDate, EDate}}, Variants).
 
 simple_badge({Type, Text}, Variants) ->  % {{{1
-    {Type,
-     Text,
-     Variants -- [Type]}.
+    #sigma_search_badge{type=Type,
+                        text=Text,
+                        dropdown=Variants -- [Type]}.
 
 get_badge_for_type({"Term", _Data}) ->  % {{{1
     [];
