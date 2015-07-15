@@ -459,11 +459,16 @@ get_tasks(Parent, Archive) ->  % {{{1
                 end).
 
 get_tasks_due_today(Archive) ->  % {{{1
-    Today = sugar:date_format(date()),
+    Today = date(),
     error_logger:info_msg("searching: ~p",[Today]),
     ArchOp = archive_op(Archive),
     transaction(fun() ->
                         mnesia:select(db_task, [{#db_task{status='$1', due=Today, _='_'}, [{ArchOp, '$1', 'archive'}], ['$_']}])
+                end).
+
+get_tasks_by_month(Y, M) ->  % {{{1
+    transaction(fun() ->
+                        mnesia:select(db_task, [{#db_task{status='$1', due={{Y, M, '_'}, '_'}, _='_'}, [{'/=', '$1', 'archive'}], ['$_']}])
                 end).
 
 get_tasks_overdue(Archive) ->  % {{{1

@@ -629,7 +629,8 @@ render_comment(#message{from=From, text=Data, time=Datetime}) ->  % {{{1
     ]}.
 
 render_calendar_view(Y, M) ->  % {{{1
-    %TasksByDate = lists:keysort(#db_task.due, Tasks),
+    {ok, Tasks} = db:get_tasks_by_month(Y, M),
+    TasksByDate = lists:keysort(#db_task.due, Tasks),
     FirstDay = calendar:day_of_the_week({Y, M, 1}),
     LastDay = calendar:last_day_of_the_month(Y, M),
     #panel{id=calendar,
@@ -650,11 +651,20 @@ render_calendar_view(Y, M) ->  % {{{1
                                                            (Day) ->
                                                                 Date = (Day - FirstDay + 1) + 7 * (Week - 1),
                                                                 #panel{
-                                                                   style="border: #000 1px solid;display:table-cell;padding:12px;",
+                                                                   style="border: #000 1px solid;display:table-cell;padding:2%;",
                                                                    body=[
                                                                          #panel{
                                                                             style="width:100%;text-align:right;",
-                                                                            text=wf:to_list(Date)}
+                                                                            text=wf:to_list(Date)},
+                                                                         lists:map(fun(#db_task{name=N,
+                                                                                                due={_, {H, Mi, _}}) ->
+Text = string:centre(
+
+                                                                         #panel{class="badge",
+                                                                                style="width:95%;background-color:#000;",
+                                                                                text="test"},
+                                                                         #panel{class="badge",
+                                                                                text="test"}
                                                                         ]
                                                                   }
                                                         end,
