@@ -60,22 +60,22 @@ buttons(main) ->  % {{{1
 left() ->  % {{{1
     CId = wf:session(current_task_id),
     #panel{id=left,
-           body=case wf:session(filter) of
-                    undefined ->
-                        wf:session(task_tree_mode, task_tree),
-                        #panel{id=tasks,
-                               class="span4 scrollable",
-                               body=[
-                                     render_task_tree()
-                                    ]};
-                    D ->
-                        wf:session(task_tree_mode, filter),
-                        #panel{id=tasks,
-                               class="span4 scrollable",
-                               body=[
-                                     render_task_tree()
-                                    ]}
-                end}.
+           body=[]}.%case wf:session(filter) of
+                %    undefined ->
+                %        wf:session(task_tree_mode, task_tree),
+                %        #panel{id=tasks,
+                %               class="span4 scrollable",
+                %               body=[
+                %                     render_task_tree()
+                %                    ]};
+                %    D ->
+                %        wf:session(task_tree_mode, filter),
+                %        #panel{id=tasks,
+                %               class="span4 scrollable",
+                %               body=[
+                %                     render_task_tree()
+                %                    ]}
+                %end}.
 
 
 render_task_tree_buttons(Selected) ->  % {{{1
@@ -281,18 +281,20 @@ render_flat_task(Task, Archive) ->  % {{{1
     #listitem{body=render_task_link(Task)}.
 
 body() ->  % {{{1
-    case wf:session(current_task) of
-        #db_task{id=Id, name=Name, due=Due, text=Text, parent=Parent, status=Status}=Task -> 
-            wf:state(current_task, Task),
-            wf:state(current_task_id, Id),
-            highlight_selected(Id),
-            #panel{id=body, class="span8 scrollable", body=
-                   [
-                    render_task(Task)
-                   ]};
-        undefined ->
-            #panel{id=body, class="span8", body=[]}
-    end.
+    #panel{id=body,
+           body=render_calendar_view(2015, 7)}.
+    %case wf:session(current_task) of
+    %    #db_task{id=Id, name=Name, due=Due, text=Text, parent=Parent, status=Status}=Task -> 
+    %        wf:state(current_task, Task),
+    %        wf:state(current_task_id, Id),
+    %        highlight_selected(Id),
+    %        #panel{id=body, class="span8 scrollable", body=
+    %               [
+    %                render_task(Task)
+    %               ]};
+    %    undefined ->
+    %        #panel{id=body, class="span8", body=[]}
+    %end.
 
 
 render_task(#db_task{id=Id,  % {{{1
@@ -626,6 +628,42 @@ render_comment(#message{from=From, text=Data, time=Datetime}) ->  % {{{1
         #panel{class="span6", text=Text}
     ]}.
 
+render_calendar_view(Y, M) ->  % {{{1
+    %TasksByDate = lists:keysort(#db_task.due, Tasks),
+    FirstDay = calendar:day_of_the_week({Y, M, 1}),
+    LastDay = calendar:last_day_of_the_month(Y, M),
+    #panel{id=calendar,
+           style="width: 100%;display:table;",
+           body=lists:map(fun(Week) ->
+                                  #panel{class="calendar-week",
+                                         style="width: 100%;display:table-row;",
+                                         body=lists:map(fun(Day) when Week == 1,
+                                                                      Day < FirstDay; Day > LastDay ->
+                                                                #panel{
+                                                                   style="display:table-cell;border: #000 1px solid; width:15%;",
+                                                                   body=[
+                                                                         #panel{
+                                                                            style="float:right;",
+                                                                            text=""}
+                                                                        ]
+                                                                  };
+                                                           (Day) ->
+                                                                Date = (Day - FirstDay + 1) + 7 * (Week - 1),
+                                                                #panel{
+                                                                   style="border: #000 1px solid;display:table-cell;padding:12px;",
+                                                                   body=[
+                                                                         #panel{
+                                                                            style="width:100%;text-align:right;",
+                                                                            text=wf:to_list(Date)}
+                                                                        ]
+                                                                  }
+                                                        end,
+                                                        lists:seq(1, 7))}
+                          end,
+                          lists:seq(1, 6))}.
+
+
+    
 highlight_selected() ->  % {{{1
     case wf:session(current_task) of
         #db_task{id=Id} -> highlight_selected(Id);
