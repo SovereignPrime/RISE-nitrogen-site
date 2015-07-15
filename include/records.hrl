@@ -95,7 +95,7 @@
     }).
 
 -record(expander, {?ELEMENT_BASE(element_expander),
-                   start=open,
+                   parent,
                    target
     }).
 

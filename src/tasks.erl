@@ -163,7 +163,7 @@ render_subtask(Task = #db_task{name=Name, status=Status, due=Due, id=Id}, Archiv
                 [] -> {#span{style="width:10px;display:inline-block"}, []};
                 Tree -> 
                     Sublistid = Tree#list.id,
-                    {#expander{target=Sublistid, data_fields=[{parent,ThisTaskIdMd5}], start=open},Tree}
+                    {#expander{target=Sublistid, parent=ThisTaskIdMd5, data_fields=[{parent,ThisTaskIdMd5}]},Tree}
             end,
             
             #listitem{body=[
@@ -705,7 +705,7 @@ event(save) -> % {{{1
     Task2 = calculate_changes(Task),
     db:save(Task2),
     [save_contact_role(ContactRole) || {ContactRole, _} <- Involved],
-    % common:send_messages(Task2),
+    common:send_messages(Task2),
     wf:state(unsaved, false),
     update_task_tree(),
     event({task_chosen, Task#db_task.id});

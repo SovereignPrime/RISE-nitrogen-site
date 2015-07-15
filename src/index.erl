@@ -32,29 +32,29 @@ buttons(main) -> % {{{1
                ]}.
 
 left() -> % {{{1
-    case wf:session(filter) of
-        undefined ->
-            left(false);
-        F ->
-            {ok, Updates} = db:search_messages(F),
-            render_left(Updates)
-    end.
+    left(false).
 
 left(Archive) -> % {{{1
-    case db:get_updates(Archive) of 
+    Updates = case wf:session(filter) of
+                  undefined ->
+                      db:get_updates(Archive);
+                  F ->
+                      db:search_messages(F)
+    end,
+    case Updates  of 
         {ok, none} ->
             render_left([]);
-        {ok, Updates} ->
-            render_left(Updates)
+        {ok, Upd} ->
+            render_left(Upd)
     end.
 
 render_left(Updates) -> % {{{1
     SortedUpdates = sugar:sort_by_timestamp(Updates),
     GroupedUpdates = group_updates(SortedUpdates),
-    Render = [ #update_preview{message=M,
-                               flag=true,
-                               archive = (Status == archive)} || 
-               #message{status=Status} = M <- GroupedUpdates],
+    Render = [#update_preview{message=M,
+                              flag=true,
+                              archive = (Status == archive)} || 
+              #message{status=Status} = M <- GroupedUpdates],
     #panel{id=left,class="span4 scrollable", body=Render}.
 
 group_updates(List) ->  % {{{1

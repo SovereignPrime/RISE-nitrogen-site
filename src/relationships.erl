@@ -196,7 +196,7 @@ contact_render(#db_contact{id=Id,  % {{{1
                 ]},
                 #panel{class=span3,
                        style="min-height:20px; height:20px; text-align:right",
-                       text=Due}
+                       text=sugar:date_format(Due)}
             ]}
         end, Tasks),
        

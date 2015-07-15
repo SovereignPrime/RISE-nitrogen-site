@@ -31,9 +31,9 @@ render_element(_Record = #group_item{gid=Id, name=Name, sub=Sub, archive=Archive
                     _ ->
                         SubId = wf:f("subgroup~p", [Id]),
                         [
-                            render_group(Id, Name, #expander{start=open,
-                                                            target=SubId
-                                                           }, Archive),
+                            render_group(Id, Name, #expander{parent=Sub,
+                                                             target=SubId
+                                                            }, Archive),
                             #list{id=SubId,
                                   numbered=false,
                                   style='margin-left:15px;',
