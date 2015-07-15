@@ -123,6 +123,10 @@ search() -> %{{{1
                   results_summary_class="search-results span10",
                   delegate=?MODULE}.
 
+fade() ->
+    #panel{id=fade,
+           style="display:none"}.
+
 render_files() -> % {{{1
     AttachmentsIDs = sets:to_list(wf:session_default(attached_files, sets:new())),
     {ok, Attachments} = db:get_files(AttachmentsIDs),
