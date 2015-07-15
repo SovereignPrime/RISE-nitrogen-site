@@ -110,7 +110,8 @@ search() -> %{{{1
                            search:get_badge_for_type(In)
                    end,
                    Terms),
-    #sigma_search{tag=search, 
+    #sigma_search{id=search,
+                  tag=search, 
                   placeholder="Search", 
                   class="input-append input-prepend input-block-level search", 
                   textbox_class="",
@@ -475,35 +476,7 @@ event({filter_delete, Name}) ->  % {{{1
     wf:replace(filters, render_filters());
 event({filter_load, Name, Terms}) ->  % {{{1
     wf:session(filter_name, Name),
-    wf:session(filter, Terms),
-    Bs = lists:map(fun({"Date", Date}) ->
-                           #sigma_search_badge{type="Date", text=sugar:date_format(Date)};
-                      ({"Daterange", {SDate, EDate}}) ->
-                           #sigma_search_badge{type="Daterange", text=sugar:date_format(SDate) 
-                                               ++ " " ++
-                                               sugar:date_format(EDate)
-                                              };
-                      ({"Group", Group}) ->
-                           #sigma_search_badge{type="Group", text=Group};
-                      ({"Term", T}) ->
-                           wf:set(sigma_search_textbox, T),
-                           "";
-                      ({Type, Text}) ->
-                           #sigma_search_badge{type=Type,
-                                               text=Text,
-                                               dropdown=[
-                                                         "Contact",
-                                                         "Responsible",
-                                                         "Accountable",
-                                                         "Consulted",
-                                                         "Informed"
-                                                        ]}
-                   end, Terms),
-    wf:replace(filters, render_filters(Name)),
-    wf:replace(sigma_search_badges, Bs),
-    wf:wire(#script{script="$('.sigma_search_textbox').keydown()"}),
-    wf:wire(#script{script="$('.sigma_search_button').click()"});
-    
+    sigma_search_filter_event(search, Terms);
     
 event({reply, Subject, To}) -> % {{{1
     {ok, Id} = db:next_id(db_update),
