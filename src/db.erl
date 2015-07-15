@@ -250,7 +250,7 @@ search_contacts(Term) ->  % {{{1
                         Tab = mnesia:table(db_contact),
                         QH = qlc:q([G || G <- Tab, 
                                          G#db_contact.status /= archive,
-                                         re:run(G#db_contact.name ++ G#db_contact.email, Term, [caseless]) /= nomatch]),
+                                         (re:run(G#db_contact.name ++ G#db_contact.email, Term, [caseless]) /= nomatch orelse wf:to_binary(Term) == G#db_contact.address)]),
                         qlc:e(QH)
                 end).
 

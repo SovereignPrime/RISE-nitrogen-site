@@ -68,8 +68,6 @@ body() -> % {{{1
                           clear_button_text="<i class='icon icon-remove'></i>",
                           results_summary_class="search-results span10",
                           delegate=common},
-            %#addable_row{id=roles, num=0, body= #to{}},
-            %add_existing_rows(To),
 
             #panel{ class="row-fluid", body=[
                     #panel{class="span12", body=[

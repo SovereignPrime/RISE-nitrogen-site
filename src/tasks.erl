@@ -397,26 +397,21 @@ get_involved_full(Id) -> % {{{1
 
 render_roles(Id) -> % {{{1
     {ok, Involved} = get_involved_full(Id),
-    [
-        #panel{id=role_wrapper, class="row-fluid", body=[
-            [render_role_row(Inv) || Inv <- Involved]
-        ]},
-        #panel{class="row-fluid",
-               body=[
-                     #button{class="btn btn-link",
-                             body="<i class='icon-plus'></i> Add Role",
-                             postback=add_role}
-                    ]}
-    ].
+    #sigma_search{tag=involved, 
+                  placeholder="Involved", 
+                  class="input-append input-prepend input-block-level search no-border", 
+                  textbox_class="",
+                  search_button_class="hidden btn btn-inverse search-btn wfid_to_field", 
+                  search_button_text="<i class='icon icon-search'></i>",
+                  x_button_class="search-x",
+                  clear_button_class="hidden pull-right btn btn-inverse",
+                  clear_button_text="<i class='icon icon-remove'></i>",
+                  results_summary_class="search-results span10",
+                  badges=[render_role_row(Inv) || Inv <- Involved],
+                  delegate=common}.
 
-render_role_row({ContactRole, Name}) -> % {{{1
-    Rowid = wf:temp_id(),
-    Edit = #event{type=click, postback={edit_role, Rowid, {ContactRole, Name} }},
-    #panel{id=Rowid, class="row-fluid role-row", actions=Edit, body=[
-        #panel{class="span2", body=[ContactRole#db_contact_roles.role,":"]},
-        #panel{class="span6", body=Name},
-        #panel{class="span4", style="background-color: #fff", body=""}
-    ]}.
+render_role_row({#db_contact_roles{role=Role}, Name}) -> % {{{1
+    search:simple_badge({Role, Name}, [ R || {_, R} <- ?ROLES]).
 
 render_role_edit_row(OriginalData = {ContactRole, Name}) -> % {{{1
     Rowid = wf:temp_id(),
@@ -770,7 +765,7 @@ event({save_role, Rowid, {OrigContactRole, _OrigName} = OriginalData, RoleFieldi
         true ->
             lists:map(fun(Data) ->
                         case Data of
-                                OriginalData -> {ContactRole, Name};
+                                OriginalData -> ContactRole;
                                 _ -> Data
                         end
             end, CurrentInvolved);
@@ -848,7 +843,7 @@ maybe_show_top_buttons(CurrentTask) -> % {{{1
    
 
     TaskChanged = TaskFromDB =/= CurrentTask,
-    InvolvedChanged = InvolvedFromDB =/= NewInvolved,
+    InvolvedChanged = sets:from_list(InvolvedFromDB) /= sets:from_list(NewInvolved),
 
     case TaskChanged orelse InvolvedChanged of
         true -> 
@@ -897,7 +892,7 @@ calculate_changes(Task) -> % {{{1
     Involved = wf:state(involved),
     {ok, OriginalInvolved} = db:get_involved_full(Id),
 
-    NewChanges2 = case Involved =:= OriginalInvolved of
+    NewChanges2 = case sets:from_list(Involved) == sets:from_list(OriginalInvolved) of
                       true -> NewChanges;
                       false -> [#db_task_change{
                                    address=Me,

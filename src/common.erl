@@ -105,6 +105,11 @@ connection_status(_N) -> % {{{1
     "</script>".
 
 search() -> %{{{1
+    Terms = wf:session_default(filter, []),
+    Bs = lists:map(fun(In) ->
+                           search:get_badge_for_type(In)
+                   end,
+                   Terms),
     #sigma_search{tag=search, 
                   placeholder="Search", 
                   class="input-append input-prepend input-block-level search", 
@@ -112,6 +117,7 @@ search() -> %{{{1
                   search_button_class="btn btn-inverse search-btn", 
                   search_button_text="<i class='icon icon-search'></i>",
                   x_button_class="search-x",
+                  badges=lists:flatten(Bs),
                   clear_button_class="pull-right btn btn-inverse",
                   clear_button_text="<i class='icon icon-remove'></i>",
                   results_summary_class="search-results span10",
@@ -153,7 +159,6 @@ render_files() -> % {{{1
                 ]}.
 
 sigma_search_event(to, Terms) -> % {{{1
-    TermsD = dict:from_list(Terms),
     {NTerms, Results} = search:contacts(Terms),
     Bs = lists:map(fun({"Term", _}) ->
                            [];
@@ -165,8 +170,42 @@ sigma_search_event(to, Terms) -> % {{{1
     {lists:flatten(Bs),
                   Results
                 };
+sigma_search_event(involved, Terms) -> % {{{1
+    {NTerms, Results} = search:contacts(Terms),
+    Involved = wf:state_default(involved, []),
+    {InvolvedN, Bs} = lists:foldl(fun({"Term", _}, A) ->
+                                        A;
+                                   ({Role, Name}=In, {I, B}) ->
+                                        %{ok, #db_contact{id=CID}} = db:get_contacts_by_name(Name),
+                                        ContactRole = case lists:keysearch(Name, 2, Involved) of
+                                                          false ->
+                                                              {#db_contact_roles{id=new,
+                                                                                 role=Role},
+                                                                                 %contact=CID},
+                                                               Name};
+                                                          {value, {CR, Name}} when CR#db_contact_roles.role /= Role ->
+                                                              {CR#db_contact_roles{role=Role}, Name};
+                                                          {value, CR} -> CR
+                                                      end,
+
+
+                                        {[ContactRole | I],
+                                         [search:simple_badge(In, [ R || {_, R} <- ?ROLES]) | B]}
+                                  end,
+                                  {[], []},
+                                  NTerms),
+    wf:state(involved, InvolvedN),
+    tasks:maybe_show_top_buttons(),
+    {lists:flatten(Bs),
+     case proplists:get_value("Term", NTerms) of
+         undefined ->
+             [];
+         "" ->
+             [];
+         _ ->
+             Results
+     end};
 sigma_search_event(search, Terms) -> % {{{1
-    TermsD = dict:from_list(Terms),
     {NTerms, Results} = search:terms(Terms),
     Bs = lists:map(fun(In) ->
                            search:get_badge_for_type(In)
