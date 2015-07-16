@@ -100,7 +100,6 @@ render_element(#update_element{id=Id,
                       Status
               end,
     {Text, Timestamp, TID} = decode_enc(Enc, Data, false),
-    %TD = bm_types:timestamp() - Timestamp,
     TD = bm_types:timestamp() - sugar:ttl_to_timestamp(TTL), %Timstamp,
     #panel{id=Id,
            body=[
@@ -253,11 +252,14 @@ format_status(unread) ->  % {{{1
 format_status(ackwait) ->  % {{{1
     " (sent)";
 format_status(new) ->  % {{{1
-    " (creating message authentification)";
+    [" (creating message authentification)",
+     #progressbar{progress="0"}];
 format_status(wait_pubkey) ->  % {{{1
-    " (waiting for key)";
+    [" (waiting for key)",
+     #progressbar{progress="25"}];
 format_status(encrypt_message) ->  % {{{1
-    " (sending)";
+    [" (sending)",
+     #progressbar{progress="80"}];
 format_status(Status) ->  % {{{1
     " " ++ wf:to_list(Status).
 

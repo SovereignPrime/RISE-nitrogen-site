@@ -14,7 +14,11 @@
 reflect() -> record_info(fields, progressbar).
 
 -spec render_element(#progressbar{}) -> body().
-render_element(_Record = #progressbar{id=Id, bg=BG, color=Color, progress=Progress, width=W, border_color=Border}) ->
-    #panel{ id=Id, 
-            class="progress", 
-            body=[#panel{ class="bar", style=wf:f("width:~s%;background-color:#000;background-image:none;",[Progress])}]}.
+render_element(_Record = #progressbar{id=Id,
+                                      progress=Progress,
+                                      border_color=Border}) ->
+    #panel{id=Id, 
+           class="progress", 
+           body=[#panel{class="bar",
+                        style=wf:f("width:~s%;background-color:#000;background-image:none;",
+                                   [Progress])}]}.
