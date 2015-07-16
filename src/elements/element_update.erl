@@ -195,14 +195,16 @@ render_element(#update_element{id=Id,
                                            hash=FID,
                                            name=Path,
                                            size=Size,
-                                           time={Date, _Time},
+                                           time=Timestamp,
                                            status=FStatus}) ->
+                                            Datetime = sugar:date_format(sugar:timestamp_to_datetime(Timestamp)),
                                             #attachment{fid=FID,
                                                         filename=Path,
                                                         size=Size,
-                                                        time=Date,
+                                                        time=Datetime,
                                                         status=FStatus}
-                                    end, Files)
+                                    end,
+                                    Files)
                          ]
                  end
 

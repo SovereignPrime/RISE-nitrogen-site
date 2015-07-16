@@ -22,16 +22,15 @@ render_element(#attachment{id=I,
                            size=Size,
                            time=Time,
                            status=received} = Attachment) -> % {{{1
-    {Y, M, D} = Time,
-    DateS = io_lib:format("~p-~p-~p", [Y, M, D]),
+    DateS = Time,
     PathId = wf:temp_id(),
     #panel{id=I,
            class="row-fluid",
            body=[
                  #panel{class="span5", body=File},
                  #panel{class="span1", body=sugar:format_file_size(Size)},
-                 #panel{class="span4", body=DateS},
-                 #panel{class="span2",
+                 #panel{class="span5", body=DateS},
+                 #panel{class="span1",
                         body=[
                               #hidden{id=PathId,
                                       actions=#event{type=change, 
@@ -51,8 +50,6 @@ render_element(Record=#attachment{id=I,
                                   size=Size,
                                   time=Time,
                                   status=downloading}=Attachment) -> % {{{1
-    {Y, M, D} = Time,
-    DateS = io_lib:format("~p-~p-~p", [Y, M, D]),
     Downloaded = bitmessage:progress(Id) * 100,
     {ok, Pid} = wf:comet(fun() ->
                                  receive 
@@ -64,9 +61,9 @@ render_element(Record=#attachment{id=I,
     timer:send_after(10000, Pid, update),
     #panel{id=I, class="row-fluid", body=[
             #panel{class="span5", body=File},
-            #panel{class="span1", body=wf:to_list(Size)},
-            #panel{class="span4", body=DateS},
-            #panel{class="span2", body=[
+            #panel{class="span1", body=sugar:format_file_size(Size)},
+            #panel{class="span5", body=Time},
+            #panel{class="span1", body=[
                             wf:to_list(wf:to_integer(Downloaded))
                     ], style="text-align:center;"}
 
@@ -78,12 +75,10 @@ render_element(#attachment{id=I,
                            size=Size,
                            time=Time,
                            status=Status}) -> % {{{1
-    {Y, M, D} = Time,
-    DateS = io_lib:format("~p-~p-~p", [Y, M, D]),
     #panel{id=I, class="row-fluid", body=[
-            #panel{class="span6", body=File},
-            #panel{class="span2", body=sugar:format_file_size(Size)},
-            #panel{class="span3", body=DateS},
+            #panel{class="span5", body=File},
+            #panel{class="span1", body=sugar:format_file_size(Size)},
+            #panel{class="span5", body=Time},
             #panel{class="span1",
                    body="<i class='icon icon-save'></i>",
                    style="text-align:center;",

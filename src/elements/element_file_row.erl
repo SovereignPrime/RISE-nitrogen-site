@@ -65,7 +65,7 @@ render_element(Record = #file_row{
                     #tablecell{body=#progressbar{progress=wf:to_list(Percent),
                                                  width=80},
                                class=""};
-                _ when Status == uploaded; Status == downloaded ->
+                _ when Status == uploaded; Status == downloaded; Status == imported ->
                     [
                      #tablecell{text=Status,
                                 class=""},
