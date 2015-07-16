@@ -29,6 +29,7 @@
 #row_fluid	./src/elements/element_row_fluid.erl	/^-\s\*record\s\*(\s\*row_fluid\>/;"	r	file:
 #state	./src/nitrogen_cowboy.erl	/^-\s\*record\s\*(\s\*state\>/;"	r	file:
 #state	./src/receiver.erl	/^-\s\*record\s\*(\s\*state\>/;"	r	file:
+#task_comment	./include/protokol.hrl	/^-\s\*record\s\*(\s\*task_comment\>/;"	r
 #task_leaf	./include/records.hrl	/^-\s\*record\s\*(\s\*task_leaf\>/;"	r
 #task_packet	./include/protokol.hrl	/^-\s\*record\s\*(\s\*task_packet\>/;"	r
 #task_tree_packet	./include/protokol.hrl	/^-\s\*record\s\*(\s\*task_tree_packet\>/;"	r
@@ -42,11 +43,13 @@
 ?ALPHA	./src/elements/element_attachment.erl	/^-\s\*define\s\*(\s\*ALPHA\>/;"	d	file:
 ?CHILD	./src/nitrogen_sup.erl	/^-\s\*define\s\*(\s\*CHILD\>/;"	d	file:
 ?LISTEN	./src/nitrogen_sup.erl	/^-\s\*define\s\*(\s\*LISTEN\>/;"	d	file:
+?ROLES	./include/db.hrl	/^-\s\*define\s\*(\s\*ROLES\>/;"	d
 ?UPDATE_CURRENT	./src/tasks.erl	/^-\s\*define\s\*(\s\*UPDATE_CURRENT\>/;"	d	file:
 ?V	./src/db.erl	/^-\s\*define\s\*(\s\*V\>/;"	d	file:
 ALPHA	./src/elements/element_attachment.erl	/^-\s\*define\s\*(\s\*ALPHA\>/;"	d	file:
 CHILD	./src/nitrogen_sup.erl	/^-\s\*define\s\*(\s\*CHILD\>/;"	d	file:
 LISTEN	./src/nitrogen_sup.erl	/^-\s\*define\s\*(\s\*LISTEN\>/;"	d	file:
+ROLES	./include/db.hrl	/^-\s\*define\s\*(\s\*ROLES\>/;"	d
 UPDATE_CURRENT	./src/tasks.erl	/^-\s\*define\s\*(\s\*UPDATE_CURRENT\>/;"	d	file:
 V	./src/db.erl	/^-\s\*define\s\*(\s\*V\>/;"	d	file:
 accept	./src/legal.erl	/^accept\>/;"	f	file:
@@ -75,10 +78,9 @@ archive_op	./src/db.erl	/^archive_op\>/;"	f	file:
 are_all_child_tasks_complete	./src/db.erl	/^are_all_child_tasks_complete\>/;"	f	file:
 attachment	./include/records.hrl	/^-\s\*record\s\*(\s\*attachment\>/;"	r
 autocomplete_enter_event	./src/common.erl	/^autocomplete_enter_event\>/;"	f	file:
-autocomplete_enter_event	./src/textb.erl	/^autocomplete_enter_event\>/;"	f	file:
 autocomplete_select_event	./src/common.erl	/^autocomplete_select_event\>/;"	f	file:
-autocomplete_select_event	./src/textb.erl	/^autocomplete_select_event\>/;"	f	file:
 backup	./src/db.erl	/^backup\>/;"	f	file:
+bage_types	./src/search.erl	/^bage_types\>/;"	f	file:
 body	./.prototypes/page.erl	/^body\>/;"	f	file:
 body	./src/edit_expense.erl	/^body\>/;"	f	file:
 body	./src/edit_file.erl	/^body\>/;"	f	file:
@@ -91,7 +93,6 @@ body	./src/login.erl	/^body\>/;"	f	file:
 body	./src/mobile.erl	/^body\>/;"	f	file:
 body	./src/relationships.erl	/^body\>/;"	f	file:
 body	./src/tasks.erl	/^body\>/;"	f	file:
-body	./src/textb.erl	/^body\>/;"	f	file:
 buttons	./src/edit_expense.erl	/^buttons\>/;"	f	file:
 buttons	./src/edit_file.erl	/^buttons\>/;"	f	file:
 buttons	./src/edit_task.erl	/^buttons\>/;"	f	file:
@@ -103,8 +104,10 @@ buttons	./src/relationships.erl	/^buttons\>/;"	f	file:
 buttons	./src/tasks.erl	/^buttons\>/;"	f	file:
 calculate_changes	./src/tasks.erl	/^calculate_changes\>/;"	f	file:
 check_changing_task_status	./src/tasks.erl	/^check_changing_task_status\>/;"	f	file:
+check_due	./src/db.erl	/^check_due\>/;"	f	file:
 check_roles	./src/db.erl	/^check_roles\>/;"	f	file:
 check_roles	./src/search.erl	/^check_roles\>/;"	f	file:
+check_status	./src/db.erl	/^check_status\>/;"	f	file:
 clear_roles	./src/db.erl	/^clear_roles\>/;"	f	file:
 coalesce_best_contact	./src/db.erl	/^coalesce_best_contact\>/;"	f	file:
 code_change	./src/receiver.erl	/^code_change\>/;"	f	file:
@@ -115,10 +118,11 @@ common:autocomplete_select_event	./src/common.erl	/^autocomplete_select_event\>/
 common:connection_status	./src/common.erl	/^connection_status\>/;"	f
 common:dropevent	./src/common.erl	/^dropevent\>/;"	f
 common:event	./src/common.erl	/^event\>/;"	f
+common:fade	./src/common.erl	/^fade\>/;"	f
 common:finish_upload_event	./src/common.erl	/^finish_upload_event\>/;"	f
 common:incoming	./src/common.erl	/^incoming\>/;"	f
 common:main	./src/common.erl	/^main\>/;"	f
-common:maybe_add	./src/common.erl	/^maybe_add\>/;"	f
+common:maybe_unsaved	./src/common.erl	/^maybe_unsaved\>/;"	f
 common:remove_duplicates	./src/common.erl	/^remove_duplicates\>/;"	f
 common:render_files	./src/common.erl	/^render_files\>/;"	f
 common:render_filters	./src/common.erl	/^render_filters\>/;"	f
@@ -142,9 +146,13 @@ contact_render	./src/relationships.erl	/^contact_render\>/;"	f	file:
 contacts	./src/search.erl	/^contacts\>/;"	f	file:
 counter	./src/legal.erl	/^counter\>/;"	f	file:
 create_account	./src/db.erl	/^create_account\>/;"	f	file:
+create_contacts_request	./src/db.erl	/^create_contacts_request\>/;"	f	file:
+create_dates_request	./src/db.erl	/^create_dates_request\>/;"	f	file:
+date_badge	./src/search.erl	/^date_badge\>/;"	f	file:
 date_format	./src/sugar.erl	/^date_format\>/;"	f	file:
 date_from_string	./src/sugar.erl	/^date_from_string\>/;"	f	file:
 date_string	./src/sugar.erl	/^date_string\>/;"	f	file:
+daterange_badge	./src/search.erl	/^daterange_badge\>/;"	f	file:
 dates	./src/search.erl	/^dates\>/;"	f	file:
 dates_if	./src/search.erl	/^dates_if\>/;"	f	file:
 datetime_to_timestamp	./src/sugar.erl	/^datetime_to_timestamp\>/;"	f	file:
@@ -167,17 +175,20 @@ db:archive	./src/db.erl	/^archive\>/;"	f
 db:archive_op	./src/db.erl	/^archive_op\>/;"	f
 db:are_all_child_tasks_complete	./src/db.erl	/^are_all_child_tasks_complete\>/;"	f
 db:backup	./src/db.erl	/^backup\>/;"	f
+db:check_due	./src/db.erl	/^check_due\>/;"	f
 db:check_roles	./src/db.erl	/^check_roles\>/;"	f
+db:check_status	./src/db.erl	/^check_status\>/;"	f
 db:clear_roles	./src/db.erl	/^clear_roles\>/;"	f
 db:coalesce_best_contact	./src/db.erl	/^coalesce_best_contact\>/;"	f
 db:create_account	./src/db.erl	/^create_account\>/;"	f
+db:create_contacts_request	./src/db.erl	/^create_contacts_request\>/;"	f
+db:create_dates_request	./src/db.erl	/^create_dates_request\>/;"	f
 db:delete	./src/db.erl	/^delete\>/;"	f
 db:delete_group	./src/db.erl	/^delete_group\>/;"	f
-db:filter_messages_by_date	./src/db.erl	/^filter_messages_by_date\>/;"	f
+db:filter_by_date	./src/db.erl	/^filter_by_date\>/;"	f
 db:get_addresat	./src/db.erl	/^get_addresat\>/;"	f
 db:get_archive	./src/db.erl	/^get_archive\>/;"	f
 db:get_attachments	./src/db.erl	/^get_attachments\>/;"	f
-db:get_by_date	./src/db.erl	/^get_by_date\>/;"	f
 db:get_children	./src/db.erl	/^get_children\>/;"	f
 db:get_contact	./src/db.erl	/^get_contact\>/;"	f
 db:get_contact_by_address	./src/db.erl	/^get_contact_by_address\>/;"	f
@@ -195,16 +206,18 @@ db:get_linked_messages	./src/db.erl	/^get_linked_messages\>/;"	f
 db:get_my_accounts	./src/db.erl	/^get_my_accounts\>/;"	f
 db:get_notes_by_user	./src/db.erl	/^get_notes_by_user\>/;"	f
 db:get_orphan_tasks	./src/db.erl	/^get_orphan_tasks\>/;"	f
-db:get_owner	./src/db.erl	/^get_owner\>/;"	f
 db:get_subgroup	./src/db.erl	/^get_subgroup\>/;"	f
 db:get_task	./src/db.erl	/^get_task\>/;"	f
+db:get_task_comments	./src/db.erl	/^get_task_comments\>/;"	f
 db:get_task_history	./src/db.erl	/^get_task_history\>/;"	f
 db:get_tasks	./src/db.erl	/^get_tasks\>/;"	f
+db:get_tasks_by_month	./src/db.erl	/^get_tasks_by_month\>/;"	f
 db:get_tasks_by_subject	./src/db.erl	/^get_tasks_by_subject\>/;"	f
 db:get_tasks_by_user	./src/db.erl	/^get_tasks_by_user\>/;"	f
 db:get_tasks_completed	./src/db.erl	/^get_tasks_completed\>/;"	f
 db:get_tasks_due_today	./src/db.erl	/^get_tasks_due_today\>/;"	f
 db:get_tasks_no_deadline	./src/db.erl	/^get_tasks_no_deadline\>/;"	f
+db:get_tasks_overdue	./src/db.erl	/^get_tasks_overdue\>/;"	f
 db:get_unread_ids	./src/db.erl	/^get_unread_ids\>/;"	f
 db:get_unread_updates	./src/db.erl	/^get_unread_updates\>/;"	f
 db:get_update	./src/db.erl	/^get_update\>/;"	f
@@ -214,7 +227,6 @@ db:get_updates_by_user	./src/db.erl	/^get_updates_by_user\>/;"	f
 db:get_users	./src/db.erl	/^get_users\>/;"	f
 db:install	./src/db.erl	/^install\>/;"	f
 db:iterate	./src/db.erl	/^iterate\>/;"	f
-db:mark_downloaded	./src/db.erl	/^mark_downloaded\>/;"	f
 db:next_id	./src/db.erl	/^next_id\>/;"	f
 db:nice_task_status_name	./src/db.erl	/^nice_task_status_name\>/;"	f
 db:qlc_result	./src/db.erl	/^qlc_result\>/;"	f
@@ -235,6 +247,7 @@ db:search_groups	./src/db.erl	/^search_groups\>/;"	f
 db:search_messages	./src/db.erl	/^search_messages\>/;"	f
 db:search_parent	./src/db.erl	/^search_parent\>/;"	f
 db:search_parent_rec	./src/db.erl	/^search_parent_rec\>/;"	f
+db:search_roles	./src/db.erl	/^search_roles\>/;"	f
 db:search_tasks	./src/db.erl	/^search_tasks\>/;"	f
 db:set_read	./src/db.erl	/^set_read\>/;"	f
 db:task_status_list	./src/db.erl	/^task_status_list\>/;"	f
@@ -258,6 +271,7 @@ db_task_tree	./include/db.hrl	/^-\s\*record\s\*(\s\*db_task_tree\>/;"	r
 db_update	./include/db.hrl	/^-\s\*record\s\*(\s\*db_update\>/;"	r
 decline	./src/legal.erl	/^decline\>/;"	f	file:
 decode_enc	./src/elements/element_update.erl	/^decode_enc\>/;"	f	file:
+decode_type	./src/elements/element_update_preview.erl	/^decode_type\>/;"	f	file:
 delete	./src/db.erl	/^delete\>/;"	f	file:
 delete_group	./src/db.erl	/^delete_group\>/;"	f	file:
 disconnected	./src/receiver.erl	/^disconnected\>/;"	f	file:
@@ -331,13 +345,14 @@ element_contact_li:reflect	./src/elements/element_contact_li.erl	/^reflect\>/;"	
 element_contact_li:render_element	./src/elements/element_contact_li.erl	/^render_element\>/;"	f
 element_expander	./src/elements/element_expander.erl	1;"	M
 element_expander.erl	./src/elements/element_expander.erl	1;"	F
+element_expander:event	./src/elements/element_expander.erl	/^event\>/;"	f
 element_expander:open_or_closed	./src/elements/element_expander.erl	/^open_or_closed\>/;"	f
 element_expander:reflect	./src/elements/element_expander.erl	/^reflect\>/;"	f
 element_expander:render_element	./src/elements/element_expander.erl	/^render_element\>/;"	f
 element_file_row	./src/elements/element_file_row.erl	1;"	M
 element_file_row.erl	./src/elements/element_file_row.erl	1;"	F
 element_file_row:event	./src/elements/element_file_row.erl	/^event\>/;"	f
-element_file_row:once_join	./src/elements/element_file_row.erl	/^once_join\>/;"	f
+element_file_row:get_file_senders	./src/elements/element_file_row.erl	/^get_file_senders\>/;"	f
 element_file_row:reflect	./src/elements/element_file_row.erl	/^reflect\>/;"	f
 element_file_row:render_element	./src/elements/element_file_row.erl	/^render_element\>/;"	f
 element_group_item	./src/elements/element_group_item.erl	1;"	M
@@ -394,12 +409,12 @@ element_update:reflect	./src/elements/element_update.erl	/^reflect\>/;"	f
 element_update:render_element	./src/elements/element_update.erl	/^render_element\>/;"	f
 element_update_preview	./src/elements/element_update_preview.erl	1;"	M
 element_update_preview.erl	./src/elements/element_update_preview.erl	1;"	F
+element_update_preview:decode_type	./src/elements/element_update_preview.erl	/^decode_type\>/;"	f
 element_update_preview:get_name	./src/elements/element_update_preview.erl	/^get_name\>/;"	f
 element_update_preview:participant_list	./src/elements/element_update_preview.erl	/^participant_list\>/;"	f
 element_update_preview:reflect	./src/elements/element_update_preview.erl	/^reflect\>/;"	f
 element_update_preview:render_element	./src/elements/element_update_preview.erl	/^render_element\>/;"	f
 element_update_preview:render_icon	./src/elements/element_update_preview.erl	/^render_icon\>/;"	f
-element_update_preview:render_unread_icon	./src/elements/element_update_preview.erl	/^render_unread_icon\>/;"	f
 element_vcard	./src/elements/element_vcard.erl	1;"	M
 element_vcard.erl	./src/elements/element_vcard.erl	1;"	F
 element_vcard:event	./src/elements/element_vcard.erl	/^event\>/;"	f
@@ -415,6 +430,7 @@ event	./src/edit_task.erl	/^event\>/;"	f	file:
 event	./src/edit_update.erl	/^event\>/;"	f	file:
 event	./src/elements/element_addable_row.erl	/^event\>/;"	f	file:
 event	./src/elements/element_attachment.erl	/^event\>/;"	f	file:
+event	./src/elements/element_expander.erl	/^event\>/;"	f	file:
 event	./src/elements/element_file_row.erl	/^event\>/;"	f	file:
 event	./src/elements/element_group_item.erl	/^event\>/;"	f	file:
 event	./src/elements/element_popup.erl	/^event\>/;"	f	file:
@@ -428,11 +444,11 @@ event	./src/login.erl	/^event\>/;"	f	file:
 event	./src/mobile.erl	/^event\>/;"	f	file:
 event	./src/relationships.erl	/^event\>/;"	f	file:
 event	./src/tasks.erl	/^event\>/;"	f	file:
-event	./src/textb.erl	/^event\>/;"	f	file:
 expand_task	./src/tasks.erl	/^expand_task\>/;"	f	file:
 expand_to_task	./src/tasks.erl	/^expand_to_task\>/;"	f	file:
 expander	./include/records.hrl	/^-\s\*record\s\*(\s\*expander\>/;"	r
 extract_task	./src/receiver.erl	/^extract_task\>/;"	f	file:
+fade	./src/common.erl	/^fade\>/;"	f	file:
 file_row	./include/records.hrl	/^-\s\*record\s\*(\s\*file_row\>/;"	r
 filechunk_received	./src/receiver.erl	/^filechunk_received\>/;"	f	file:
 filechunk_sent	./src/receiver.erl	/^filechunk_sent\>/;"	f	file:
@@ -450,7 +466,7 @@ files:main	./src/files.erl	/^main\>/;"	f
 files:more_options_buttons	./src/files.erl	/^more_options_buttons\>/;"	f
 files:sortheader	./src/files.erl	/^sortheader\>/;"	f
 files:title	./src/files.erl	/^title\>/;"	f
-filter_messages_by_date	./src/db.erl	/^filter_messages_by_date\>/;"	f	file:
+filter_by_date	./src/db.erl	/^filter_by_date\>/;"	f	file:
 finances	./src/finances.erl	1;"	M
 finances.erl	./src/finances.erl	1;"	F
 finances:body	./src/finances.erl	/^body\>/;"	f
@@ -464,13 +480,14 @@ finish_upload_event	./src/common.erl	/^finish_upload_event\>/;"	f	file:
 finish_upload_event	./src/elements/element_vcard.erl	/^finish_upload_event\>/;"	f	file:
 fix_addable_rows	./src/edit_task.erl	/^fix_addable_rows\>/;"	f	file:
 format_dates	./src/search.erl	/^format_dates\>/;"	f	file:
+format_dropdown_group	./src/search.erl	/^format_dropdown_group\>/;"	f	file:
 format_file_size	./src/sugar.erl	/^format_file_size\>/;"	f	file:
 format_status	./src/elements/element_update.erl	/^format_status\>/;"	f	file:
 format_timedelta	./src/sugar.erl	/^format_timedelta\>/;"	f	file:
 get_addresat	./src/db.erl	/^get_addresat\>/;"	f	file:
 get_archive	./src/db.erl	/^get_archive\>/;"	f	file:
 get_attachments	./src/db.erl	/^get_attachments\>/;"	f	file:
-get_by_date	./src/db.erl	/^get_by_date\>/;"	f	file:
+get_badge_for_type	./src/search.erl	/^get_badge_for_type\>/;"	f	file:
 get_children	./src/db.erl	/^get_children\>/;"	f	file:
 get_contact	./src/db.erl	/^get_contact\>/;"	f	file:
 get_contact_by_address	./src/db.erl	/^get_contact_by_address\>/;"	f	file:
@@ -478,6 +495,7 @@ get_contacts_by_group	./src/db.erl	/^get_contacts_by_group\>/;"	f	file:
 get_contacts_by_name	./src/db.erl	/^get_contacts_by_name\>/;"	f	file:
 get_expense	./src/db.erl	/^get_expense\>/;"	f	file:
 get_expense_tasks	./src/db.erl	/^get_expense_tasks\>/;"	f	file:
+get_file_senders	./src/elements/element_file_row.erl	/^get_file_senders\>/;"	f	file:
 get_files	./src/db.erl	/^get_files\>/;"	f	file:
 get_filters	./src/db.erl	/^get_filters\>/;"	f	file:
 get_groups	./src/db.erl	/^get_groups\>/;"	f	file:
@@ -492,17 +510,19 @@ get_next_tasks_by_date	./src/tasks.erl	/^get_next_tasks_by_date\>/;"	f	file:
 get_notes_by_user	./src/db.erl	/^get_notes_by_user\>/;"	f	file:
 get_or_request_contact	./src/receiver.erl	/^get_or_request_contact\>/;"	f	file:
 get_orphan_tasks	./src/db.erl	/^get_orphan_tasks\>/;"	f	file:
-get_owner	./src/db.erl	/^get_owner\>/;"	f	file:
 get_subgroup	./src/db.erl	/^get_subgroup\>/;"	f	file:
 get_task	./src/db.erl	/^get_task\>/;"	f	file:
+get_task_comments	./src/db.erl	/^get_task_comments\>/;"	f	file:
 get_task_history	./src/db.erl	/^get_task_history\>/;"	f	file:
 get_tasks	./src/db.erl	/^get_tasks\>/;"	f	file:
 get_tasks_by_filter	./src/tasks.erl	/^get_tasks_by_filter\>/;"	f	file:
+get_tasks_by_month	./src/db.erl	/^get_tasks_by_month\>/;"	f	file:
 get_tasks_by_subject	./src/db.erl	/^get_tasks_by_subject\>/;"	f	file:
 get_tasks_by_user	./src/db.erl	/^get_tasks_by_user\>/;"	f	file:
 get_tasks_completed	./src/db.erl	/^get_tasks_completed\>/;"	f	file:
 get_tasks_due_today	./src/db.erl	/^get_tasks_due_today\>/;"	f	file:
 get_tasks_no_deadline	./src/db.erl	/^get_tasks_no_deadline\>/;"	f	file:
+get_tasks_overdue	./src/db.erl	/^get_tasks_overdue\>/;"	f	file:
 get_tasks_sorted_by_date	./src/tasks.erl	/^get_tasks_sorted_by_date\>/;"	f	file:
 get_term	./src/search.erl	/^get_term\>/;"	f	file:
 get_unread_ids	./src/db.erl	/^get_unread_ids\>/;"	f	file:
@@ -608,10 +628,8 @@ main	./src/photo.erl	/^main\>/;"	f	file:
 main	./src/raw.erl	/^main\>/;"	f	file:
 main	./src/relationships.erl	/^main\>/;"	f	file:
 main	./src/tasks.erl	/^main\>/;"	f	file:
-main	./src/textb.erl	/^main\>/;"	f	file:
-mark_downloaded	./src/db.erl	/^mark_downloaded\>/;"	f	file:
-maybe_add	./src/common.erl	/^maybe_add\>/;"	f	file:
 maybe_show_top_buttons	./src/tasks.erl	/^maybe_show_top_buttons\>/;"	f	file:
+maybe_unsaved	./src/common.erl	/^maybe_unsaved\>/;"	f	file:
 maybe_wrap_list	./src/sugar.erl	/^maybe_wrap_list\>/;"	f	file:
 md5	./src/tasks.erl	/^md5\>/;"	f	file:
 message_packet	./include/protokol.hrl	/^-\s\*record\s\*(\s\*message_packet\>/;"	r
@@ -644,7 +662,7 @@ nitrogen_sup:init_dispatch	./src/nitrogen_sup.erl	/^init_dispatch\>/;"	f
 nitrogen_sup:localized_dir_file	./src/nitrogen_sup.erl	/^localized_dir_file\>/;"	f
 nitrogen_sup:reformat_path	./src/nitrogen_sup.erl	/^reformat_path\>/;"	f
 nitrogen_sup:start_link	./src/nitrogen_sup.erl	/^start_link\>/;"	f
-once_join	./src/elements/element_file_row.erl	/^once_join\>/;"	f	file:
+once_join	./src/sugar.erl	/^once_join\>/;"	f	file:
 open_or_closed	./src/elements/element_expander.erl	/^open_or_closed\>/;"	f	file:
 page	./.prototypes/page.erl	1;"	M
 page.erl	./.prototypes/page.erl	1;"	F
@@ -733,6 +751,9 @@ remove_duplicates	./src/common.erl	/^remove_duplicates\>/;"	f	file:
 render_action	./.prototypes/action.erl	/^render_action\>/;"	f	file:
 render_attachments	./src/tasks.erl	/^render_attachments\>/;"	f	file:
 render_body	./src/index.erl	/^render_body\>/;"	f	file:
+render_calendar_view	./src/tasks.erl	/^render_calendar_view\>/;"	f	file:
+render_comment	./src/tasks.erl	/^render_comment\>/;"	f	file:
+render_comments	./src/tasks.erl	/^render_comments\>/;"	f	file:
 render_contact_list	./src/relationships.erl	/^render_contact_list\>/;"	f	file:
 render_element	./.prototypes/element.erl	/^render_element\>/;"	f	file:
 render_element	./src/elements/element_addable_row.erl	/^render_element\>/;"	f	file:
@@ -775,7 +796,6 @@ render_task_list	./src/tasks.erl	/^render_task_list\>/;"	f	file:
 render_task_tree	./src/tasks.erl	/^render_task_tree\>/;"	f	file:
 render_task_tree_buttons	./src/tasks.erl	/^render_task_tree_buttons\>/;"	f	file:
 render_top_buttons	./src/tasks.erl	/^render_top_buttons\>/;"	f	file:
-render_unread_icon	./src/elements/element_update_preview.erl	/^render_unread_icon\>/;"	f	file:
 render_updates	./src/tasks.erl	/^render_updates\>/;"	f	file:
 replace_left	./src/index.erl	/^replace_left\>/;"	f	file:
 restore	./src/common.erl	/^restore\>/;"	f	file:
@@ -801,15 +821,22 @@ save_uniq	./src/db.erl	/^save_uniq\>/;"	f	file:
 search	./src/common.erl	/^search\>/;"	f	file:
 search	./src/search.erl	1;"	M
 search.erl	./src/search.erl	1;"	F
+search:bage_types	./src/search.erl	/^bage_types\>/;"	f
 search:check_roles	./src/search.erl	/^check_roles\>/;"	f
 search:contacts	./src/search.erl	/^contacts\>/;"	f
+search:date_badge	./src/search.erl	/^date_badge\>/;"	f
+search:daterange_badge	./src/search.erl	/^daterange_badge\>/;"	f
 search:dates	./src/search.erl	/^dates\>/;"	f
 search:dates_if	./src/search.erl	/^dates_if\>/;"	f
 search:files	./src/search.erl	/^files\>/;"	f
 search:format_dates	./src/search.erl	/^format_dates\>/;"	f
+search:format_dropdown_group	./src/search.erl	/^format_dropdown_group\>/;"	f
+search:get_badge_for_type	./src/search.erl	/^get_badge_for_type\>/;"	f
 search:get_term	./src/search.erl	/^get_term\>/;"	f
 search:groups	./src/search.erl	/^groups\>/;"	f
 search:messages	./src/search.erl	/^messages\>/;"	f
+search:simple_badge	./src/search.erl	/^simple_badge\>/;"	f
+search:statuses	./src/search.erl	/^statuses\>/;"	f
 search:tasks	./src/search.erl	/^tasks\>/;"	f
 search:terms	./src/search.erl	/^terms\>/;"	f
 search_contacts	./src/db.erl	/^search_contacts\>/;"	f	file:
@@ -819,6 +846,7 @@ search_groups	./src/db.erl	/^search_groups\>/;"	f	file:
 search_messages	./src/db.erl	/^search_messages\>/;"	f	file:
 search_parent	./src/db.erl	/^search_parent\>/;"	f	file:
 search_parent_rec	./src/db.erl	/^search_parent_rec\>/;"	f	file:
+search_roles	./src/db.erl	/^search_roles\>/;"	f	file:
 search_tasks	./src/db.erl	/^search_tasks\>/;"	f	file:
 send_messages	./src/common.erl	/^send_messages\>/;"	f	file:
 send_task_tree	./src/common.erl	/^send_task_tree\>/;"	f	file:
@@ -826,9 +854,9 @@ sent	./src/receiver.erl	/^sent\>/;"	f	file:
 set_read	./src/db.erl	/^set_read\>/;"	f	file:
 settings_menu	./src/common.erl	/^settings_menu\>/;"	f	file:
 sigma_search_event	./src/common.erl	/^sigma_search_event\>/;"	f	file:
-sigma_search_event	./src/textb.erl	/^sigma_search_event\>/;"	f	file:
 sigma_search_filter_clear	./src/common.erl	/^sigma_search_filter_clear\>/;"	f	file:
 sigma_search_filter_event	./src/common.erl	/^sigma_search_filter_event\>/;"	f	file:
+simple_badge	./src/search.erl	/^simple_badge\>/;"	f	file:
 sort_by_timestamp	./src/sugar.erl	/^sort_by_timestamp\>/;"	f	file:
 sortheader	./src/files.erl	/^sortheader\>/;"	f	file:
 start	./src/nitrogen_app.erl	/^start\>/;"	f	file:
@@ -838,6 +866,7 @@ start_upload_event	./src/common.erl	/^start_upload_event\>/;"	f	file:
 start_upload_event	./src/elements/element_vcard.erl	/^start_upload_event\>/;"	f	file:
 state	./src/nitrogen_cowboy.erl	/^-\s\*record\s\*(\s\*state\>/;"	r	file:
 state	./src/receiver.erl	/^-\s\*record\s\*(\s\*state\>/;"	r	file:
+statuses	./src/search.erl	/^statuses\>/;"	f	file:
 stop	./src/nitrogen_app.erl	/^stop\>/;"	f	file:
 subject_exists_in_updates	./src/index.erl	/^subject_exists_in_updates\>/;"	f	file:
 sugar	./src/sugar.erl	1;"	M
@@ -849,10 +878,17 @@ sugar:datetime_to_timestamp	./src/sugar.erl	/^datetime_to_timestamp\>/;"	f
 sugar:format_file_size	./src/sugar.erl	/^format_file_size\>/;"	f
 sugar:format_timedelta	./src/sugar.erl	/^format_timedelta\>/;"	f
 sugar:maybe_wrap_list	./src/sugar.erl	/^maybe_wrap_list\>/;"	f
+sugar:once_join	./src/sugar.erl	/^once_join\>/;"	f
 sugar:sort_by_timestamp	./src/sugar.erl	/^sort_by_timestamp\>/;"	f
 sugar:time_string	./src/sugar.erl	/^time_string\>/;"	f
+sugar:timestamp_from_string	./src/sugar.erl	/^timestamp_from_string\>/;"	f
 sugar:timestamp_to_datetime	./src/sugar.erl	/^timestamp_to_datetime\>/;"	f
+sugar:ttl_from_string	./src/sugar.erl	/^ttl_from_string\>/;"	f
+sugar:ttl_to_datetime	./src/sugar.erl	/^ttl_to_datetime\>/;"	f
+sugar:ttl_to_readable	./src/sugar.erl	/^ttl_to_readable\>/;"	f
+sugar:ttl_to_timestamp	./src/sugar.erl	/^ttl_to_timestamp\>/;"	f
 summarize_involved	./src/tasks.erl	/^summarize_involved\>/;"	f	file:
+task_comment	./include/protokol.hrl	/^-\s\*record\s\*(\s\*task_comment\>/;"	r
 task_leaf	./include/records.hrl	/^-\s\*record\s\*(\s\*task_leaf\>/;"	r
 task_packet	./include/protokol.hrl	/^-\s\*record\s\*(\s\*task_packet\>/;"	r
 task_status_list	./src/db.erl	/^task_status_list\>/;"	f	file:
@@ -886,6 +922,9 @@ tasks:main	./src/tasks.erl	/^main\>/;"	f
 tasks:maybe_show_top_buttons	./src/tasks.erl	/^maybe_show_top_buttons\>/;"	f
 tasks:md5	./src/tasks.erl	/^md5\>/;"	f
 tasks:render_attachments	./src/tasks.erl	/^render_attachments\>/;"	f
+tasks:render_calendar_view	./src/tasks.erl	/^render_calendar_view\>/;"	f
+tasks:render_comment	./src/tasks.erl	/^render_comment\>/;"	f
+tasks:render_comments	./src/tasks.erl	/^render_comments\>/;"	f
 tasks:render_flat_task	./src/tasks.erl	/^render_flat_task\>/;"	f
 tasks:render_role_edit_row	./src/tasks.erl	/^render_role_edit_row\>/;"	f
 tasks:render_role_row	./src/tasks.erl	/^render_role_row\>/;"	f
@@ -909,16 +948,8 @@ tasks:update_task_tree	./src/tasks.erl	/^update_task_tree\>/;"	f
 terminate	./src/nitrogen_cowboy.erl	/^terminate\>/;"	f	file:
 terminate	./src/receiver.erl	/^terminate\>/;"	f	file:
 terms	./src/search.erl	/^terms\>/;"	f	file:
-textb	./src/textb.erl	1;"	M
-textb.erl	./src/textb.erl	1;"	F
-textb:autocomplete_enter_event	./src/textb.erl	/^autocomplete_enter_event\>/;"	f
-textb:autocomplete_select_event	./src/textb.erl	/^autocomplete_select_event\>/;"	f
-textb:body	./src/textb.erl	/^body\>/;"	f
-textb:event	./src/textb.erl	/^event\>/;"	f
-textb:main	./src/textb.erl	/^main\>/;"	f
-textb:sigma_search_event	./src/textb.erl	/^sigma_search_event\>/;"	f
-textb:title	./src/textb.erl	/^title\>/;"	f
 time_string	./src/sugar.erl	/^time_string\>/;"	f	file:
+timestamp_from_string	./src/sugar.erl	/^timestamp_from_string\>/;"	f	file:
 timestamp_to_datetime	./src/sugar.erl	/^timestamp_to_datetime\>/;"	f	file:
 title	./.prototypes/page.erl	/^title\>/;"	f	file:
 title	./src/edit_expense.erl	/^title\>/;"	f	file:
@@ -932,7 +963,6 @@ title	./src/login.erl	/^title\>/;"	f	file:
 title	./src/mobile.erl	/^title\>/;"	f	file:
 title	./src/relationships.erl	/^title\>/;"	f	file:
 title	./src/tasks.erl	/^title\>/;"	f	file:
-title	./src/textb.erl	/^title\>/;"	f	file:
 to	./include/records.hrl	/^-\s\*record\s\*(\s\*to\>/;"	r
 torrent	./include/torrent.hrl	/^-\s\*record\s\*(\s\*torrent\>/;"	r
 torrent.hrl	./include/torrent.hrl	1;"	F
@@ -944,6 +974,10 @@ torrent_id	./include/torrent.hrl	/^-\s\*type\s\*torrent_id\>/;"	t	file:
 torrent_mode	./include/torrent.hrl	/^-\s\*type\s\*torrent_mode\>/;"	t	file:
 torrent_state	./include/torrent.hrl	/^-\s\*type\s\*torrent_state\>/;"	t	file:
 transaction	./src/db.erl	/^transaction\>/;"	f	file:
+ttl_from_string	./src/sugar.erl	/^ttl_from_string\>/;"	f	file:
+ttl_to_datetime	./src/sugar.erl	/^ttl_to_datetime\>/;"	f	file:
+ttl_to_readable	./src/sugar.erl	/^ttl_to_readable\>/;"	f	file:
+ttl_to_timestamp	./src/sugar.erl	/^ttl_to_timestamp\>/;"	f	file:
 unread	./src/common.erl	/^unread\>/;"	f	file:
 update	./src/db.erl	/^update\>/;"	f	file:
 update_current_task	./src/tasks.erl	/^update_current_task\>/;"	f	file:

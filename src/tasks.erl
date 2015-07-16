@@ -22,10 +22,14 @@ icon() -> #image{image="/img/tasks.svg", class="icon", style="height: 32px;"}.
 
 
 buttons(main) ->  % {{{1
-    #list{numbered=false, class="nav nav-pills", style="display:inline-block", body=[
-        #listitem{body=[
-            %#panel{ class='span2', body="<i class='icon-user'></i> All accounts"},
-        ]},
+    #list{numbered=false,
+          class="nav nav-pills",
+          style="display:inline-block",
+          body=[
+                #listitem{body=[
+                                %#panel{ class='span2',
+                                %body="<i class='icon-user'></i> All accounts"},
+                               ]},
         #listitem{body=[
             #button{
                 id=hide_show,
@@ -36,6 +40,9 @@ buttons(main) ->  % {{{1
                     #event{postback=hide}
                 ]
             }
+       ]},
+        #listitem{body=[
+                        calendar_button(calendar)
        ]},
         #listitem{body=[
             common:render_filters()
@@ -60,22 +67,22 @@ buttons(main) ->  % {{{1
 left() ->  % {{{1
     CId = wf:session(current_task_id),
     #panel{id=left,
-           body=[]}.%case wf:session(filter) of
-                %    undefined ->
-                %        wf:session(task_tree_mode, task_tree),
-                %        #panel{id=tasks,
-                %               class="span4 scrollable",
-                %               body=[
-                %                     render_task_tree()
-                %                    ]};
-                %    D ->
-                %        wf:session(task_tree_mode, filter),
-                %        #panel{id=tasks,
-                %               class="span4 scrollable",
-                %               body=[
-                %                     render_task_tree()
-                %                    ]}
-                %end}.
+           body=case wf:session(filter) of
+                    undefined ->
+                        wf:session(task_tree_mode, task_tree),
+                        #panel{id=tasks,
+                               class="span4 scrollable",
+                               body=[
+                                     render_task_tree()
+                                    ]};
+                    D ->
+                        wf:session(task_tree_mode, filter),
+                        #panel{id=tasks,
+                               class="span4 scrollable",
+                               body=[
+                                     render_task_tree()
+                                    ]}
+                end}.
 
 
 render_task_tree_buttons(Selected) ->  % {{{1
@@ -281,20 +288,22 @@ render_flat_task(Task, Archive) ->  % {{{1
     #listitem{body=render_task_link(Task)}.
 
 body() ->  % {{{1
-    #panel{id=body,
-           body=render_calendar_view(2015, 7)}.
-    %case wf:session(current_task) of
-    %    #db_task{id=Id, name=Name, due=Due, text=Text, parent=Parent, status=Status}=Task -> 
-    %        wf:state(current_task, Task),
-    %        wf:state(current_task_id, Id),
-    %        highlight_selected(Id),
-    %        #panel{id=body, class="span8 scrollable", body=
-    %               [
-    %                render_task(Task)
-    %               ]};
-    %    undefined ->
-    %        #panel{id=body, class="span8", body=[]}
-    %end.
+    case wf:session(current_task) of
+        #db_task{id=Id, name=Name, due=Due, text=Text, parent=Parent, status=Status}=Task -> 
+            wf:state(current_task, Task),
+            wf:state(current_task_id, Id),
+            highlight_selected(Id),
+            #panel{id=body,
+                   class="span8 scrollable",
+                   body=
+                   [
+                    render_task(Task)
+                   ]};
+        undefined ->
+            #panel{id=body,
+                   class="span8",
+                   body=[]}
+    end.
 
 
 render_task(#db_task{id=Id,  % {{{1
@@ -633,47 +642,125 @@ render_calendar_view(Y, M) ->  % {{{1
     TasksByDate = lists:keysort(#db_task.due, Tasks),
     FirstDay = calendar:day_of_the_week({Y, M, 1}),
     LastDay = calendar:last_day_of_the_month(Y, M),
-    #panel{id=calendar,
-           style="width: 100%;display:table;",
-           body=lists:map(fun(Week) ->
-                                  #panel{class="calendar-week",
-                                         style="width: 100%;display:table-row;",
-                                         body=lists:map(fun(Day) when Week == 1,
-                                                                      Day < FirstDay; Day > LastDay ->
-                                                                #panel{
-                                                                   style="display:table-cell;border: #000 1px solid; width:15%;",
-                                                                   body=[
-                                                                         #panel{
-                                                                            style="float:right;",
-                                                                            text=""}
-                                                                        ]
-                                                                  };
-                                                           (Day) ->
-                                                                Date = (Day - FirstDay + 1) + 7 * (Week - 1),
-                                                                #panel{
-                                                                   style="border: #000 1px solid;display:table-cell;padding:2%;",
-                                                                   body=[
-                                                                         #panel{
-                                                                            style="width:100%;text-align:right;",
-                                                                            text=wf:to_list(Date)},
-                                                                         lists:map(fun(#db_task{name=N,
-                                                                                                due={_, {H, Mi, _}}) ->
-Text = string:centre(
+    Months = {
+      "Jan",
+      "Feb",
+      "Mar",
+      "Apr",
+      "May",
+      "Jun",
+      "Jul",
+      "Aug",
+      "Sep",
+      "Oct",
+      "Nov",
+      "Dec"
+     },
+    Days = {"Mon",
+            "Tue",
+            "Wed",
+            "Thu",
+            "Fri",
+            "Sat",
+            #span{style="color:#f00000",
+                  text="Sun"}},
+    {Prev, Next} = case M of
+                       1 ->
+                           {{calendar, Y - 1, 12},
+                            {calendar, Y, 2}};
+                       12 ->
+                           {{calendar, Y , 11},
+                            {calendar, Y + 1, 1}};
+                       M ->
+                           {{calendar, Y, M - 1},
+                            {calendar, Y, M + 1}}
+                   end,
+    #panel{
+       body=[
+             #panel{
+                style="cursor:pointer;display:inline-block;width:25%;",
+                body="<i class='icon-angle-left'></i> Previous",
+                actions=#event{type=click,
+                               postback=Prev}
+               },
+             #panel{
+                style="cursor:pointer;display:inline-block;width:50%;text-align:center;",
+                body=[element(M, Months),
+                      ", ",
+                      wf:to_list(Y)
+                     ]
+               },
+             #panel{
+                style="cursor:pointer;display:inline-block;width:25%;text-align:right;",
+                body="Next <i class='icon-angle-right'></i>",
+                actions=#event{type=click,
+                               postback=Next}
+               },
+             #panel{
+                id=calendar_grid,
+                style="width: 100%;display:table;",
+                body=lists:map(
+                       fun(Week) ->
+                               #panel{
+                                  class="calendar-week",
+                                  style="width: 100%;display:table-row;",
+                                  body=lists:map(
+                                         fun(Day) when Week == 1,
+                                                       Day < FirstDay;
+                                                       Day + 7 * (Week - 1) >= LastDay + FirstDay ->
+                                                 #panel{
+                                                    style="display:table-cell;border: #000 0px solid; width:15%;",
+                                                    body=[
+                                                          #panel{
+                                                             style="float:right;",
+                                                             text=""}
+                                                         ]
+                                                   };
+                                            (Day) when Week == 0 ->
+                                                 #panel{
+                                                    style="display:table-cell;border: #000 0px solid; width:15%;",
+                                                    body=[
+                                                          #panel{
+                                                             body=element(Day, Days)}
+                                                         ]
+                                                   };
+                                            (Day) ->
+                                                 Date = (Day - FirstDay + 1) + 7 * (Week - 1),
+                                                 #panel{
+                                                    style="border: #000 0px solid;display:table-cell;padding:2%;",
+                                                    body=[
+                                                          #panel{
+                                                             style="width:100%;text-align:right;",
+                                                             text=wf:to_list(Date)},
+                                                          lists:map(
+                                                            fun(#db_task{
+                                                                   name=N,
+                                                                   id=Id,
+                                                                   due={{Y1, M1, D1}, 
+                                                                        {H, Mi, _}}
+                                                                  }) when Y1 == Y, 
+                                                                          M1 == M,
+                                                                          D1 == Date ->
+                                                                    Text = wf:f("~p:~2..0w ~16s", [H, M, N]),
 
-                                                                         #panel{class="badge",
-                                                                                style="width:95%;background-color:#000;",
-                                                                                text="test"},
-                                                                         #panel{class="badge",
-                                                                                text="test"}
-                                                                        ]
-                                                                  }
-                                                        end,
-                                                        lists:seq(1, 7))}
-                          end,
-                          lists:seq(1, 6))}.
+                                                                    #panel{
+                                                                       class="badge",
+                                                                       style="cursor:pointer;width:95%;background-color:#000;",
+                                                                       text=Text,
+                                                                       actions=#event{
+                                                                                  type=click,
+                                                                                  postback={to_task, Id},
+                                                                                  delegate=common}};
+                                                               (_) -> []
+                                                            end,
+                                                            TasksByDate)
+                                                         ]
+                                                   }
+                                         end,
+                                         lists:seq(1, 7))}
+                       end,
+                       lists:seq(0, 5))}]}.
 
-
-    
 highlight_selected() ->  % {{{1
     case wf:session(current_task) of
         #db_task{id=Id} -> highlight_selected(Id);
@@ -747,6 +834,14 @@ event({edit, Id}) ->  % {{{1
     Task = wf:session(current_task),
     wf:session(current_task, Task),
     wf:redirect("/edit_task");
+event({calendar, Y, M}) -> % {{{1
+    wf:update(body, render_calendar_view(Y, M)),
+    wf:replace(calendar, calendar_button(task));
+
+event(task) -> % {{{1
+    wf:update(body, body()),
+    wf:replace(calendar, calendar_button(calendar));
+
 event(save) -> % {{{1
     Task = wf:state(current_task),
     Involved = wf:state(involved),
@@ -987,3 +1082,23 @@ drop_event({task, Id}, task_root) ->  % {{{1
 incoming() ->  % {{{1
     wf:update(tasks, render_task_tree()),
     wf:flush().
+
+calendar_button(calendar) -> % {{{1
+    {Y, M, _} = date(),
+    #button{
+       id=calendar,
+       class="btn btn-link",
+       body="<i class='icon-calendar'></i> Calendar view",
+       click=[
+              #event{postback={calendar, Y, M}}
+             ]
+      };
+calendar_button(task) -> % {{{1
+            #button{
+                id=calendar,
+                class="btn btn-link",
+                body="<i class='icon-calendar'></i> Task view",
+                click=[
+                    #event{postback=task}
+                ]
+            }.
