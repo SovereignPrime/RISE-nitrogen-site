@@ -22,14 +22,13 @@ render_element(#attachment{id=I,
                            size=Size,
                            time=Time,
                            status=received} = Attachment) -> % {{{1
-    DateS = Time,
     PathId = wf:temp_id(),
     #panel{id=I,
            class="row-fluid",
            body=[
                  #panel{class="span5", body=File},
                  #panel{class="span1", body=sugar:format_file_size(Size)},
-                 #panel{class="span5", body=DateS},
+                 #panel{class="span5", body=sugar:date_format(Time)},
                  #panel{class="span1",
                         body=[
                               #hidden{id=PathId,
@@ -44,12 +43,12 @@ render_element(#attachment{id=I,
                                        delegate=?MODULE}}
                 ]};
 
-render_element(Record=#attachment{id=I,
+render_element(Record=#attachment{id=I, % {{{1
                                   fid=Id,
                                   filename=File,
                                   size=Size,
                                   time=Time,
-                                  status=downloading}=Attachment) -> % {{{1
+                                  status=downloading}=Attachment) ->
     Downloaded = bitmessage:progress(Id) * 100,
     {ok, Pid} = wf:comet(fun() ->
                                  receive 
@@ -62,7 +61,7 @@ render_element(Record=#attachment{id=I,
     #panel{id=I, class="row-fluid", body=[
             #panel{class="span5", body=File},
             #panel{class="span1", body=sugar:format_file_size(Size)},
-            #panel{class="span5", body=Time},
+            #panel{class="span5", body=sugar:date_format(Time)},
             #panel{class="span1", body=[
                             wf:to_list(wf:to_integer(Downloaded))
                     ], style="text-align:center;"}
@@ -78,7 +77,7 @@ render_element(#attachment{id=I,
     #panel{id=I, class="row-fluid", body=[
             #panel{class="span5", body=File},
             #panel{class="span1", body=sugar:format_file_size(Size)},
-            #panel{class="span5", body=Time},
+            #panel{class="span5", body=sugar:date_format(Time)},
             #panel{class="span1",
                    body="<i class='icon icon-save'></i>",
                    style="text-align:center;",
