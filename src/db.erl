@@ -612,13 +612,15 @@ get_update(Id) ->   % {{{1
 get_updates(false) ->  % {{{1
     transaction(fun() ->
                         mnesia:select(message, [{#message{status='$1',
-                                                       enc='$2',
-                                                       subject='$3',
+                                                          subject='$3',
                                                        _='_'},
                                               [{'and',
                                                 {'/=', '$1', archive},
-                                                {'/=', '$2', 6}},
-                                               {'/=', '$3', <<"Update223322">>}],
+                                                {'/=', '$3', <<"$Task tree$">>},
+                                                {'/=', '$3', <<"$Get vCard$">>},
+                                                {'/=', '$3', <<"$vCard$">>},
+                                                {'/=', '$3', <<"$Update223322$">>}
+                                               }],
                                               ['$_']}])
                 end);
 get_updates(true) ->  % {{{1
