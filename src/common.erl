@@ -151,13 +151,14 @@ render_files() -> % {{{1
                  lists:map(fun(#bm_file{path=Path,
                                         name=FName,
                                         size=Size,
-                                        time={Date, _Time},
+                                        time=Timestamp,
                                         hash=Id,
                                         status=Status}) ->
+                                   DateTime = sugar:timestamp_to_datetime(Timestamp),
                                    #attachment{fid=Id,
                                                filename=Path ++ "/" ++ FName,
                                                size=Size,
-                                               time=Date,
+                                               time=DateTime,
                                                status=Status}
                            end,
                            Attachments)

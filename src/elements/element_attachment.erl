@@ -22,7 +22,7 @@ render_element(#attachment{id=I,
                            size=Size,
                            time=Time,
                            status=received} = Attachment) -> % {{{1
-    DateS = Time,
+    DateS = sugar:date_format(Time),
     PathId = wf:temp_id(),
     #panel{id=I,
            class="row-fluid",
@@ -62,7 +62,7 @@ render_element(Record=#attachment{id=I,
     #panel{id=I, class="row-fluid", body=[
             #panel{class="span5", body=File},
             #panel{class="span1", body=sugar:format_file_size(Size)},
-            #panel{class="span5", body=Time},
+            #panel{class="span5", body=sugar:date_format(Time)},
             #panel{class="span1", body=[
                             wf:to_list(wf:to_integer(Downloaded))
                     ], style="text-align:center;"}
@@ -78,7 +78,7 @@ render_element(#attachment{id=I,
     #panel{id=I, class="row-fluid", body=[
             #panel{class="span5", body=File},
             #panel{class="span1", body=sugar:format_file_size(Size)},
-            #panel{class="span5", body=Time},
+            #panel{class="span5", body=sugar:date_format(Time)},
             #panel{class="span1",
                    body="<i class='icon icon-save'></i>",
                    style="text-align:center;",
