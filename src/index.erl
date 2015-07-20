@@ -55,7 +55,9 @@ render_left(Updates) -> % {{{1
                               flag=true,
                               archive = (Status == archive)} || 
               #message{status=Status} = M <- GroupedUpdates],
-    #panel{id=left,class="span4 scrollable", body=Render}.
+    #panel{id=left,
+           class="span4 scrollable",
+           body=Render}.
 
 group_updates(List) ->  % {{{1
     group_updates(List, []).
