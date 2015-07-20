@@ -534,7 +534,7 @@ event(wrap_peers) -> %{{{1
     mnesia:clear_table(addr);
 event(backup) -> %{{{1
     wf:wire(#script{script="init_download('" ++ wf:to_list(backup_path) ++ "')"}),
-    wf:redirect("/raw?id=backup.rz&file=RISE_BACUP_" ++ sugar:date_string(date()) ++ ".rz");
+    wf:redirect("/raw?id=backup.rz&file=RISE_BACKUP_" ++ sugar:date_string(date()) ++ ".rz");
 event(backup_download) ->
     FD = wf:q(backup_path),
     error_logger:info_msg("Backup to file: ~s", [FD]),
