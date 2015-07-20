@@ -681,16 +681,12 @@ send_messages(#db_update{subject=Subject, % {{{1
                          date=Date}=U) ->
     #db_contact{address=From} = wf:user(),
     wf:info("Sending ~p~n", [U]),
-    {ok, Attachments} = db:get_attachments(U),
+    Attachments = sets:to_list(wf:session_default(attached_files, sets:new())),
     MSG = term_to_binary(#message_packet{subject=Subject,
                                          text=Text,
                                          involved=[From | Contacts],
                                          time=bm_types:timestamp()}),
 
-    AttachmentsPaths = lists:map(fun(#bm_file{hash=Hash}) ->
-                                         Hash
-                                 end,
-                                 Attachments),
     lists:foreach(fun(To) ->
                           error_logger:info_msg("Message to ~s sent subject ~s~n",
                                                 [To,
@@ -700,7 +696,7 @@ send_messages(#db_update{subject=Subject, % {{{1
                                                   wf:to_binary(To),
                                                   wf:to_binary(Subject),
                                                   MSG,
-                                                  AttachmentsPaths)
+                                                  Attachments)
                   end,
                   Contacts);
 send_messages(#db_task{id=UID, %{{{1
@@ -713,11 +709,7 @@ send_messages(#db_task{id=UID, %{{{1
     {ok, Involved} = db:get_involved(UID),
     Contacts = [#role_packet{address=C, role=R} || {_, R, #db_contact{bitmessage=C}}  <- Involved],
     #db_contact{address=From} = wf:user(),
-    {ok, Attachments} = db:get_attachments(U),
-    AttachmentsPaths = lists:map(fun(#bm_file{hash=Hash}) ->
-                                         Hash
-                                 end,
-                                 Attachments),
+    Attachments = sets:to_list(wf:session_default(attached_files, sets:new())),
     lists:foreach(fun(#role_packet{address=To}) when To /= From ->
                 bitmessage:send_message(From,
                                         wf:to_binary(To), 
@@ -732,7 +724,7 @@ send_messages(#db_task{id=UID, %{{{1
                                                                     time=bm_types:timestamp(),
                                                                     changes=Changes}),
 
-                                        AttachmentsPaths);
+                                        Attachments);
             (_) ->
                 ok
         end, Contacts).
