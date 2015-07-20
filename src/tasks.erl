@@ -67,18 +67,17 @@ buttons(main) ->  % {{{1
 left() ->  % {{{1
     CId = wf:session(current_task_id),
     #panel{id=left,
+           class="span4 scrollable",
            body=case wf:session(filter) of
                     undefined ->
                         wf:session(task_tree_mode, task_tree),
                         #panel{id=tasks,
-                               class="span4 scrollable",
                                body=[
                                      render_task_tree()
                                     ]};
                     D ->
                         wf:session(task_tree_mode, filter),
                         #panel{id=tasks,
-                               class="span4 scrollable",
                                body=[
                                      render_task_tree()
                                     ]}
