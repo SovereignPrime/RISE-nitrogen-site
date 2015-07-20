@@ -15,104 +15,103 @@ buttons(left) -> % {{{1
     "";
 buttons(main) -> % {{{1
     #panel{class='row-fluid', body=[
-            #panel{class='span9 offset3', body=[
-                    #panel{class="row-fluid", body=[
-                            #button{ class='btn btn-link span2', body="<i class='icon-remove'></i> Discard", 
-   					click=#redirect{url="/index"}},
-                            #button{ class='btn btn-link span2', body="<i class='icon-ok'></i> Send", postback=save, delegate=?MODULE}
-                            ]}
+            #panel{class='span9 offset3',
+                   body=[
+                         #panel{class="row-fluid",
+                                body=[
+                                      #button{class='btn btn-link span2',
+                                              body="<i class='icon-remove'></i> Discard", 
+                                              click=#redirect{url="/index"}},
+                                      #button{class='btn btn-link span2',
+                                              body="<i class='icon-ok'></i> Send",
+                                              postback=save,
+                                              delegate=?MODULE}
+                                     ]}
                     ]}
             ]}.
 
 left() -> % {{{1
     Subject = wf:session(current_subject),
+    wf:info("Left"),
     {ok, Updates} = db:get_updates_by_subject(Subject),
     [
-    #panel{ class="span3", body=[
-            #panel{id=files, class="row-fluid", body=[
-                    common:render_files()
-                            %"<i class='icon-th-large'></i> Select from my files", #br{}
-                    ]},
-            #panel{ class="row-fluid", body=[
-                    case Updates of
-                        [] ->
-                            [];
-                        U -> 
-                            #panel{ class="span12", body=[
-                                    "<i class='icon-file-alt'></i> Previous updates", #br{},
-                                    [#update_preview{flag=false,
-                                                     message=M} || M <- U]
-                                    ]}
-                    end
-                    ]}
+    #panel{class="span3",
+           body=[
+                 #panel{id=files,
+                        class="row-fluid",
+                        body=[
+                              common:render_files()
+                             ]},
+                 #panel{class="row-fluid",
+                        body=[
+                              case Updates of
+                                  [] ->
+                                      [];
+                                  U -> 
+                                      #panel{ class="span12",
+                                              body=[
+                                                    "<i class='icon-file-alt'></i> Previous updates",
+                                                    #br{},
+                                                    [#update_preview{flag=false,
+                                                                     message=M} || M <- U]
+                                                   ]}
+                              end
+                             ]}
                 ]}].
 body() -> % {{{1
     #db_update{subject=Subject, text=Text, to=To}  = wf:session(current_update),
-    #panel{ class="span9", body=[
-            #panel{ class="row-fluid", body=[
-                    #panel{ class="input-prepend span12", body=[
-                            #span{ class="add-on", body=[
-                                    #span{html_encode=false, text="<i class='icon-message'></i>"}
-                                    ]},
-                            #textbox{id=name, placeholder="Re:something", text=Subject, next=due, class="span12"}
-                            ]}
-                    ]},
-            #sigma_search{tag=to, 
-                          placeholder="Contacts", 
-                          class="input-append input-prepend input-block-level search", 
-                          textbox_class="",
-                          search_button_class="hidden btn btn-inverse search-btn wfid_to_field", 
-                          search_button_text="<i class='icon icon-search'></i>",
-                          x_button_class="search-x",
-                          clear_button_class="pull-right btn btn-inverse",
-                          clear_button_text="<i class='icon icon-remove'></i>",
-                          results_summary_class="search-results span10",
-                          delegate=common},
+    #panel{class="span9",
+           body=[
+                 #panel{class="row-fluid",
+                        body=[
+                              #panel{class="input-prepend span12",
+                                     body=[
+                                           #span{class="add-on",
+                                                 body=[
+                                                       #span{html_encode=false,
+                                                             text="<i class='icon-message'></i>"}
+                                                      ]},
+                                           #textbox{id=name,
+                                                    placeholder="Re:something",
+                                                    text=Subject,
+                                                    next=due,
+                                                    class="span12"}
+                                          ]}
+                             ]},
+                 #sigma_search{tag=to, 
+                               placeholder="Contacts", 
+                               class="input-append input-prepend input-block-level search", 
+                               textbox_class="",
+                               search_button_class="hidden btn btn-inverse search-btn wfid_to_field", 
+                               search_button_text="<i class='icon icon-search'></i>",
+                               x_button_class="search-x",
+                               clear_button_class="pull-right btn btn-inverse",
+                               clear_button_text="<i class='icon icon-remove'></i>",
+                               results_summary_class="search-results span10",
+                               delegate=common},
 
-            #panel{ class="row-fluid", body=[
-                    #panel{class="span12", body=[
-                            #textarea{class="input-block-level",rows=15, text=Text, placeholder="Some text here", id=text}
-                            ]}
+                 #panel{class="row-fluid",
+                        body=[
+                              #panel{class="span12",
+                                     body=[
+                                           #textarea{class="input-block-level",
+                                                     rows=15,
+                                                     text=Text,
+                                                     placeholder="Some text here",
+                                                     id=text}
+                                          ]}
 
-                    ]}
-%            #panel{ class="row-fluid", body=[
-%                    #panel{class="span12", body=[
-%                            #checkbox{id=notice,class="pull-left", text=" Send notice about this update to everyone involved",  checked=true}
-%
-%                            ]}
-%
-%                    ]}
-            ]}.
-            
-add_existing_rows(To) when is_list(To) -> % {{{1
-    Tos = lists:zip(To, lists:seq(1, length(To))),
-    ToN = lists:filter(fun({ T, N }) ->
-                case db:get_contact_by_address(T) of
-                    {ok, #db_contact{id=CID, name=Name} } ->
-                        wf:session(wf:to_binary(Name), CID),
-                        element_addable_row:event({add,
-                                                   #addable_row{id=roles,
-                                                                num= N - 1,
-                                                                body=#to{text=Name}
-                                                               }}), 
-                        true;
-                    _ ->
-                        false
-                end
-        end, Tos),
-    case length(ToN) of
-        0 ->
-            ok;
-        _ ->
-            element_addable_row:event({del, #addable_row{id=roles, num= 0}}),
-            element_addable_row:event({add, #addable_row{id=roles,
-                                                         num= length(Tos),
-                                                         body=#to{} }})
-    end,
-    [];
-add_existing_rows(_To) -> % {{{1
-    [].
-    
+                             ]}
+                 %            #panel{ class="row-fluid", body=[
+                 %                    #panel{class="span12", body=[
+                 %                            #checkbox{id=notice,class="pull-left", text=" Send notice about this update to everyone involved",  checked=true}
+                 %
+                 %                            ]}
+                 %
+                 %                    ]}
+                ]}.
+
+
 event(add_file) -> % {{{1
     Subject = wf:q(name),
     InvolvedS = wf:qs(person),

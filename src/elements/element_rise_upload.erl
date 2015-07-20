@@ -32,7 +32,6 @@ render_element(_Record = #rise_upload{
                     "');"}),
     [
      
-     "<script type='text/javascript' src='/js/upload.js'></script>",
      #panel{id=Id,
            class=["rise_upload", "upload_drop" | Class],
            text=wf:html_encode(Text)
@@ -43,6 +42,7 @@ render_element(_Record = #rise_upload{
 event({rise_upload_event, Tag, Delegate}) ->
     PathId = wf:to_atom("upload_path_" ++ wf:to_list(Tag)),
     Path = wf:q(PathId),
+    wf:info("Upload PathId: ~p", [PathId]),
     Delegate:finish_upload_event(Tag, Path);
 event(E) ->
     error_logger:info_msg("Event ~p occured in ~p~n", [E, ?MODULE_STRING]).

@@ -1,4 +1,5 @@
 var init_upload = function(id, pathid) {
+    $(id).off();
     $(id).on({
         dragover : function(e) {
             var dataTransfer = e.dataTransfer = e.originalEvent.dataTransfer;

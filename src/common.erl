@@ -124,8 +124,8 @@ search() -> %{{{1
                   results_summary_class="search-results span10",
                   delegate=?MODULE}.
 
-fade() ->
-    #panel{id=fade,
+fade() ->  % {{{1
+    #panel{id=fade, 
            style="display:none"}.
 
 render_files() -> % {{{1
