@@ -609,31 +609,20 @@ get_update(Id) ->   % {{{1
                         [U] = mnesia:read(message, Id),
                         U
                 end).
-get_updates(false) ->  % {{{1
-    transaction(fun() ->
-                        mnesia:select(message, [{#message{status='$1',
-                                                          subject='$3',
-                                                       _='_'},
-                                              [{'and',
-                                                {'/=', '$1', archive},
-                                                {'/=', '$3', <<"$Task tree$">>},
-                                                {'/=', '$3', <<"$Get vCard$">>},
-                                                {'/=', '$3', <<"$vCard$">>},
-                                                {'/=', '$3', <<"$Update223322$">>}
-                                               }],
-                                              ['$_']}])
-                end);
-get_updates(true) ->  % {{{1
+get_updates(Archive) ->  % {{{1
+    ArchOp = archive_op(Archive),
     transaction(fun() ->
                         mnesia:select(message,
                                       [{#message{status='$1',
-                                                 enc='$2',
                                                  subject='$3',
                                                  _='_'},
                                         [{'and',
-                                          {'==', '$1', archive},
-                                          {'/=', '$2', 6}},
-                                         {'/=', '$3', <<"Update223322">>}],
+                                          {ArchOp, '$1', archive},
+                                          {'/=', '$3', <<"$Task tree$">>},
+                                          {'/=', '$3', <<"$Get vCard$">>},
+                                          {'/=', '$3', <<"$vCard$">>},
+                                          {'/=', '$3', <<"$Update223322$">>}
+                                         }],
                                         ['$_']}])
                 end).
 
@@ -642,30 +631,17 @@ get_updates_by_subject(Subject) ->  % {{{1
 
 get_updates_by_subject(Subject, Archive) when is_list(Subject) ->  % {{{1
     get_updates_by_subject(list_to_binary(Subject), Archive);
-get_updates_by_subject(Subject, false) ->  % {{{1
+get_updates_by_subject(Subject, Archive) ->  % {{{1
+    ArchOp = archive_op(Archive),
     transaction(fun() ->
                         mnesia:select(message,
                                       [{#message{status='$1',
-                                                 enc='$2',
                                                  subject=Subject,
                                                  _='_'},
-                                        [{'and',
-                                          {'/=', '$1', archive},
-                                          {'/=', '$2', 6}}],
-                                        ['$_']}])
-                end);
-get_updates_by_subject(Subject, true) ->  % {{{1
-    transaction(fun() ->
-                        mnesia:select(message,
-                                      [{#message{status='$1',
-                                                 enc='$2',
-                                                 subject=Subject,
-                                                 _='_'},
-                                        [{'and',
-                                          {'==', '$1', archive},
-                                          {'/=', '$2', 6}}],
+                                          [{ArchOp, '$1', archive}],
                                         ['$_']}])
                 end).
+
 get_updates_by_user(UID) when is_list(UID) ->   % {{{1
     get_updates_by_user(list_to_binary(UID)); 
 get_updates_by_user(UID) ->   % {{{1
@@ -688,12 +664,15 @@ get_unread_updates() ->  % {{{1
     transaction(fun() ->
                         mnesia:select(message,
                                       [{#message{status=unread,
-                                                 enc='$1',
                                                  folder=incoming,
-                                                 subject='$2',
+                                                 subject='$3',
                                                  _='_'},
-                                        [{'/=', '$1', 6},
-                                         {'/=', '$2', <<"Update223322">>}],
+                                        [{'and',
+                                          {'/=', '$3', <<"$Task tree$">>},
+                                          {'/=', '$3', <<"$Get vCard$">>},
+                                          {'/=', '$3', <<"$vCard$">>},
+                                          {'/=', '$3', <<"$Update223322$">>}
+                                         }],
                                         ['$_']}])
                 end).
 
