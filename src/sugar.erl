@@ -8,6 +8,8 @@ ttl_to_readable(TTL) ->  % {{{1
 
 ttl_to_timestamp(undefined) ->  % {{{1
     bm_types:timestamp();
+ttl_to_timestamp(TTL) when is_tuple(TTL) ->  % {{{1
+    ttl_to_timestamp(datetime_to_timestamp(TTL));
 ttl_to_timestamp(TTL) ->  % {{{1
      TTL - application:get_env(bitmessage, message_ttl, 2419200).
 

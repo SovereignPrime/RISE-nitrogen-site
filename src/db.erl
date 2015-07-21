@@ -99,10 +99,26 @@ update(5) ->  % {{{1
                                                               hash=wf:to_binary(Id),
                                                               name=Path,
                                                               size=Size,
-                                                              time={Date, {0,0,0}},
+                                                              time=sugar:datetime_to_timestamp({Date, {0,0,0}}),
                                                               status=imported})
                                       end,
                                       Files)
+                       end),
+    mnesia:transaction(fun() ->
+                               mnesia:foldl(fun(#message{time=DateTime}=T, _) when is_integer(DateTime) ->
+                                                    ok;
+                                               (#message{time=D, subject=Subject}=T, _) ->
+                                                    mnesia:write(T#message{time=sugar:datetime_to_timestamp(D),
+                                                                           subject=case Subject of
+                                                                                       S when S == <<"Task tree">>;
+                                                                                              S == <<"vCard">>;
+                                                                                              S == <<"Get vCard">> ->
+                                                                                           <<"$", S/bytes, "$">>;
+                                                                                      S -> S
+                                                                                  end})
+                                            end,
+                                            [],
+                                            message)
                        end),
     mnesia:transaction(fun() ->
                                mnesia:foldl(fun(#db_task{due=undefined}=T, _) ->
