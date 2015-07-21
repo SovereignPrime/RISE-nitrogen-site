@@ -30,6 +30,10 @@ main() ->  % {{{1
                             #event{type=change,
                                    postback=backup_download,
                                    delegate=?MODULE}),
+                    wf:wire(logs_path,
+                            #event{type=change,
+                                   postback=logs_download,
+                                   delegate=?MODULE}),
                     wf:wire('to_files',
                             #event{type=click,
                                    postback={to_files, undefined},
@@ -333,6 +337,9 @@ render_help() ->  % {{{1
     #panel{ class='btn-group', body=[
         #link{class="btn dropdown-toggle btn-link", body="<i class='icon-question'></i> Help", data_fields=[{toggle, "dropdown"}], url="#", new=false},
         #list{numbered=false, class="dropdown-menu",body=[
+			#listitem{ class="", body=[
+				#link{text="Download logs", postback=logs, delegate=?MODULE}
+			]},
             #listitem{body=[
 				#email_link{text="For support: support@sovereignprime.com", email="support@sovereignprime.com"}
 			]}
@@ -535,10 +542,20 @@ event(wrap_peers) -> %{{{1
 event(backup) -> %{{{1
     wf:wire(#script{script="init_download('" ++ wf:to_list(backup_path) ++ "')"}),
     wf:redirect("/raw?id=backup.rz&file=RISE_BACKUP_" ++ sugar:date_string(date()) ++ ".rz");
-event(backup_download) ->
+event(backup_download) ->  % {{{1
     FD = wf:q(backup_path),
     error_logger:info_msg("Backup to file: ~s", [FD]),
     mnesia:backup(wf:f("~s", [FD]));
+event(logs) -> %{{{1
+    wf:wire(#script{script="init_download('" ++ wf:to_list(logs_path) ++ "')"}),
+    wf:redirect("/raw?id=backup.rz&file=RISE_LOGS_" ++ sugar:date_string(date()) ++ ".tar.gz");
+event(logs_download) ->  % {{{1
+    FD = wf:q(logs_path),
+    error_logger:info_msg("Logs to file: ~s", [FD]),
+    WorkDir = application:get_env(nitrogen, workdir, "workdir"),
+    Path = WorkDir ++ "/log",
+    error_logger:info_msg("Logs from file: ~s", [Path]),
+    erl_tar:create(FD, [{"log", Path}], [compressed]);
 event(cancel) -> %{{{1
     wf:wire(#script{script="$('.modal').modal('hide')"}),
     wf:remove(".modal");

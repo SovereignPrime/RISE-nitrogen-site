@@ -19,6 +19,7 @@ start(_StartType, _StartArgs) ->
         _ ->
             os:getenv("HOME") ++ "/Library/RISE"
     end,
+    application:set_env(nitrogen, workdir, RiseDir),
     file:make_dir(RiseDir),
     file:make_dir(RiseDir ++ "/data"),
     file:make_dir(RiseDir ++ "/scratch"),
