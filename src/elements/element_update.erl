@@ -220,12 +220,13 @@ render_element(#update_element{
                              subject=Subject,
                              enc=Enc,
                              attachments=Attachments,
+                             time=TTL,
                              status=Status
                             } = Message,
                   age=Age,
                   collapse=paragraph}) ->
     {Text, Timestamp, _} = decode_enc(Enc, Data, true),
-    TD = bm_types:timestamp() - Timestamp,
+    TD = bm_types:timestamp() - sugar:ttl_to_timestamp(TTL), %Timstamp,
     [
      #panel{class="row-fluid",
             body=[

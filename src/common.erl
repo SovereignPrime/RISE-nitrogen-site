@@ -730,7 +730,7 @@ send_task_tree(Id, Parent, Time) -> %{{{1
                           IsAdresat = sets:is_element(To, PContact),
                           if IsAdresat ->
                                   MSG = term_to_binary(#task_tree_packet{task=Id, parent=Parent, time=Time}),
-                                  bitmessage:send_message(From, wf:to_binary(To), <<"Task tree">>, MSG, 6);
+                                  bitmessage:send_message(From, wf:to_binary(To), <<"$Task tree$">>, MSG);
                               true -> ok
                           end;
                      (_) ->

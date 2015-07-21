@@ -24,13 +24,15 @@ render_element(#update_preview{id=Id,
                                           hash=UID,
                                           from=From,
                                           to=To,
+                                          time=TTL,
                                           subject=Subject,
                                           text=Data,
                                           status=Status},
                                flag=Flag,
                                archive=Archive}) -> 
     {Text, Timestamp, Icon} = decode_type(Data),
-    TD = bm_types:timestamp() - Timestamp,
+    TD = bm_types:timestamp() - sugar:ttl_to_timestamp(TTL), %Timstamp,
+    %TD = bm_types:timestamp() - Timestamp,
     CurrentId = wf:session(current_update_id),
     HasCurrent = lists:any(fun(I) -> (I == CurrentId) end, sugar:maybe_wrap_list(UID)),
     Class = if HasCurrent ->
@@ -78,7 +80,10 @@ render_element(#update_preview{id=Id,
                              ]}
                 ],
            actions=#event{type=click,
-                          postback={selected, sugar:maybe_wrap_list(UID), Subject, Archive}}}.
+                          postback={selected,
+                                    sugar:maybe_wrap_list(UID),
+                                    Subject,
+                                    Archive}}}.
 
 render_icon(Icon) ->  % {{{1
     render_icon(Icon, true).
@@ -143,7 +148,7 @@ decode_type(Data) ->  % {{{1
                       time=TS,
                       text=Txt} ->
             {Txt, sugar:datetime_to_timestamp(TS), 4};
-        Task ->
+        Task when is_record(Task, task_packet) ->
             #task_packet{text=Txt,
                          time=TS} = receiver:extract_task(Task),
             {Txt, TS, 4};
