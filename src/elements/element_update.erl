@@ -297,7 +297,7 @@ decode_enc(Enc, Data, Collapsed) when Enc == 2; Enc == 3 ->  % {{{1
             Body = #panel{ class="",
                            body= [ 
                                   #panel{class="", 
-                                         body=["Due: ", Due]
+                                         body=["Due: ", sugar:date_format(Due)]
                                         },
                                   #panel{class="", 
                                          body=["Status: ", Status]
