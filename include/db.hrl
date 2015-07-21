@@ -1,51 +1,61 @@
 -record(db_group,
-        {id,
-         name,
-         subgroups}).
+        {
+         id :: non_neg_integer(),
+         name :: string(),
+         subgroups :: non_neg_integer() | undefined
+        }).
 -record(db_group_members,
-        {group,
-         contact}).
+        {
+         group :: non_neg_integer(),
+         contact :: non_neg_integer()
+        }).
 
 -record(db_contact,
-        {id,
-         name="User ",
-         email="",
-         phone="",
-         photo="undefined.png",
-         bitmessage,
-         address,
-         my=false,
-         status}).
+        {id :: non_neg_integer(),
+         name="User " :: string() | undefined,
+         email="" :: string() | undefined,
+         phone="" :: string() | undefined,
+         photo="undefined.png" :: string() | undefined,
+         bitmessage :: binary() | undefined,
+         address :: binary() | undefined,
+         my=false :: boolean(),
+         status :: atom()}).
 -record(db_contact_note,
-        {id,
-         contact,
-         datetime,
-         text=""}).
+        {
+         id :: non_neg_integer(),
+         contact :: non_neg_integer(),
+         datetime :: calendar:date_time(),
+         text="" :: string()
+        }).
 -record(db_contact_roles,
-        {id,
+        {id :: non_neg_integer(),
          type,
          tid,
          role,
-         contact}).
+         contact :: non_neg_integer()
+        }).
 
--record(db_task,
-        {id,
-         due,
-         name,
-         text="",
-         parent,
-         status=new,
-         changes=[]}).
 -record(db_task_change,
-        {address,
-         datetime,
-         field,
-         new_value}).
+        {address :: binary(),
+         datetime :: calendar:date_time(),
+         field :: atom(),
+         new_value :: term()
+        }).
+-record(db_task,
+        {id :: binary(),
+         due :: calendar:date_time(),
+         name :: iodata(),
+         text="" :: iodata(),
+         parent :: binary(),
+         status=new :: atom(),
+         changes=[] :: [#db_task_change{}]
+        }).
 -record(db_task_tree,
-        {task,
-         parent,
-         time,
-         visible=false}).
+        {task :: binary(),
+         parent :: binary(),
+         time :: non_neg_integer(),
+         visible=false :: boolean()
+        }).
 
 %% DEPRECATED: Will be removed in next release
 -record(db_file,
@@ -58,9 +68,9 @@
          size}).
 -record(db_attachment,
         {id,
-         file,
+         file :: binary(),
          type,
-         tid}).
+         tid :: binary()}).
 
 -record(db_expense,
         {id,
@@ -74,7 +84,7 @@
          from}).
 -record(db_expense_tasks,
         {expense,
-         task}).
+         task :: binary()}).
 
 %% DEPRECATED: Will be removed in next release
 -record(db_update,
@@ -86,8 +96,9 @@
          date,
          status}).
 -record(db_search,
-        {name="",
-         text}).
+        {name="" :: string(),
+         text :: [proplists:property()]
+        }).
 
 -define(ROLES, 
         [{"Responsible", "responsible"},
