@@ -266,7 +266,7 @@ format_status(encrypt_message) ->  % {{{1
 format_status(Status) ->  % {{{1
     " " ++ wf:to_list(Status).
 
-decode_enc(Enc, Data, Collapsed) when Enc == 2; Enc == 3 ->  % {{{1
+decode_enc(Enc, Data, Collapsed) when Enc == 2; Enc == 3; Enc == 4 ->  % {{{1
     try binary_to_term(Data) of
         #message_packet{text=T, time=TS} ->
             Text = ?WF_IF(Collapsed, wf:html_encode(T), wf:html_encode(T, whites)),
