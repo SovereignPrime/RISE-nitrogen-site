@@ -71,9 +71,9 @@ disconnected(N) ->
 -spec downloaded(binary()) -> ok. % {{{1
 downloaded(Hash) ->
     gen_server:cast(?MODULE, {downloaded, Hash}).
--spec filechunk_received(binary(), binary()) -> ok. % {{{1
-filechunk_received(FileHash, ChunkHash) ->
-    gen_server:cast(?MODULE, {filechunk_received, FileHash, ChunkHash}).
+-spec filechunk_received(binary(), binary(), float()) -> ok. % {{{1
+filechunk_received(FileHash, ChunkHash, Progress) ->
+    gen_server:cast(?MODULE, {filechunk_received, FileHash, ChunkHash, Progress}).
 -spec filechunk_sent(binary(), binary()) -> ok. % {{{1
 filechunk_sent(FileHash, ChunkHash) ->
     gen_server:cast(?MODULE, {filechunk_sent, FileHash, ChunkHash}).

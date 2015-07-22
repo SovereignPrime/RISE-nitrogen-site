@@ -132,7 +132,7 @@ update(5) ->  % {{{1
                                             end,
                                             [],
                                             message)
-                       end);
+                       end),
     mnesia:transaction(fun() ->
                                mnesia:foldl(fun(#db_task{due=undefined}=T, _) ->
                                                     ok;
