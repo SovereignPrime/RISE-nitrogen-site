@@ -70,6 +70,8 @@ date_from_string(Any) ->  % {{{1
     Any.
 
 
+datetime_to_timestamp(undefined) ->  %{{{1
+    bm_types:timestamp();
 datetime_to_timestamp(DateTime) when is_integer(DateTime) ->  %{{{1
     DateTime;
 datetime_to_timestamp(DateTime) ->  %{{{1
