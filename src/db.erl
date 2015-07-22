@@ -220,16 +220,16 @@ archive(#db_contact{address=Address}) ->  % {{{1
                                       db:save(M#message{status=archive})
                               end,
                               Updates),
-                Tasks = get_tasks_by_user(R#db_contact.id),
-                lists:foreach(fun(#db_task{id=TID}=T) ->
-                                      case length(get_involved(TID)) of
-                                          1 ->
-                                              save(T#db_task{status=archive});
-                                          _ ->
-                                              ok
-                                      end
-                              end,
-                              Tasks)
+                {ok, Tasks} = get_tasks_by_user(R#db_contact.id)
+                %lists:foreach(fun(#db_task{id=TID}=T) ->
+                %                      case length(get_involved(TID)) of
+                %                          1 ->
+                %                              save(T#db_task{status=archive});
+                %                          _ ->
+                %                              ok
+                %                      end
+                %              end,
+                %              Tasks)
         end);
 archive(Rec) when is_list(Rec) ->  % {{{1
     transaction(fun() ->
@@ -451,6 +451,7 @@ get_task_comments(Hash) ->  % {{{1
 
 get_tasks_by_user(UID) ->  % {{{1
     get_tasks_by_user(UID, '_').
+
 get_tasks_by_user(UID, Role) ->  % {{{1
     transaction(fun() ->
                         Tasks = mnesia:match_object(#db_contact_roles{contact=UID,
