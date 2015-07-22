@@ -17,7 +17,7 @@
     disconnected/1,
     downloaded/1,
     filechunk_sent/2,
-    filechunk_received/2,
+    filechunk_received/3,
 	extract_task/1
     ]). % }}}
 
