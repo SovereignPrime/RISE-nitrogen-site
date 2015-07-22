@@ -287,13 +287,13 @@ decode_enc(Enc, Data, Collapsed) when Enc == 2; Enc == 3 ->  % {{{1
                       time=TS,
                       text=Txt} ->
             {Txt, sugar:datetime_to_timestamp(TS), 4};
-        Task ->
+        Task when element(1, Task) == task_packet ->
             #task_packet{id=Id,
                          text=T,
                          due=Due, 
                          involved=Involved,
                          status=Status,
-                         time=TS} = receiver:extract_task(Data),
+                         time=TS} = receiver:extract_task(Task),
             Body = #panel{ class="",
                            body= [ 
                                   #panel{class="", 

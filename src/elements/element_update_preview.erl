@@ -148,7 +148,7 @@ decode_type(Data) ->  % {{{1
                       time=TS,
                       text=Txt} ->
             {Txt, sugar:datetime_to_timestamp(TS), 4};
-        Task when is_record(Task, task_packet) ->
+        Task when element(1, Task) == task_packet ->
             #task_packet{text=Txt,
                          time=TS} = receiver:extract_task(Task),
             {Txt, TS, 4};
