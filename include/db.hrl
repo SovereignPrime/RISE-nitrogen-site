@@ -91,7 +91,7 @@
         {id,
          subject,
          from,
-         to,
+         to=[],
          text,
          date,
          status}).
