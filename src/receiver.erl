@@ -231,8 +231,7 @@ apply_message(#message{from=BMF,
                                                  ",",
                                                  (wf:to_binary(Address))/bytes,
                                                  ",",
-                                                 (wf:to_binary(BM))/bytes>>,
-                                               6);
+                                                 (wf:to_binary(BM))/bytes>>);
 
 % vCard  {{{1
 apply_message(#message{from=BMF,
