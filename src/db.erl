@@ -106,7 +106,11 @@ update(5) ->  % {{{1
                        end),
     UpdMsg = fun(#message{time=DateTime,
                           subject=Subject}=M) ->
-                     mnesia:write(M#message{time=sugar:datetime_to_timestamp(DateTime),
+                     mnesia:write(M#message{time=if is_integer(DateTime) ->
+                                                        DateTime;
+                                                    true ->
+                                                        sugar:timestamp_to_ttl(sugar:datetime_to_timestamp(DateTime))
+                                                 end,
                                             subject=case Subject of
                                                         S when S == <<"Task tree">>;
                                                                S == <<"vCard">>;
@@ -120,7 +124,7 @@ update(5) ->  % {{{1
     mnesia:transaction(fun() ->
                                mnesia:foldl(fun(#message{time=DateTime,
                                                          subject=S}=M,
-                                                _) when not is_integer(DateTime);
+                                                _) when not is_integer(DateTime) andalso DateTime /= undefined;
                                                         S == <<"Task tree">>;
                                                         S == <<"vCard">>;
                                                         S == <<"Get vCard">> ->

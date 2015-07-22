@@ -17,9 +17,14 @@ ttl_to_datetime(TTL) ->  % {{{1
     TS = ttl_to_timestamp(TTL),
     timestamp_to_datetime(TS).
 
-ttl_from_string(Str) ->
+ttl_from_string(Str) ->  % {{{1
     TS = timestamp_from_string(Str),
     TS + application:get_env(bitmessage, message_ttl, 2419200).
+
+timestamp_to_ttl(undefined) ->  % {{{1
+    timestamp_to_ttl(bm_types:timestamp());
+timestamp_to_ttl(Timstamp) ->  % {{{1
+     Timstamp + application:get_env(bitmessage, message_ttl, 2419200).
 
 time_string(DT) ->  % {{{1
     O = date_format(DT),
