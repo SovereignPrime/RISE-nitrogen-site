@@ -101,30 +101,7 @@ format_timedelta(TD) ->  %{{{1
     wf:f("~p days ago", [wf:to_integer(TD/(24 * 3600))]).
 
 sort_by_timestamp(Updates) ->  %{{{1
-    lists:sort(fun(#message{time=A}, #message{time=B}) ->
-                       A > B
-                       %F = fun(E) -> 
-                       %            try binary_to_term(E) of
-                       %                    #message_packet{time=Z} when is_integer(Z) ->
-                       %                        Z;
-					   % 				   %% This accommodates protocol
-					   % 				   %% oddness if packet is encoded with
-					   % 				   %% older version of RISE
-					   % 			       Task when element(1, Task) == task_packet ->
-					   % 				       #task_packet{time=Z} = receiver:extract_task(Task),
-                       %                        case is_integer(Z) of
-					   % 						   true -> Z;
-					   % 						   false -> bm_types:timestamp()
-					   % 						end;
-                       %                    _ ->
-                       %                        bm_types:timestamp()
-                       %            catch 
-                       %                error:_P ->
-                       %                    bm_types:timestamp()
-                       %            end
-                       %    end,
-                       %F(A) > F( B )
-               end, Updates).
+    lists:reverse(lists:keysort(#message.time, Updates)).
 
 maybe_wrap_list(AddressList) when is_list(AddressList) ->  % {{{1
     AddressList;
