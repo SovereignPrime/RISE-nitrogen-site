@@ -70,6 +70,8 @@ date_from_string(Any) ->  % {{{1
     Any.
 
 
+datetime_to_timestamp(DateTime) when is_integer(DateTime) ->  %{{{1
+    DateTime;
 datetime_to_timestamp(DateTime) ->  %{{{1
     calendar:datetime_to_gregorian_seconds(DateTime) -
     calendar:datetime_to_gregorian_seconds({{1970, 1, 1}, {0, 0, 0}}).

@@ -104,22 +104,35 @@ update(5) ->  % {{{1
                                       end,
                                       Files)
                        end),
+    UpdMsg = fun(#message{time=DateTime,
+                          subject=Subject}=M) ->
+                     mnesia:write(M#message{time=sugar:datetime_to_timestamp(DateTime),
+                                            subject=case Subject of
+                                                        S when S == <<"Task tree">>;
+                                                               S == <<"vCard">>;
+                                                               S == <<"Get vCard">> ->
+                                                            <<"$", S/bytes, "$">>;
+                                                        S -> 
+                                                            error_logger:info_msg("Not updating subject: ~p", [S]),
+                                                            S
+                                                    end})
+             end,
     mnesia:transaction(fun() ->
-                               mnesia:foldl(fun(#message{time=DateTime}=T, _) when is_integer(DateTime) ->
-                                                    ok;
-                                               (#message{time=D, subject=Subject}=T, _) ->
-                                                    mnesia:write(T#message{time=sugar:datetime_to_timestamp(D),
-                                                                           subject=case Subject of
-                                                                                       S when S == <<"Task tree">>;
-                                                                                              S == <<"vCard">>;
-                                                                                              S == <<"Get vCard">> ->
-                                                                                           <<"$", S/bytes, "$">>;
-                                                                                      S -> S
-                                                                                  end})
+                               mnesia:foldl(fun(#message{time=DateTime,
+                                                         subject=S}=M,
+                                                _) when not is_integer(DateTime);
+                                                        S == <<"Task tree">>;
+                                                        S == <<"vCard">>;
+                                                        S == <<"Get vCard">> ->
+                                                    error_logger:info_msg("Updating: ~p ~p", [DateTime, S]),
+                                                    UpdMsg(M);
+                                               (T, _) ->
+                                                    error_logger:info_msg("Not updating: ~p", [T#message.subject]),
+                                                    ok
                                             end,
                                             [],
                                             message)
-                       end),
+                       end);
     mnesia:transaction(fun() ->
                                mnesia:foldl(fun(#db_task{due=undefined}=T, _) ->
                                                     ok;
