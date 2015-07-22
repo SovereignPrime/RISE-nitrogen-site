@@ -83,6 +83,7 @@ body() -> % {{{1
                                class="input-append input-prepend input-block-level search", 
                                textbox_class="",
                                search_button_class="hidden btn btn-inverse search-btn wfid_to_field", 
+                               badges=[render_contact(A) || A <- To],
                                search_button_text="<i class='icon icon-search'></i>",
                                x_button_class="search-x",
                                clear_button_class="pull-right btn btn-inverse",
@@ -102,13 +103,6 @@ body() -> % {{{1
                                           ]}
 
                              ]}
-                 %            #panel{ class="row-fluid", body=[
-                 %                    #panel{class="span12", body=[
-                 %                            #checkbox{id=notice,class="pull-left", text=" Send notice about this update to everyone involved",  checked=true}
-                 %
-                 %                            ]}
-                 %
-                 %                    ]}
                 ]}.
 
 
@@ -141,5 +135,10 @@ event(save) -> % {{{1
 event(Ev) -> % {{{1
     io:format("Event ~p in module ~p~n", [Ev, ?MODULE]).
 
-incoming() ->
+incoming() ->  % {{{1
     ok.
+
+render_contact(Address) ->  % {{{1
+    {ok, #db_contact{name=Name}} = db:get_contact_by_address(Address),
+    search:simple_badge({"Contact", Name}, ["Contact"]).
+
