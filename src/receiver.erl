@@ -311,7 +311,6 @@ apply_message(#message{from=BMF,
                                  status=unread},
 
             db:save(Message),
-            %save_attachments(FID, Message, Attachments),
             db:save_attachments(Message, sets:from_list(Attachments)),
             State#state.pid ! received;
         Task when is_record(Task, task_packet) ->
