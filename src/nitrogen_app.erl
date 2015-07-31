@@ -30,10 +30,26 @@ start(_StartType, _StartArgs) ->
     application:set_env(sasl, sasl_error_logger, {file, RiseDir ++ "/log/sasl/sasl-error.log"}),
     application:set_env(lager, handlers,[
                                          {lager_file_backend,
-                                          [{RiseDir ++ "/log/error.log", error, 10485760, "$D0", 5},
-                                           {RiseDir ++ "/log/console.log", info, 10485760, "$D0", 5},
-                                           {RiseDir ++ "/log/debug.log", debug, 10485760, "$D0", 5}
-                                          ]}
+                                          [{file, RiseDir ++ "/log/error.log"},
+                                           {level, debug},
+                                           {size, 10485760},
+                                           {date, "$D0"},
+                                           {count, 5}
+                                           ]},
+                                         {lager_file_backend,
+                                          [{file, RiseDir ++ "/log/console.log"},
+                                           {level, debug},
+                                           {size, 10485760},
+                                           {date, "$D0"},
+                                           {count, 5}
+                                           ]},
+                                         {lager_file_backend,
+                                          [{file, RiseDir ++ "/log/debug.log"},
+                                           {level, debug},
+                                           {size, 10485760},
+                                           {date, "$D0"},
+                                           {count, 5}
+                                           ]}
                                         ]),
     application:set_env(lager, crash_log, RiseDir ++ "/log/crash.log"),
     application:start(mnesia),
