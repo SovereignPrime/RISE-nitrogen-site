@@ -150,6 +150,32 @@ event({archive, E, Rec}) -> % {{{1
     replace_left(),
     wf:update(body, render_body(Subject, false));
 
+event({to_task, #message{from=From, subject=Subject, text=Data}}) -> % {{{1
+    #db_contact{id=Me} = wf:user(),
+    {ok, #db_contact{id=CID}} = db:get_contact_by_address(From),
+    try binary_to_term(Data) of
+        #message_packet{text=Text} ->
+            ID = crypto:hash(sha512, <<Subject/bytes, (wf:to_binary(Text))/bytes>>),
+            Task = #db_task{id=ID, name=Subject, text=Text},
+            wf:state(current_task, Task),
+            wf:session(current_task, Task),
+            wf:state(current_task_id, ID),
+            wf:session(current_task_id, ID),
+            db:save(Task),
+            tasks:save_contact_role(#db_contact_roles{id=new,
+                                                      contact=CID,
+                                                      role="concerning"}),
+            tasks:save_contact_role(#db_contact_roles{id=new,
+                                                      contact=Me,
+                                                      role="responsible"}),
+            wf:redirect("/tasks");
+        _ ->
+            ok
+    catch
+        error:_ ->
+            ok
+    end;
+    
 event({show_archive, true}) -> % {{{1
     wf:replace(archive, #link{id=archive, body="<i class='icon-list-alt'></i> Actual", postback={show_archive, false}}),
     {ok, Updates} = db:get_updates(true),

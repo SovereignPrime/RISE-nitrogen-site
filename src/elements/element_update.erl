@@ -131,52 +131,75 @@ render_element(#update_element{id=Id,
                                            format_status(NStatus)
                                           ]}
                              ]},
-                 #panel{class="row-fluid",
-                        body=[
-                              #panel{class="span12",
-                                     body=Text}
-                             ]},
-                 #panel{class="row-fluid",
-                        body=[
-                              #panel{class="span3 offset4",
-                                     body=[
-                                           #link{class="btn btn-link",
-                                                 body=[
-                                                       #span{class="icon-reply icon-large",
-                                                             text=" "}
-                                                      ],
-                                                 postback=case Enc of
+                 #panel{
+                    class="row-fluid",
+                    body=[
+                          #panel{class="span12",
+                                 body=Text}
+                         ]},
+                 #panel{
+                    class="row-fluid",
+                    body=[
+                          #panel{
+                             class="span3 offset4",
+                             body=[
+                                   #link{
+                                      class="btn btn-link",
+                                      body=[
+                                            #span{class="icon-reply icon-large",
+                                                  text=" "}
+                                           ],
+                                      postback=case Enc of
 
-                                                              E when E == 3; E == 2 -> 
-                                                                  {reply, Subject, From};
-                                                              4 ->
-                                                                  {to_task, TID}
-                                                          end,
-                                                 new=false,
-                                                 delegate=common},
+                                                   E when E == 3; E == 2 -> 
+                                                       {reply, Subject, From};
+                                                   4 ->
+                                                       {to_task, TID}
+                                               end,
+                                      new=false,
+                                      delegate=common},
 
-                                           #panel{class="btn-group",
-                                                  body=[
-                                                        #link{ class="btn btn-link droppdown-toggle",
+                                   #panel{
+                                      class="btn-group",
+                                      body=[
+                                            #link{
+                                               class="btn btn-link droppdown-toggle",
+                                               body=[
+                                                     "<i class='icon-reorder icon-large'></i>"
+                                                    ],
+                                               new=false,
+                                               data_fields=[{toggle, "dropdown"}]},
+                                            #list{
+                                               numbered=false,
+                                               class="dropdown-menu pull-right",
+                                               body=case Enc of
+                                                        E when E == 2;
+                                                               E == 3 ->
+                                                            #listitem{
                                                                body=[
-                                                                     "<i class='icon-reorder icon-large'></i>"
-                                                                    ],
-                                                               new=false,
-                                                               data_fields=[{toggle, "dropdown"}]},
-                                                        #list{numbered=false,
-                                                              class="dropdown-menu pull-right",
+                                                                     #link{
+                                                                        body=[
+                                                                              #span{
+                                                                                 style="float: left;",
+                                                                                 body=tasks:icon()},
+                                                                              " Convert to task"
+                                                                             ],
+                                                                        postback={to_task, Message},
+                                                                        new=false}]};
+                                                        _ -> []
+                                                    end,
+                                               #listitem{
+                                                  body=[
+                                                        #link{
+                                                           body=[
+                                                                 "<i class='icon-list-alt icon-large'></i> Archive"
+                                                                ],
+                                                           postback={archive, Enc, UID},
+                                                           new=false}]}
+                                              }
 
-                                                              body=[
-                                                                    #listitem{body=[
-                                                                                    #link{body=[
-                                                                                                "<i class='icon-list-alt icon-large'></i> Archive"
-                                                                                               ],
-                                                                                          postback={archive, Enc, UID},
-                                                                                          new=false}]}
-                                                                   ]}
-
-                                                       ]}
-                                          ]}]},
+                                           ]}
+                                  ]}]},
                  case Attachments of
                      undefined ->
                          [];
