@@ -298,7 +298,7 @@ terms(Terms) ->  % {{{1
     
 
     {ok, M} = db:search_messages(DTerms),
-    {ok, F} = db:search_files(DTerms),
+    %{ok, F} = db:search_files(DTerms),
 
     error_logger:info_msg("Messages: ~p~n", [M]),
     {DTerms,
@@ -306,8 +306,8 @@ terms(Terms) ->  % {{{1
       format_dates(lists:usort(D)),
       G, C, S,
       messages(lists:usort(M)),
-      tasks(lists:usort(M)),
-      files(lists:usort(F))
+      tasks(lists:usort(M))
+      %files(lists:usort(F))
      ]}.
 
 get_term(Terms) ->  % {{{1
