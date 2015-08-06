@@ -172,7 +172,8 @@ render_element(#update_element{id=Id,
                                             #list{
                                                numbered=false,
                                                class="dropdown-menu pull-right",
-                                               body=case Enc of
+                                               body=[
+                                                     case Enc of
                                                         E when E == 2;
                                                                E == 3 ->
                                                             #listitem{
@@ -196,7 +197,7 @@ render_element(#update_element{id=Id,
                                                                 ],
                                                            postback={archive, Enc, UID},
                                                            new=false}]}
-                                              }
+                                                    ]}
 
                                            ]}
                                   ]}]},

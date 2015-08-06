@@ -310,6 +310,7 @@ render_task(#db_task{id=Id,  % {{{1
                      due=Due,
                      text=Text,
                      parent=Parent,
+                     effort={EffortValue, EffortPeriod},
                      status=Status,
                      changes=Changes}=Task) ->
     error_logger:info_msg("Due: ~p~n", [Due]),
@@ -366,6 +367,31 @@ render_task(#db_task{id=Id,  % {{{1
                                       start_mode=view,
                                       edit=#textbox{text=sugar:time_string(Due)}
                                      }
+                            ]},
+                #panel{class="row-fluid",
+                       body=[
+                             #panel{ class="span2", body="Level of effort: "},
+                             #inplace_textbox{id=effort_value,
+                                              style="min-height:15px;",
+                                      class="span2",
+                                      tag=effort_value,
+                                      text="1.5"
+                                             },
+                             #inplace{id=effort_period, 
+                                      style="min-height:15px;",
+                                      class="span6",
+                                      tag=effort_period,
+                                      text="hours",
+                                      view=#span{},
+                                      edit=#dropdown{
+                                              options=[
+                                                       {hours, "hours"},
+                                                       {days, "days"},
+                                                       {weeks, "weeks"},
+                                                       {years, "years"}
+                                                      ],
+                                              value=hours} 
+                        }
                             ]},
                 render_roles(Id)
             ]},

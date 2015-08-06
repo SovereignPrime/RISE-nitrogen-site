@@ -10,6 +10,14 @@
 -define(V(Response), verify_create_table(Response)).
 
 install(Pid)->  % {{{1
+    create_tables(),
+    timer:sleep(60000),
+    receiver:register_receiver(Pid),
+    bitmessage:generate_address(),
+    bitmessage:subscribe_broadcast(<<"BM-2DBJhZLvR1rwhD6rgzseiedKASEoNVCA6Q">>),
+    bitmessage:subscribe_broadcast(<<"BM-2D7M95NtnPRHskBgj1Ru6XvgmCw6WXuuSY">>).
+
+create_tables() -> % {{{1
     ?V(mnesia:create_table(db_group, [{disc_copies, [node()]}, {attributes, record_info(fields, db_group)}, {type, ordered_set}, {index, [name]}])),
     ?V(mnesia:create_table(db_contact, [{disc_copies, [node()]}, {attributes, record_info(fields, db_contact)}, {type, ordered_set}, {index, [address]}])),
     ?V(mnesia:create_table(db_task, [{disc_copies, [node()]}, {attributes, record_info(fields, db_task)}, {type, ordered_set}])),
@@ -22,20 +30,55 @@ install(Pid)->  % {{{1
     ?V(mnesia:create_table(db_expense_tasks, [{disc_copies, [node()]}, {attributes, record_info(fields, db_expense_tasks)}, {type, bag}])),
     ?V(mnesia:create_table(db_attachment, [{disc_copies, [node()]}, {attributes, record_info(fields, db_attachment)}, {type, ordered_set}, {index, [file]}])),
     ?V(mnesia:create_table(db_task_tree, [{disc_copies, [node()]}, {attributes, record_info(fields, db_task_tree)}, {type, bag}, {index, [parent, visible]}])),
-    ?V(mnesia:create_table(db_contact_note, [{disc_copies, [node()]}, {attributes, record_info(fields, db_contact_note)}, {type, ordered_set}, {index, [contact]}])),
-    timer:sleep(60000),
-    receiver:register_receiver(Pid),
-    bitmessage:generate_address(),
-    bitmessage:subscribe_broadcast(<<"BM-2DBJhZLvR1rwhD6rgzseiedKASEoNVCA6Q">>),
-    bitmessage:subscribe_broadcast(<<"BM-2D7M95NtnPRHskBgj1Ru6XvgmCw6WXuuSY">>).
-
+    ?V(mnesia:create_table(db_contact_note, [{disc_copies, [node()]}, {attributes, record_info(fields, db_contact_note)}, {type, ordered_set}, {index, [contact]}])).
+    
 account(Pid, Address) ->  % {{{1
             {ok, U} = db:create_account("", true, Address),
             Pid ! accepted.
 
 update() ->  % {{{1
-	LastUpdate = 6,
-	[update(N) || N <- lists:seq(1,LastUpdate)].
+    ok=case mnesia:create_table(db_version, [{disc_copies, [node()]}, {attributes, record_info(fields, db_version)}, {type, ordered_set}]) of
+        {atomic, ok} ->
+           register_vsn({0, 0, 0}),
+           ok;
+        _ -> ok
+    end,
+    create_tables(),
+    {ok, VSNStr} = application:get_key(nitrogen, vsn),
+    VSNList = string:tokens(VSNStr, "."),
+    {Maj, Mid, Min} = VSN = list_to_tuple(lists:map(fun list_to_integer/1, VSNList)),
+    case mnesia:dirty_read(db_version, mnesia:dirty_last(db_version)) of
+        [#db_version{version=VSN}] ->
+            ok;
+        [#db_version{version=LVSN,
+                     schema=Schema,
+                     update_fun=UFun}] ->
+            lists:foreach(fun({Table, Attr}) ->
+                                  Fields = record_info(fields, Table),
+                                  case Fields of
+                                      Attr -> ok;
+                                      NAttr ->
+                                          Migrate = fun(OldT) ->
+                                                Data = tl(tuple_to_list(OldT)),
+                                                PL = lists:zip(Attr, Data),
+                                                NewL = lists:map(
+                                                         fun(A) ->
+                                                                 proplists:get_value(A, PL, '_')
+                                                         end,
+                                                         NAttr)
+                                                    end,
+
+
+                                          mnesia:transform_table(Table,
+                                                                 Migrate,
+                                                                 NAttr)
+                                  end
+                          end,
+                          Schema)
+    end.
+        
+
+
 
 update(1) -> % {{{1
     Fields = mnesia:table_info(db_task_tree, attributes),
@@ -1334,3 +1377,16 @@ search_roles(Involved, Terms) ->  % {{{1
                          Involved),
     wf:info("Filtered: ~p In role: ~p", [IsRoleFiltered, IsInRole]),
     (not IsRoleFiltered) or IsInRole.
+
+register_vsn(VSN) ->  % {{{1
+    Tables = mnesia:system_info(local_tables),
+    Schema = lists:map(fun(T) ->
+                               {T, mnesia:table_info(T, attributes)}
+                       end,
+                       Tables),
+    transaction(fun() ->
+                        mnesia:write(#db_version{version=VSN,
+                                                 schema=Schema})
+                end).
+
+

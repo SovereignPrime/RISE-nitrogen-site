@@ -1,3 +1,9 @@
+-record(db_version, 
+        {
+         version :: {non_neg_integer(), non_neg_integer(), non_neg_integer()},
+         schema :: [proplists:property()],
+         update_fun :: fun()
+        }).
 -record(db_group,
         {
          id :: non_neg_integer(),
@@ -44,9 +50,12 @@
 -record(db_task,
         {id :: binary(),
          due :: calendar:date_time(),
+         recurring :: tuple(),
          name :: iodata(),
          text="" :: iodata(),
          parent :: binary(),
+         effort={1.0, day} :: {float(), atom()},
+         sort :: non_neg_integer() | atom(),
          status=new :: atom(),
          changes=[] :: [#db_task_change{}]
         }).
