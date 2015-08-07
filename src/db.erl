@@ -53,28 +53,8 @@ update() ->  % {{{1
         [#db_version{version=LVSN,
                      schema=Schema,
                      update_fun=UFun}] ->
-            lists:foreach(fun({Table, Attr}) ->
-                                  Fields = record_info(fields, Table),
-                                  case Fields of
-                                      Attr -> ok;
-                                      NAttr ->
-                                          Migrate = fun(OldT) ->
-                                                Data = tl(tuple_to_list(OldT)),
-                                                PL = lists:zip(Attr, Data),
-                                                NewL = lists:map(
-                                                         fun(A) ->
-                                                                 proplists:get_value(A, PL, '_')
-                                                         end,
-                                                         NAttr)
-                                                    end,
-
-
-                                          mnesia:transform_table(Table,
-                                                                 Migrate,
-                                                                 NAttr)
-                                  end
-                          end,
-                          Schema)
+            ok=update(VSN),
+            register_vsn(VSN)
     end.
         
 
@@ -192,7 +172,51 @@ update(5) ->  % {{{1
 update(6) ->  % {{{1
     mnesia:delete_table(db_update),
     ?V(mnesia:create_table(db_contact_note, [{disc_copies, [node()]}, {attributes, record_info(fields, db_contact_note)}, {type, ordered_set}, {index, [contact]}])),
-    ?V(mnesia:create_table(db_update, [{disc_copies, [node()]}, {attributes, record_info(fields, db_update)}, {type, ordered_set}])).
+    ?V(mnesia:create_table(db_update, [{disc_copies, [node()]}, {attributes, record_info(fields, db_update)}, {type, ordered_set}]));
+update({0, 1, 5}) ->
+    [ update(X) || X <- lists:seq(1, 6)],
+    update_table(db_task,
+                 [{due, fun(D) -> sugar:date_from_string(D) end},
+                  {recurring, undefined},
+                  {effort, {1.0, week}},
+                  {sort, undefined}
+                 ],
+                 record_info(fields, db_task));
+update(_) ->
+    ok.
+
+update_table(Table, NewData, NewAttrs) ->  % {{{1
+    case mnesia:transform_table(Table,
+                                fun(Old) ->
+                                        OldL = tl(tuple_to_list(Old)),
+                                        OldAttr = mnesia:table_info(Table, attributes),
+                                        OldProp = lists:zip(OldAttr, OldL),
+                                        NewL = lists:foldr(
+                                                 fun(K, A) ->
+                                                         OldV = proplists:get_value(K, OldProp, undefined),
+                                                         V = proplists:get_value(K, NewData, OldV),
+                                                         case is_function(V) of
+                                                             true ->
+                                                                 N = V(OldV),
+                                                                 [N | A];
+                                                             _ ->
+                                                                 [V | A]
+                                                         end
+                                                 end,
+                                                 [],
+                                                 NewAttrs),
+                                        list_to_tuple([Table | NewL])
+                                end,
+                                NewAttrs) of
+        {atomic, ok} ->
+            ok;
+        Any -> Any
+    end.
+                           
+
+
+
+
 
 
 
