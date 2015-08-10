@@ -178,7 +178,7 @@ update({0, 1, 5}) ->
     update_table(db_task,
                  [{due, fun(D) -> sugar:date_from_string(D) end},
                   {recurring, undefined},
-                  {effort, {1.0, week}},
+                  {effort, {1.0, weeks}},
                   {sort, undefined}
                  ],
                  record_info(fields, db_task));

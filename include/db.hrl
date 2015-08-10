@@ -54,7 +54,7 @@
          name :: iodata(),
          text="" :: iodata(),
          parent :: binary(),
-         effort={1.0, day} :: {float(), atom()} | atom(),
+         effort={1.0, days} :: {float(), atom()} | atom(),
          sort :: non_neg_integer() | atom(),
          status=new :: atom(),
          changes=[] :: [#db_task_change{}]

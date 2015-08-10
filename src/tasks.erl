@@ -173,19 +173,21 @@ render_subtask(Task = #db_task{name=Name, status=Status, due=Due, id=Id}, Archiv
             end,
             
             #listitem{body=[
-                #droppable{tag={subtask, Id}, accept_groups=[task_groups], body=[
-                    #draggable{tag={task, Id},
-                               group=task_groups,
-                               clone=false,
-                               distance=20,
-                               options=[{delay, 300}],
-                               body=[
-                                     #panel{style="display:block",
+                #droppable{tag={subtask, Id},
+                           accept_groups=[task_groups],
+                           body=[
+                                 #draggable{tag={task, Id},
+                                            group=task_groups,
+                                            clone=false,
+                                            distance=20,
+                                            options=[{delay, 300}],
                                             body=[
-                                                  Expander,
-                                                  render_task_link(Task)
+                                                  #panel{style="display:block",
+                                                         body=[
+                                                               Expander,
+                                                               render_task_link(Task)
+                                                              ]}
                                                  ]}
-                    ]}
                 ]},
                 Subtree
             ]}
@@ -321,99 +323,105 @@ render_task(#db_task{id=Id,  % {{{1
     Paied = false,
     IncompleteWarning = ?WF_IF(Status==complete andalso not(AllComplete), "<i class='icon-exclamation-sign' title=\"Task marked complete but has incomplete subtasks\"></i>"),
     StatusDropdown = #dropdown{options=db:task_status_list(Paied), value=Status},
+    DueDate = ?WF_IF(Due,
+                     sugar:date_string(Due),
+                     "No due date"),
+    DueTime = ?WF_IF(Due,
+                     sugar:time_string(Due),
+                     ""),
     [
-        render_top_buttons(),
-        #panel{class="row-fluid",
-               body=[
-                     #panel{class="span11",
-                            body=[
-                                  #h1{body=#inplace_textbox{id=name,
-                                                            tag=name,
-                                                            text=Name}},
-                                  #panel{class="row-fluid",
-                                         style="min-height:15px;",
-                                         body=[
-                                               #panel{class="span2",
-                                                      style="min-height:15px;",
-                                                      body=["Status: ",
-                                                            IncompleteWarning]},
-                                               #inplace{id=status, 
-                                                        style="min-height:15px;",
-                                                        class="span6",
-                                                        tag=status,
-                                                        text=wf:to_list(Status),
-                                                        view=#span{},
-                                                        edit=StatusDropdown
-                                                       }
-                                              ]},
-                #panel{class="row-fluid",
-                       body=[
-                             #panel{ class="span2", body="Due: "},
-                             #inplace{id=due_date,
+     render_top_buttons(),
+     #panel{class="row-fluid",
+            body=[
+                  #panel{class="span11",
+                         body=[
+                               #h1{body=#inplace_textbox{id=name,
+                                                         tag=name,
+                                                         text=Name}},
+                               #panel{class="row-fluid",
                                       style="min-height:15px;",
-                                      class="span2",
-                                      tag=due_date,
-                                      text=sugar:date_string(Due),
-                                      view=#span{},
-                                      start_mode=view,
-                                      edit=#datepicker_textbox{text=sugar:date_string(Due)}
-                                     },
-                             #inplace{id=due_time,
-                                      style="min-height:15px;",
-                                      class="span2",
-                                      tag=due_time,
-                                      text=sugar:time_string(Due),
-                                      view=#span{},
-                                      start_mode=view,
-                                      edit=#textbox{text=sugar:time_string(Due)}
-                                     }
-                            ]},
-                #panel{class="row-fluid",
-                       body=[
-                             #panel{ class="span2", body="Level of effort: "},
-                             #inplace_textbox{id=effort_value,
-                                              style="min-height:15px;",
-                                      class="span2",
-                                      tag=effort_value,
-                                      text="1.5"
-                                             },
-                             #inplace{id=effort_period, 
-                                      style="min-height:15px;",
-                                      class="span6",
-                                      tag=effort_period,
-                                      text="hours",
-                                      view=#span{},
-                                      edit=#dropdown{
-                                              options=[
-                                                       {hours, "hours"},
-                                                       {days, "days"},
-                                                       {weeks, "weeks"},
-                                                       {years, "years"}
-                                                      ],
-                                              value=hours} 
-                        }
-                            ]},
-                render_roles(Id)
-            ]},
-            #panel{class="span1",
-                   body=render_side_buttons(Id, Task)}
-                                        ]},
-        #br{},
-        #panel{class="row-fluid",
-               body=[
-                     #panel{class="span10",
-                            body=[
-                                  #inplace_textarea{id=text,
-                                                    class="span12",
-                                                    tag=text,
-                                                    html_encode=whites,
-                                                    text=Text}
-            ]}
-        ]},
-        render_attachments(Task),
-        render_comments(Comments),
-        render_updates(Updates),
-        render_task_changes(Changes)
+                                      body=[
+                                            #panel{class="span2",
+                                                   style="min-height:15px;",
+                                                   body=["Status: ",
+                                                         IncompleteWarning]},
+                                            #inplace{id=status, 
+                                                     style="min-height:15px;",
+                                                     class="span6",
+                                                     tag=status,
+                                                     text=wf:to_list(Status),
+                                                     view=#span{},
+                                                     edit=StatusDropdown
+                                                    }
+                                           ]},
+                               #panel{class="row-fluid",
+                                      body=[
+                                            #panel{ class="span2", body="Due: "},
+                                            #inplace{id=due_date,
+                                                     style="min-height:15px;",
+                                                     class="span2",
+                                                     tag=due_date,
+                                                     text=DueDate,
+                                                     view=#span{},
+                                                     start_mode=view,
+                                                     edit=#datepicker_textbox{text=DueDate}
+                                                    },
+                                            #inplace{id=due_time,
+                                                     style="min-height:15px;",
+                                                     class="span2",
+                                                     tag=due_time,
+                                                     text=DueTime,
+                                                     view=#span{},
+                                                     start_mode=view,
+                                                     edit=#textbox{text=DueTime}
+                                                    }
+                                           ]},
+                               #panel{class="row-fluid",
+                                      body=[
+                                            #panel{class="span1", body="Level of effort: "},
+                                            #inplace_textbox{id=effort_value,
+                                                             style="min-height:15px;",
+                                                             class="span2",
+                                                             tag=effort_value,
+                                                             text=wf:to_list(EffortValue)
+                                                            },
+                                            #inplace{id=effort_period, 
+                                                     style="min-height:15px;",
+                                                     class="span6",
+                                                     tag=effort_period,
+                                                     text=EffortPeriod,
+                                                     view=#span{},
+                                                     edit=#dropdown{
+                                                             options=[
+                                                                      {hours, "hours"},
+                                                                      {days, "days"},
+                                                                      {weeks, "weeks"},
+                                                                      {years, "years"}
+                                                                     ],
+                                                             value=EffortPeriod} 
+                                                    }
+                                           ]},
+                               render_roles(Id)
+                              ]},
+                  #panel{class="span1",
+                         body=render_side_buttons(Id, Task)}
+                 ]},
+     #br{},
+     #panel{class="row-fluid",
+            body=[
+                  #panel{class="span10",
+                         body=[
+                               #inplace_textarea{id=text,
+                                                 class="span12",
+                                                 tag=text,
+                                                 html_encode=whites,
+                                                 text=Text}
+                              ]}
+                 ]},
+     render_attachments(Task),
+     render_comments(Comments),
+     render_updates(Updates),
+     render_task_changes(Changes)
     ]. 
 
 get_involved_full() -> % {{{1
@@ -487,22 +495,22 @@ render_role_edit_row(OriginalData = {ContactRole, Name}) -> % {{{1
 
 
 render_top_buttons() -> % {{{1
-    #panel{ id=top_buttons,
-            class="row-fluid",
-            style="display:none",
-            body=[
-                  #panel{ class="span4 offset4",
-                          body=[
-                                #panel{class="row-fluid",
-                                       body=[
-                                             #button{ class="btn btn-link span6",
-                                                      body="<i class='icon-remove'></i> Discard",
-                                                      postback=discard},
+    #panel{id=top_buttons,
+           class="row-fluid",
+           style="display:none",
+           body=[
+                 #panel{class="span4 offset4",
+                        body=[
+                              #panel{class="row-fluid",
+                                     body=[
+                                           #button{class="btn btn-link span6",
+                                                   body="<i class='icon-remove'></i> Discard",
+                                                   postback=discard},
 
-                                             #button{ class="btn btn-link span6",
-                                                      body="<i class='icon-ok'></i> Save",
-                                                      postback=save}
-                                            ]}
+                                           #button{class="btn btn-link span6",
+                                                   body="<i class='icon-ok'></i> Save",
+                                                   postback=save}
+                                          ]}
                                ]}
                  ]}.
 
@@ -584,8 +592,8 @@ render_updates(Updates) -> % {{{1
     ].
 
 
-render_task_changes([]) -> [];
-render_task_changes(Changes) ->
+render_task_changes([]) -> [];  % {{{1
+render_task_changes(Changes) ->  % {{{1
     [
         #br{},
         #panel{class="row-fluid", body=[
@@ -594,7 +602,7 @@ render_task_changes(Changes) ->
         [render_task_change(C) || C <- Changes]
     ].
 
-render_task_change(C) ->
+render_task_change(C) ->  % {{{1
     Contact = case db:get_contact_by_address(C#db_task_change.address) of
                   none -> "Anonymous";
                   {ok, Co} -> Co#db_contact.name
@@ -873,7 +881,7 @@ event(save) -> % {{{1
     Task2 = calculate_changes(Task),
     db:save(Task2),
     [save_contact_role(ContactRole) || {ContactRole, _} <- Involved],
-    common:send_messages(Task2),
+    %common:send_messages(Task2),
     wf:state(unsaved, false),
     update_task_tree(),
     event({task_chosen, Task#db_task.id});
@@ -953,9 +961,21 @@ inplace_textarea_event(text, Val) -> % {{{1
     ?UPDATE_CURRENT(text, wf:to_binary(Val)),
     Val.
 
+inplace_textbox_event(effort_value, Val) -> % {{{1
+    error_logger:info_msg(Val),
+    #db_task{effort={_Value, Period}} = wf:state(current_task),
+    ?UPDATE_CURRENT(effort, {list_to_float(Val), Period}),
+    Val;
+
 inplace_textbox_event(name, Val) -> % {{{1
     ?UPDATE_CURRENT(name, wf:to_binary(Val)),
     Val.
+
+inplace_event(effort_period, Val) ->  % {{{1
+    error_logger:info_msg(Val),
+    #db_task{effort={Value, _Period}} = wf:state(current_task),
+    ?UPDATE_CURRENT(effort, {Value, wf:to_atom(Val)}),
+    Val;
 
 inplace_event(status, Val) ->  % {{{1
     NewStatus = db:sanitize_task_status(Val),
@@ -972,15 +992,24 @@ inplace_event(status, Val) ->  % {{{1
             Status
     end;
 
+inplace_event(due_date, Val) when Val == "No Due Date" -> % {{{1
+    ?UPDATE_CURRENT(due, undefined),
+    Val;
 inplace_event(due_date, Val) -> % {{{1
     error_logger:info_msg(Val),
-    {DueDate, _DueTime} = sugar:date_from_string(Val),
-    #db_task{due=Due} = wf:state(current_task),
-    {_DueDateO, DueTimeO} = sugar:date_from_string(Due),
-    NewVal = {DueDate, DueTimeO},
+    {DueDate, _DueTime} = DT  = sugar:date_from_string(Val),
+    NewVal = case wf:state(current_task) of
+                 #db_task{due=undefined} -> DT;
+                 #db_task{due=Due} ->
+                     {_DueDateO, DueTimeO} = sugar:date_from_string(Due),
+                     {DueDate, DueTimeO}
+             end,
     ?UPDATE_CURRENT(due, NewVal),
     Val;
 
+inplace_event(due_time, Val) when Val == "" -> % {{{1
+    ?UPDATE_CURRENT(due, undefined),
+    Val;
 inplace_event(due_time, Val) -> % {{{1
     error_logger:info_msg(Val),
     {_DueDate, DueTime} = sugar:date_from_string("2015-01-01 " ++ Val),
@@ -1015,6 +1044,8 @@ maybe_show_top_buttons(CurrentTask) -> % {{{1
 
     case TaskChanged orelse InvolvedChanged of
         true -> 
+            wf:info("OldTask: ~p~n
+                    NewTask: ~p~n", [TaskFromDB, CurrentTask]),
             wf:state(unsaved, true),
             wf:wire(top_buttons, #show{});
         false -> 
@@ -1031,15 +1062,19 @@ calculate_changes(Task) -> % {{{1
     NewChanges = lists:foldl(fun ({_, changes}, Acc) -> Acc;
                                  ({_, id}, Acc) -> Acc;
                                  ({Fieldnum, Field}, Acc) ->
-        case element(Fieldnum+1, Task) =:= element(Fieldnum+1, TaskFromDB) of
+                                     case element(Fieldnum+1, Task) =:= element(Fieldnum+1, TaskFromDB) of
             true -> Acc;
             false ->
                 FieldValue = sugar:date_format(element(Fieldnum+1, Task)),
-                IsDate = is_tuple(FieldValue),
+                IsComplex = is_tuple(FieldValue),
+                wf:info("FieldValue: ~p", [FieldValue]),
+                %IsDate = IsComplex andalso calendar:valid_date(element(1, FieldValue)),
                 NewValue = if is_list(FieldValue) ->
                                   string:strip(lists:flatten(io_lib:format("~100s",[FieldValue])));
-                              IsDate ->
-                                  string:strip(lists:flatten(io_lib:format("~100s",[sugar:date_format(FieldValue)])));
+                              %IsDate ->
+                              %    string:strip(lists:flatten(io_lib:format("~100s",[sugar:date_format(FieldValue)])));
+                              IsComplex ->
+                                  string:strip(lists:flatten(io_lib:format("~100p",[FieldValue])));
                               true ->
                                   string:strip(lists:flatten(io_lib:format("~100p",[FieldValue])))
                            end,
